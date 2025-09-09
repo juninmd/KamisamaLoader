@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Navigation; // Adicionado para o RequestNavigate
 using System.Diagnostics; // Adicionado para Process.Start
+using KamisamaLoader.Services;
 
 namespace KamisamaLoader
 {
@@ -14,13 +15,21 @@ namespace KamisamaLoader
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly SteamService _steamService;
+        private readonly LocalModService _localModService;
+        private readonly GameBananaService _gameBananaService;
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
+        public ObservableCollection<LocalMod> LocalMods { get; set; }
+        public string GameDirectory { get; set; }
 
         public MainWindow()
         {
             InitializeComponent();
             GameBananaMods = new ObservableCollection<ModRecord>();
+            LocalMods = new ObservableCollection<LocalMod>();
+            _steamService = new SteamService();
+            _localModService = new LocalModService();
+            _gameBananaService = new GameBananaService();
             this.DataContext = this;
 
             Loaded += MainWindow_Loaded;
@@ -29,43 +38,50 @@ namespace KamisamaLoader
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadGameBananaMods();
+            FindGameDirectory();
+            LoadLocalMods();
         }
+
+        private void LoadLocalMods()
+        {
+            var mods = _localModService.ScanForLocalMods(GameDirectory);
+            LocalMods.Clear();
+            foreach (var mod in mods)
+            {
+                LocalMods.Add(mod);
+            }
+            Debug.WriteLine($"Found {LocalMods.Count} local mods.");
+        }
+
+        private void FindGameDirectory()
+        {
+            GameDirectory = _steamService.FindGameDirectory();
+            if (!string.IsNullOrEmpty(GameDirectory))
+            {
+                GamePathText.Text = $"Caminho do jogo: {GameDirectory}";
+            }
+            else
+            {
+                GamePathText.Text = "Caminho do jogo não encontrado. Verifique se a Steam e o jogo estão instalados.";
+            }
+        }
+
+        private const int GameId = 21179;
 
         private async System.Threading.Tasks.Task LoadGameBananaMods()
         {
-            try
+            var mods = await _gameBananaService.GetModsAsync(GameId);
+            GameBananaMods.Clear();
+            if (mods != null)
             {
-                string apiUrl = "https://gamebanana.com/apiv11/Game/21179/Subfeed?_sSort=default&_nPage=1";
-
-                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                response.EnsureSuccessStatusCode();
-
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-                GameBananaApiResponse apiResponse = JsonConvert.DeserializeObject<GameBananaApiResponse>(jsonResponse);
-
-                GameBananaMods.Clear();
-                if (apiResponse?.Records != null)
+                foreach (var mod in mods)
                 {
-                    foreach (var mod in apiResponse.Records)
-                    {
-                        if (mod.ModelName == "Mod")
-                        {
-                            GameBananaMods.Add(mod);
-                        }
-                    }
+                    GameBananaMods.Add(mod);
                 }
             }
-            catch (HttpRequestException httpEx)
+            else
             {
-                MessageBox.Show($"Erro de requisição HTTP: {httpEx.Message}", "Erro de Conexão", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (JsonSerializationException jsonEx)
-            {
-                MessageBox.Show($"Erro ao desserializar JSON: {jsonEx.Message}", "Erro de Dados", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show($"Ocorreu um erro: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Não foi possível carregar os mods do GameBanana. Verifique sua conexão com a internet ou tente novamente mais tarde.", "Erro de Rede", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

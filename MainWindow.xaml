@@ -7,7 +7,10 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="Kamisama Loader" Height="700" Width="1000">
-    <Grid>
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock x:Name="GamePathText" Text="Caminho do jogo não encontrado."/>
+        </StatusBar>
         <TabControl>
             <TabItem Header="Descobrir Mods">
                 <Grid>
@@ -41,10 +44,32 @@
             </TabItem>
             <TabItem Header="Mods Instalados">
                 <Grid>
-                    <!-- Conteúdo para a aba "Mods Instalados" virá aqui -->
-                    <TextBlock Text="Aqui você gerenciará seus mods instalados." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ListView ItemsSource="{Binding LocalMods}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Nome do Mod" DisplayMemberBinding="{Binding Name}" Width="300"/>
+                                <GridViewColumn Header="Ativo">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsActive}" IsEnabled="False"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Ações">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Ativar/Desativar" Margin="5"/>
+                                                <Button Content="Excluir" Margin="5"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
                 </Grid>
             </TabItem>
         </TabControl>
-    </Grid>
+    </DockPanel>
 </Window>

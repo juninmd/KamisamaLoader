@@ -12,4 +12,11 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="Models\LocalMod.cs" />
+    <Compile Include="Services\GameBananaService.cs" />
+    <Compile Include="Services\LocalModService.cs" />
+    <Compile Include="Services\SteamService.cs" />
+  </ItemGroup>
+
 </Project>
