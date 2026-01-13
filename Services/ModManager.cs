@@ -116,6 +116,14 @@ namespace KamisamaLoader.Services
             ZipFile.ExtractToDirectory(zipPath, destinationDir);
         }
 
+        public void DeleteMod(LocalMod mod)
+        {
+            if (mod != null && Directory.Exists(mod.FolderPath))
+            {
+                Directory.Delete(mod.FolderPath, true);
+            }
+        }
+
         public void Build(List<LocalMod> localMods)
         {
             string gameExePath = _settingsManager.CurrentSettings.GameExecutablePath;
