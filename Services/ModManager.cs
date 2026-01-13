@@ -24,6 +24,7 @@ namespace KamisamaLoader.Services
             }
         }
 
+        [Obsolete("Use LoadLocalModsAsync instead.")]
         public List<LocalMod> LoadLocalMods()
         {
             var mods = new List<LocalMod>();
@@ -104,6 +105,76 @@ namespace KamisamaLoader.Services
             }
 
             return orderedMods;
+        }
+
+        public async Task<List<LocalMod>> LoadLocalModsAsync()
+        {
+            var mods = new List<LocalMod>();
+            if (!Directory.Exists(ModsDirectory)) return mods;
+
+            // Load persisted config
+            List<LocalMod> savedMods = new List<LocalMod>();
+            string configPath = Path.Combine(ModsDirectory, ModsConfigFileName);
+
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    string json = await File.ReadAllTextAsync(configPath).ConfigureAwait(false);
+                    savedMods = JsonConvert.DeserializeObject<List<LocalMod>>(json) ?? new List<LocalMod>();
+                }
+                catch
+                {
+                    // Ignore load error
+                }
+            }
+
+            // Offload directory scanning and processing to a background thread to avoid blocking UI
+            return await Task.Run(() =>
+            {
+                var directories = Directory.GetDirectories(ModsDirectory);
+                var localMods = new List<LocalMod>();
+
+                foreach (var dir in directories)
+                {
+                    var dirInfo = new DirectoryInfo(dir);
+                    // Check if we have saved state for this mod
+                    var savedMod = savedMods.FirstOrDefault(m => m.Name == dirInfo.Name);
+
+                    if (savedMod != null)
+                    {
+                        // Update path just in case
+                        savedMod.FolderPath = dir;
+                        localMods.Add(savedMod);
+                    }
+                    else
+                    {
+                        // New mod
+                        localMods.Add(new LocalMod
+                        {
+                            Name = dirInfo.Name,
+                            FolderPath = dir,
+                            IsEnabled = true,
+                            Priority = 0
+                        });
+                    }
+                }
+
+                var orderedMods = new List<LocalMod>();
+                foreach (var saved in savedMods)
+                {
+                    var found = localMods.FirstOrDefault(m => m.Name == saved.Name);
+                    if (found != null)
+                    {
+                        orderedMods.Add(found);
+                        localMods.Remove(found);
+                    }
+                }
+                // Add remaining (new) mods
+                orderedMods.AddRange(localMods);
+
+                return orderedMods;
+            });
         }
 
         public void SaveLocalMods(List<LocalMod> mods)
