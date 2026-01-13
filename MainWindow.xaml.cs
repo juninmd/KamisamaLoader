@@ -1,8 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,14 +18,30 @@ namespace KamisamaLoader
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly GameBananaService _gameBananaService;
         private readonly SettingsManager _settingsManager;
         private readonly ModManager _modManager;
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
-        public ObservableCollection<LocalMod> LocalMods { get; set; }
+
+        private ObservableCollection<LocalMod> _localMods;
+        public ObservableCollection<LocalMod> LocalMods
+        {
+            get => _localMods;
+            set
+            {
+                if (_localMods != value)
+                {
+                    _localMods = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string GameExecutablePath
         {
             get => _settingsManager.CurrentSettings.GameExecutablePath;
@@ -49,6 +67,11 @@ namespace KamisamaLoader
             Loaded += MainWindow_Loaded;
         }
 
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadGameBananaMods();
@@ -67,12 +90,8 @@ namespace KamisamaLoader
 
         private void RefreshLibrary()
         {
-            LocalMods.Clear();
             var mods = _modManager.LoadLocalMods();
-            foreach (var mod in mods)
-            {
-                LocalMods.Add(mod);
-            }
+            LocalMods = new ObservableCollection<LocalMod>(mods);
         }
 
         private void RefreshLibrary_Click(object sender, RoutedEventArgs e)
