@@ -135,17 +135,23 @@ namespace KamisamaLoader
             }
         }
 
-        private void Build_Click(object sender, RoutedEventArgs e)
+        private async void Build_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                if (sender is Button btn) btn.IsEnabled = false;
+
                 // Pass the current list to Build, which will also save it
-                _modManager.Build(LocalMods.ToList());
+                await _modManager.BuildAsync(LocalMods.ToList());
                 MessageBox.Show("Mods installed to game directory successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error building mods: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (sender is Button btn) btn.IsEnabled = true;
             }
         }
 
