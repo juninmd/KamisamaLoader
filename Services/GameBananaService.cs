@@ -1,56 +1,83 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using KamisamaLoader.Models;
 using Newtonsoft.Json;
+using KamisamaLoader.Models;
+using System.Linq;
 
 namespace KamisamaLoader.Services
 {
     public class GameBananaService
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
-        private const string ApiBaseUrl = "https://gamebanana.com/apiv11";
+        private readonly HttpClient _httpClient;
+        // Updated Game ID for Dragon Ball Sparking! Zero (21179)
+        private const string SubfeedUrl = "https://gamebanana.com/apiv11/Game/21179/Subfeed?_sSort=default&_nPage=1";
+        private const string ModProfileUrlFormat = "https://gamebanana.com/apiv11/Mod/{0}/ProfilePage";
 
-        public async Task<List<ModRecord>> GetModsAsync(int gameId, int page = 1)
+        public GameBananaService()
         {
-            var mods = new List<ModRecord>();
+            _httpClient = new HttpClient();
+        }
+
+        public async Task<List<ModRecord>> GetModsAsync()
+        {
             try
             {
-                string apiUrl = $"{ApiBaseUrl}/Game/{gameId}/Subfeed?_sSort=default&_nPage={page}";
-
-                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+                HttpResponseMessage response = await _httpClient.GetAsync(SubfeedUrl);
                 response.EnsureSuccessStatusCode();
 
                 string jsonResponse = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonConvert.DeserializeObject<GameBananaApiResponse>(jsonResponse);
+                GameBananaApiResponse apiResponse = JsonConvert.DeserializeObject<GameBananaApiResponse>(jsonResponse);
 
                 if (apiResponse?.Records != null)
                 {
-                    foreach (var mod in apiResponse.Records)
-                    {
-                        if (mod.ModelName == "Mod")
-                        {
-                            mods.Add(mod);
-                        }
-                    }
+                    return apiResponse.Records.Where(m => m.ModelName == "Mod").ToList();
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch
             {
-                // In a real app, use a proper logging framework
-                Console.WriteLine($"HTTP request error: {httpEx.Message}");
+                // Log error
             }
-            catch (JsonSerializationException jsonEx)
+
+            return new List<ModRecord>();
+        }
+
+        public async Task<ModRecord> GetModDetailsAsync(int modId)
+        {
+            try
             {
-                Console.WriteLine($"JSON deserialization error: {jsonEx.Message}");
+                string url = string.Format(ModProfileUrlFormat, modId);
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                ModRecord modRecord = JsonConvert.DeserializeObject<ModRecord>(jsonResponse);
+
+                return modRecord;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+                return null;
             }
-            return mods;
+        }
+
+        public async Task<string> DownloadFileAsync(string url, string destinationPath)
+        {
+             try
+             {
+                 HttpResponseMessage response = await _httpClient.GetAsync(url);
+                 response.EnsureSuccessStatusCode();
+
+                 using (var fs = new System.IO.FileStream(destinationPath, System.IO.FileMode.Create))
+                 {
+                     await response.Content.CopyToAsync(fs);
+                 }
+                 return destinationPath;
+             }
+             catch
+             {
+                 return null;
+             }
         }
     }
 }
