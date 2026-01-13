@@ -149,6 +149,25 @@ namespace KamisamaLoader
             }
         }
 
+        private void DeleteMod_Click(object sender, RoutedEventArgs e)
+        {
+             if (sender is Button button && button.Tag is LocalMod mod)
+             {
+                 if (MessageBox.Show($"Are you sure you want to delete '{mod.Name}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                 {
+                     try
+                     {
+                         _modManager.DeleteMod(mod);
+                         RefreshLibrary();
+                     }
+                     catch (Exception ex)
+                     {
+                         MessageBox.Show($"Error deleting mod: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                     }
+                 }
+             }
+        }
+
         private void MoveUp_Click(object sender, RoutedEventArgs e)
         {
              if (sender is Button button && button.Tag is LocalMod mod)
