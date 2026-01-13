@@ -150,11 +150,19 @@ namespace KamisamaLoader.Services
             await Task.Run(() =>
             {
                 FileInfo exeInfo = new FileInfo(gameExePath);
+                // exeInfo is .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
+                // rootDir is .../SparkingZero/
                 DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
                 string contentDir = Path.Combine(rootDir.FullName, "Content");
                 string paksDir = Path.Combine(contentDir, "Paks");
                 string modsDir = Path.Combine(paksDir, "~mods");
+
+                // UE4SS Paths
+                // LogicMods usually goes to Content/Paks/LogicMods
+                string logicModsDest = Path.Combine(paksDir, "LogicMods");
+                // Binaries/Win64/Mods
+                string binariesModsDest = Path.Combine(rootDir.FullName, "Binaries", "Win64", "Mods");
 
                 if (!Directory.Exists(modsDir))
                 {
@@ -168,6 +176,18 @@ namespace KamisamaLoader.Services
                     File.Delete(file);
                 });
 
+                // Note: We might want to clear LogicMods and Binaries/Mods too, but that could delete user-installed things.
+                // However, Unverum says "~mods folder will be erased". It doesn't explicitly say it erases LogicMods,
+                // but for a manager, it usually manages the state.
+                // For safety, let's NOT delete LogicMods/Binaries entirely, but we might overwrite.
+                // Or maybe we should? If a user disables a mod, it should be removed.
+                // Let's assume we should manage them.
+                // But deleting Binaries/Win64/Mods might remove UE4SS itself if not careful?
+                // Usually UE4SS is "installed" there.
+                // Unverum modifies mods.txt.
+                // Let's just copy for now (overwrite). Managing deletion of disabled UE4SS mods is harder without tracking.
+                // We will stick to additive for UE4SS for this iteration, as deleting ~mods is standard behavior but deleting Binaries is risky.
+
                 // Save the state first (needs to be on UI thread? No, SaveLocalMods uses File IO, safe on bg thread)
                 SaveLocalMods(localMods);
 
@@ -177,26 +197,99 @@ namespace KamisamaLoader.Services
                 // Strategy: 0 is Top Priority (Loads Last).
                 // We want Top Priority to have highest prefix (e.g. 999).
 
-                // We use Parallel.For loop
+                // We use Parallel.For loop for standard mods, but for LogicMods/UE4SS we need to be careful about concurrency if multiple mods touch same files.
+                // Parallel is fine if files are different.
+
                 Parallel.For(0, enabledMods.Count, (i) =>
                 {
                     var mod = enabledMods[i];
                     string prefix = (999 - i).ToString("D3") + "_";
-                    CopyModFiles(mod.FolderPath, modsDir, prefix);
+                    CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest);
                 });
             });
         }
 
 
-        private void CopyModFiles(string sourceDir, string targetDir, string prefix)
+        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest)
         {
             if (!Directory.Exists(sourceDir)) return;
 
+            // Handle UE4SS Special Folders
+            // LogicMods
+            // Look for "LogicMods" folder in the root of the mod or subdirectories?
+            // Unverum: "Anything in a LogicMods folder"
+            // Let's look for immediate LogicMods folder or recurse?
+            // Usually mod structure is either:
+            // 1. LogicMods/MyMod.pak
+            // 2. ModName/LogicMods/MyMod.pak
+            // The recursive scan in original code flattened everything.
+            // We should check if we are INSIDE a special folder.
+
+            // Let's iterate all files and check their relative path?
+            // Or just check for specific folders first.
+
+            var directories = Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories);
+            // We also need the root sourceDir itself if it contains files.
+
+            // Actually, simply iterating files and checking path is easier.
             var files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+
             foreach (var file in files)
             {
+                string relativePath = Path.GetRelativePath(sourceDir, file);
+                string[] parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                // Check if part of LogicMods
+                if (parts.Any(p => p.Equals("LogicMods", StringComparison.OrdinalIgnoreCase)))
+                {
+                    // It goes to LogicModsDest
+                    // We need to preserve structure INSIDE LogicMods?
+                    // Usually yes.
+                    // Find the index of LogicMods
+                    int idx = Array.FindIndex(parts, p => p.Equals("LogicMods", StringComparison.OrdinalIgnoreCase));
+                    if (idx < parts.Length - 1)
+                    {
+                         // Path after LogicMods
+                         string subPath = Path.Combine(parts.Skip(idx + 1).ToArray());
+                         string dest = Path.Combine(logicModsDest, subPath);
+                         Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                         File.Copy(file, dest, true);
+                    }
+                    else
+                    {
+                        // File IS "LogicMods" (impossible as it's a file) or inside but somehow weird.
+                    }
+                    continue; // Done with this file
+                }
+
+                // Check if part of ue4ss or Binaries
+                // Unverum: "anything in a ue4ss folder" -> Binaries/Win64/Mods
+                if (parts.Any(p => p.Equals("ue4ss", StringComparison.OrdinalIgnoreCase)))
+                {
+                    int idx = Array.FindIndex(parts, p => p.Equals("ue4ss", StringComparison.OrdinalIgnoreCase));
+                    if (idx < parts.Length - 1)
+                    {
+                         string subPath = Path.Combine(parts.Skip(idx + 1).ToArray());
+                         string dest = Path.Combine(binariesModsDest, subPath);
+                         Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                         File.Copy(file, dest, true);
+                    }
+                    continue;
+                }
+
+                // If the mod structure mimics the game folder, e.g. "Binaries/Win64/Mods"
+                if (parts.Contains("Binaries") && parts.Contains("Mods"))
+                {
+                     // Complex check, but Unverum specifically mentions "ue4ss" folder mapping to Binaries/Win64/Mods.
+                     // It doesn't explicitly say "Binaries" folder maps.
+                     // I'll stick to "ue4ss" folder for now as per instructions/Unverum readme.
+                }
+
+                // Standard Mod Files
                 string ext = Path.GetExtension(file).ToLower();
-                if (ext == ".pak" || ext == ".sig" || ext == ".utoc" || ext == ".ucas")
+                // Expanded extensions list
+                if (ext == ".pak" || ext == ".sig" || ext == ".utoc" || ext == ".ucas" ||
+                    ext == ".awb" || ext == ".mp4" || ext == ".bmp" || ext == ".uasset" || ext == ".usm")
                 {
                     string fileName = Path.GetFileName(file);
                     string targetFileName = prefix + fileName;
