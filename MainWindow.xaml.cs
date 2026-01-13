@@ -114,7 +114,7 @@ namespace KamisamaLoader
                             modName = modName.Replace(c, '_');
                         }
 
-                        _modManager.InstallMod(tempFile, modName);
+                        await _modManager.InstallModAsync(tempFile, modName);
 
                         MessageBox.Show($"Installed {modName} successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                         RefreshLibrary();
