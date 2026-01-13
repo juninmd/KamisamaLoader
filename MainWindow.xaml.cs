@@ -1,8 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,14 +18,30 @@ namespace KamisamaLoader
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly GameBananaService _gameBananaService;
         private readonly SettingsManager _settingsManager;
         private readonly ModManager _modManager;
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
-        public ObservableCollection<LocalMod> LocalMods { get; set; }
+
+        private ObservableCollection<LocalMod> _localMods;
+        public ObservableCollection<LocalMod> LocalMods
+        {
+            get => _localMods;
+            set
+            {
+                if (_localMods != value)
+                {
+                    _localMods = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string GameExecutablePath
         {
             get => _settingsManager.CurrentSettings.GameExecutablePath;
@@ -49,6 +67,11 @@ namespace KamisamaLoader
             Loaded += MainWindow_Loaded;
         }
 
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadGameBananaMods();
@@ -67,12 +90,8 @@ namespace KamisamaLoader
 
         private async Task RefreshLibraryAsync()
         {
-            LocalMods.Clear();
-            var mods = await _modManager.LoadLocalModsAsync();
-            foreach (var mod in mods)
-            {
-                LocalMods.Add(mod);
-            }
+            var mods = _modManager.LoadLocalMods();
+            LocalMods = new ObservableCollection<LocalMod>(mods);
         }
 
         private async void RefreshLibrary_Click(object sender, RoutedEventArgs e)
@@ -114,7 +133,7 @@ namespace KamisamaLoader
                             modName = modName.Replace(c, '_');
                         }
 
-                        _modManager.InstallMod(tempFile, modName);
+                        await _modManager.InstallModAsync(tempFile, modName);
 
                         MessageBox.Show($"Installed {modName} successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                         await RefreshLibraryAsync();
@@ -135,17 +154,23 @@ namespace KamisamaLoader
             }
         }
 
-        private void Build_Click(object sender, RoutedEventArgs e)
+        private async void Build_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                if (sender is Button btn) btn.IsEnabled = false;
+
                 // Pass the current list to Build, which will also save it
-                _modManager.Build(LocalMods.ToList());
+                await _modManager.BuildAsync(LocalMods.ToList());
                 MessageBox.Show("Mods installed to game directory successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error building mods: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (sender is Button btn) btn.IsEnabled = true;
             }
         }
 
