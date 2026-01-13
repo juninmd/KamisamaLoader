@@ -27,10 +27,10 @@ namespace KamisamaLoader.Services
         [Obsolete("Use LoadLocalModsAsync instead.")]
         public List<LocalMod> LoadLocalMods()
         {
-            // Fully synchronous implementation to avoid deadlocks
             var mods = new List<LocalMod>();
             if (!Directory.Exists(ModsDirectory)) return mods;
 
+            // Load persisted config
             List<LocalMod> savedMods = new List<LocalMod>();
             string configPath = Path.Combine(ModsDirectory, ModsConfigFileName);
             if (File.Exists(configPath))
@@ -50,15 +50,18 @@ namespace KamisamaLoader.Services
             foreach (var dir in directories)
             {
                 var dirInfo = new DirectoryInfo(dir);
+                // Check if we have saved state for this mod
                 var savedMod = savedMods.FirstOrDefault(m => m.Name == dirInfo.Name);
 
                 if (savedMod != null)
                 {
+                    // Update path just in case
                     savedMod.FolderPath = dir;
                     mods.Add(savedMod);
                 }
                 else
                 {
+                    // New mod
                     mods.Add(new LocalMod
                     {
                         Name = dirInfo.Name,
@@ -68,6 +71,11 @@ namespace KamisamaLoader.Services
                     });
                 }
             }
+
+            // Respect saved order if possible, append new ones at the end?
+            // Or just rely on the order in the list.
+            // But we reconstructed the list from directories, so order might be lost if we don't sort.
+            // Let's sort by index in savedMods if present.
 
             var orderedMods = new List<LocalMod>();
             foreach (var saved in savedMods)
@@ -79,6 +87,7 @@ namespace KamisamaLoader.Services
                     mods.Remove(found);
                 }
             }
+            // Add remaining (new) mods
             orderedMods.AddRange(mods);
 
             return orderedMods;
