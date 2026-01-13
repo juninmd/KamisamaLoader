@@ -131,17 +131,12 @@ namespace KamisamaLoader.Services
             string paksDir = Path.Combine(contentDir, "Paks");
             string modsDir = Path.Combine(paksDir, "~mods");
 
-            if (!Directory.Exists(modsDir))
-            {
-                Directory.CreateDirectory(modsDir);
-            }
-
             // Clear ~mods folder
-            var existingFiles = Directory.GetFiles(modsDir);
-            foreach (var file in existingFiles)
+            if (Directory.Exists(modsDir))
             {
-                File.Delete(file);
+                Directory.Delete(modsDir, true);
             }
+            Directory.CreateDirectory(modsDir);
 
             // Save the state first
             SaveLocalMods(localMods);
