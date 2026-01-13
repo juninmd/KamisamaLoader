@@ -28,6 +28,8 @@ namespace KamisamaLoader
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
+        public ObservableCollection<LocalMod> LocalMods { get; set; }
+        public string GameDirectory { get; set; }
 
         private ObservableCollection<LocalMod> _localMods;
         public ObservableCollection<LocalMod> LocalMods
