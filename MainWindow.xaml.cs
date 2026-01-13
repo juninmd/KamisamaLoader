@@ -52,7 +52,7 @@ namespace KamisamaLoader
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadGameBananaMods();
-            RefreshLibrary();
+            await RefreshLibraryAsync();
         }
 
         private async Task LoadGameBananaMods()
@@ -65,19 +65,19 @@ namespace KamisamaLoader
             }
         }
 
-        private void RefreshLibrary()
+        private async Task RefreshLibraryAsync()
         {
             LocalMods.Clear();
-            var mods = _modManager.LoadLocalMods();
+            var mods = await _modManager.LoadLocalModsAsync();
             foreach (var mod in mods)
             {
                 LocalMods.Add(mod);
             }
         }
 
-        private void RefreshLibrary_Click(object sender, RoutedEventArgs e)
+        private async void RefreshLibrary_Click(object sender, RoutedEventArgs e)
         {
-            RefreshLibrary();
+            await RefreshLibraryAsync();
         }
 
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
@@ -117,7 +117,7 @@ namespace KamisamaLoader
                         _modManager.InstallMod(tempFile, modName);
 
                         MessageBox.Show($"Installed {modName} successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                        RefreshLibrary();
+                        await RefreshLibraryAsync();
                     }
                     catch (Exception ex)
                     {
