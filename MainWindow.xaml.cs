@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
+using KamisamaLoader.Helpers;
 using KamisamaLoader.Models;
 using KamisamaLoader.Services;
 using Microsoft.Win32;
@@ -41,8 +42,8 @@ namespace KamisamaLoader
             _gameBananaService = new GameBananaService();
             _modManager = new ModManager(_settingsManager);
 
-            GameBananaMods = new ObservableCollection<ModRecord>();
-            LocalMods = new ObservableCollection<LocalMod>();
+            GameBananaMods = new RangeObservableCollection<ModRecord>();
+            LocalMods = new RangeObservableCollection<LocalMod>();
 
             this.DataContext = this;
 
@@ -57,21 +58,35 @@ namespace KamisamaLoader
 
         private async Task LoadGameBananaMods()
         {
-            GameBananaMods.Clear();
             var mods = await _gameBananaService.GetModsAsync();
-            foreach (var mod in mods)
+            if (GameBananaMods is RangeObservableCollection<ModRecord> rangeCollection)
             {
-                GameBananaMods.Add(mod);
+                rangeCollection.ReplaceAll(mods);
+            }
+            else
+            {
+                GameBananaMods.Clear();
+                foreach (var mod in mods)
+                {
+                    GameBananaMods.Add(mod);
+                }
             }
         }
 
         private void RefreshLibrary()
         {
-            LocalMods.Clear();
             var mods = _modManager.LoadLocalMods();
-            foreach (var mod in mods)
+            if (LocalMods is RangeObservableCollection<LocalMod> rangeCollection)
             {
-                LocalMods.Add(mod);
+                rangeCollection.ReplaceAll(mods);
+            }
+            else
+            {
+                LocalMods.Clear();
+                foreach (var mod in mods)
+                {
+                    LocalMods.Add(mod);
+                }
             }
         }
 
