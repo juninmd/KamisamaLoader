@@ -47,8 +47,8 @@
                 </Grid>
             </TabItem>
 
-            <!-- Library Tab -->
-            <TabItem Header="Library">
+            <!-- Installed Mods Tab -->
+            <TabItem Header="Mods Instalados">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -68,11 +68,20 @@
 
                                         <CheckBox IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="5"/>
 
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="14"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="5,0">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Ver: " Foreground="Gray" FontSize="12"/>
+                                                <TextBlock Text="{Binding Version}" Foreground="Gray" FontSize="12" Margin="0,0,10,0"/>
+                                                <TextBlock Text="By: " Foreground="Gray" FontSize="12"/>
+                                                <TextBlock Text="{Binding Author}" Foreground="Gray" FontSize="12"/>
+                                            </StackPanel>
+                                        </StackPanel>
 
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                                             <Button Content="Up" Click="MoveUp_Click" Tag="{Binding}" Margin="2"/>
                                             <Button Content="Down" Click="MoveDown_Click" Tag="{Binding}" Margin="2"/>
+                                            <Button Content="Delete" Click="DeleteMod_Click" Tag="{Binding}" Margin="2" Background="Red" Foreground="White"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
