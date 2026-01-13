@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading.Tasks;
 using KamisamaLoader.Models;
 using Newtonsoft.Json;
 
@@ -119,15 +120,19 @@ namespace KamisamaLoader.Services
             }
         }
 
-        public void InstallMod(string zipPath, string modName)
+        public async Task InstallModAsync(string zipPath, string modName)
         {
             string destinationDir = Path.Combine(ModsDirectory, modName);
-            if (Directory.Exists(destinationDir))
+
+            await Task.Run(() =>
             {
-                Directory.Delete(destinationDir, true);
-            }
-            Directory.CreateDirectory(destinationDir);
-            ZipFile.ExtractToDirectory(zipPath, destinationDir);
+                if (Directory.Exists(destinationDir))
+                {
+                    Directory.Delete(destinationDir, true);
+                }
+                Directory.CreateDirectory(destinationDir);
+                ZipFile.ExtractToDirectory(zipPath, destinationDir);
+            });
         }
 
         public async Task BuildAsync(List<LocalMod> localMods)
