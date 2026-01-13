@@ -100,6 +100,12 @@ namespace KamisamaLoader.Models
         [JsonProperty("_aStudio")]
         public Studio Studio { get; set; }
 
+        [JsonProperty("_aFiles")]
+        public List<ModFile> Files { get; set; }
+
+        [JsonProperty("_sDownloadUrl")]
+        public string DownloadUrl { get; set; }
+
         // Propriedade auxiliar para obter a URL da imagem de preview
         public string PreviewImageUrl
         {
@@ -119,6 +125,24 @@ namespace KamisamaLoader.Models
                 return null;
             }
         }
+    }
+
+    public class ModFile
+    {
+        [JsonProperty("_idRow")]
+        public int IdRow { get; set; }
+
+        [JsonProperty("_sFile")]
+        public string FileName { get; set; }
+
+        [JsonProperty("_nFilesize")]
+        public long FileSize { get; set; }
+
+        [JsonProperty("_sDownloadUrl")]
+        public string DownloadUrl { get; set; }
+
+        [JsonProperty("_sMd5Checksum")]
+        public string Md5Checksum { get; set; }
     }
 
     public class Submitter
