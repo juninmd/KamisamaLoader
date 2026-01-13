@@ -4,46 +4,106 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KamisamaLoader"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:models="clr-namespace:KamisamaLoader.Models"
         mc:Ignorable="d"
-        Title="Kamisama Loader" Height="700" Width="1000">
+        Title="Kamisama Loader" Height="600" Width="800">
     <Grid>
         <TabControl>
-            <TabItem Header="Descobrir Mods">
+            <!-- Browse Tab -->
+            <TabItem Header="Browse">
                 <Grid>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding GameBananaMods}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BorderBrush="LightGray" BorderThickness="1" Margin="5" Padding="5" Width="200" Height="250">
-                                        <StackPanel>
-                                            <Image Source="{Binding PreviewImageUrl}" Width="180" Height="120" Stretch="UniformToFill"/>
-                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                            <TextBlock Text="{Binding Submitter.Name, StringFormat='Por: {0}'}" FontStyle="Italic" TextWrapping="Wrap"/>
-                                            <Button Content="Baixar e Instalar" Margin="0,10,0,0"/>
-                                            <TextBlock Margin="0,5,0,0">
-                                                <Hyperlink NavigateUri="{Binding ProfileUrl}" RequestNavigate="Hyperlink_RequestNavigate">
-                                                    Ver no GameBanana
-                                                </Hyperlink>
-                                            </TextBlock>
+                    <ListView ItemsSource="{Binding GameBananaMods}" HorizontalContentAlignment="Stretch">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Margin="5" Padding="5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Image -->
+                                        <Image Grid.Column="0" Source="{Binding PreviewImageUrl}" Height="80" Width="80" Stretch="UniformToFill" Margin="0,0,10,0"/>
+
+                                        <!-- Details -->
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                            <TextBlock Text="{Binding Submitter.Name}" FontStyle="Italic"/>
+                                            <TextBlock Text="{Binding RootCategory.Name}" Foreground="Gray"/>
+
+                                            <!-- Download Button -->
+                                            <Button Content="Download"
+                                                    Click="DownloadButton_Click"
+                                                    Tag="{Binding}"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,5,0,0"
+                                                    Padding="10,2"/>
                                         </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </Grid>
             </TabItem>
-            <TabItem Header="Mods Instalados">
+
+            <!-- Library Tab -->
+            <TabItem Header="Library">
                 <Grid>
-                    <!-- Conteúdo para a aba "Mods Instalados" virá aqui -->
-                    <TextBlock Text="Aqui você gerenciará seus mods instalados." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListView x:Name="LocalModsList" ItemsSource="{Binding LocalMods}" HorizontalContentAlignment="Stretch" Grid.Row="0">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="LightGray" BorderThickness="1" Margin="2" Padding="5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="5"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="14"/>
+
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                            <Button Content="Up" Click="MoveUp_Click" Tag="{Binding}" Margin="2"/>
+                                            <Button Content="Down" Click="MoveDown_Click" Tag="{Binding}" Margin="2"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+                         <Button Content="Refresh" Click="RefreshLibrary_Click" Margin="5" Padding="10,5"/>
+                         <Button Content="Build &amp; Install" Click="Build_Click" Margin="5" Padding="10,5" FontWeight="Bold"/>
+                    </StackPanel>
                 </Grid>
+            </TabItem>
+
+            <!-- Settings Tab -->
+            <TabItem Header="Settings">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Game Configuration" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Game Executable Path:" Margin="0,5"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="GamePathTextBox" Text="{Binding GameExecutablePath, Mode=TwoWay}" Grid.Column="0" Margin="0,0,5,0"/>
+                        <Button Content="Browse..." Click="BrowseGamePath_Click" Grid.Column="1"/>
+                    </Grid>
+
+                    <Button Content="Save Settings" Click="SaveSettings_Click" HorizontalAlignment="Left" Margin="0,20,0,0" Padding="10,5"/>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>
