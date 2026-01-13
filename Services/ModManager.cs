@@ -76,17 +76,31 @@ namespace KamisamaLoader.Services
             // Let's sort by index in savedMods if present.
 
             var orderedMods = new List<LocalMod>();
+            // Use a dictionary of queues to handle potential duplicate names and preserve their order
+            var modDict = mods.Where(m => m.Name != null)
+                              .GroupBy(m => m.Name)
+                              .ToDictionary(g => g.Key, g => new Queue<LocalMod>(g));
+
+            var usedMods = new HashSet<LocalMod>();
+
             foreach (var saved in savedMods)
             {
-                var found = mods.FirstOrDefault(m => m.Name == saved.Name);
-                if (found != null)
+                if (saved.Name != null && modDict.TryGetValue(saved.Name, out var queue) && queue.Count > 0)
                 {
+                    var found = queue.Dequeue();
                     orderedMods.Add(found);
-                    mods.Remove(found);
+                    usedMods.Add(found);
                 }
             }
-            // Add remaining (new) mods
-            orderedMods.AddRange(mods);
+
+            // Add remaining mods, preserving their original order in 'mods'
+            foreach (var mod in mods)
+            {
+                if (!usedMods.Contains(mod))
+                {
+                    orderedMods.Add(mod);
+                }
+            }
 
             return orderedMods;
         }
