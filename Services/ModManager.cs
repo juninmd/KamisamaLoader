@@ -116,7 +116,7 @@ namespace KamisamaLoader.Services
             ZipFile.ExtractToDirectory(zipPath, destinationDir);
         }
 
-        public void Build(List<LocalMod> localMods)
+        public async Task BuildAsync(List<LocalMod> localMods)
         {
             string gameExePath = _settingsManager.CurrentSettings.GameExecutablePath;
             if (string.IsNullOrEmpty(gameExePath) || !File.Exists(gameExePath))
@@ -124,43 +124,50 @@ namespace KamisamaLoader.Services
                 throw new Exception("Game Executable Path is not set or invalid.");
             }
 
-            FileInfo exeInfo = new FileInfo(gameExePath);
-            DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
+            // Capture necessary data before the background task to avoid threading issues with UI bound objects if any
+            // (LocalMod is a simple POCO, so it's fine, but good practice).
+            // However, localMods is passed in.
 
-            string contentDir = Path.Combine(rootDir.FullName, "Content");
-            string paksDir = Path.Combine(contentDir, "Paks");
-            string modsDir = Path.Combine(paksDir, "~mods");
-
-            if (!Directory.Exists(modsDir))
+            await Task.Run(() =>
             {
-                Directory.CreateDirectory(modsDir);
-            }
+                FileInfo exeInfo = new FileInfo(gameExePath);
+                DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
-            // Clear ~mods folder
-            var existingFiles = Directory.GetFiles(modsDir);
-            foreach (var file in existingFiles)
-            {
-                File.Delete(file);
-            }
+                string contentDir = Path.Combine(rootDir.FullName, "Content");
+                string paksDir = Path.Combine(contentDir, "Paks");
+                string modsDir = Path.Combine(paksDir, "~mods");
 
-            // Save the state first
-            SaveLocalMods(localMods);
+                if (!Directory.Exists(modsDir))
+                {
+                    Directory.CreateDirectory(modsDir);
+                }
 
-            // Get Enabled Mods
-            var enabledMods = localMods.Where(m => m.IsEnabled).ToList();
+                // Clear ~mods folder
+                var existingFiles = Directory.GetFiles(modsDir);
+                Parallel.ForEach(existingFiles, (file) =>
+                {
+                    File.Delete(file);
+                });
 
-            // Strategy: 0 is Top Priority (Loads Last).
-            // We want Top Priority to have highest prefix (e.g. 999).
-            // So we iterate i from 0 to Count-1.
-            // Prefix = (999 - i).
+                // Save the state first (needs to be on UI thread? No, SaveLocalMods uses File IO, safe on bg thread)
+                SaveLocalMods(localMods);
 
-            for (int i = 0; i < enabledMods.Count; i++)
-            {
-                var mod = enabledMods[i];
-                string prefix = (999 - i).ToString("D3") + "_";
-                CopyModFiles(mod.FolderPath, modsDir, prefix);
-            }
+                // Get Enabled Mods
+                var enabledMods = localMods.Where(m => m.IsEnabled).ToList();
+
+                // Strategy: 0 is Top Priority (Loads Last).
+                // We want Top Priority to have highest prefix (e.g. 999).
+
+                // We use Parallel.For loop
+                Parallel.For(0, enabledMods.Count, (i) =>
+                {
+                    var mod = enabledMods[i];
+                    string prefix = (999 - i).ToString("D3") + "_";
+                    CopyModFiles(mod.FolderPath, modsDir, prefix);
+                });
+            });
         }
+
 
         private void CopyModFiles(string sourceDir, string targetDir, string prefix)
         {
