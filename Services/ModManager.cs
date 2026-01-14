@@ -271,13 +271,116 @@ namespace KamisamaLoader.Services
                 // We use Parallel.For loop for standard mods, but for LogicMods/UE4SS we need to be careful about concurrency if multiple mods touch same files.
                 // Parallel is fine if files are different.
 
+                // Scan for UE4SS mods to update mods.txt
+                var ue4ssModsToEnable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var ue4ssModsToDisable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // We scan ALL local mods to handle enabling/disabling correctly
+                foreach (var mod in localMods)
+                {
+                    if (Directory.Exists(mod.FolderPath))
+                    {
+                        var ue4ssDir = Path.Combine(mod.FolderPath, "ue4ss");
+                        if (Directory.Exists(ue4ssDir))
+                        {
+                            var subDirs = Directory.GetDirectories(ue4ssDir);
+                            foreach (var subDir in subDirs)
+                            {
+                                var modName = new DirectoryInfo(subDir).Name;
+                                if (mod.IsEnabled)
+                                {
+                                    ue4ssModsToEnable.Add(modName);
+                                }
+                                else
+                                {
+                                    ue4ssModsToDisable.Add(modName);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Parallel.For(0, enabledMods.Count, (i) =>
                 {
                     var mod = enabledMods[i];
                     string prefix = (999 - i).ToString("D3") + "_";
                     CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest);
                 });
+
+                // Update mods.txt
+                UpdateModsTxt(binariesModsDest, ue4ssModsToEnable, ue4ssModsToDisable);
             });
+        }
+
+        private void UpdateModsTxt(string binariesModsDir, HashSet<string> toEnable, HashSet<string> toDisable)
+        {
+            if (!Directory.Exists(binariesModsDir))
+            {
+                Directory.CreateDirectory(binariesModsDir);
+            }
+
+            string modsTxtPath = Path.Combine(binariesModsDir, "mods.txt");
+            var outputLines = new List<string>();
+            var processedMods = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (File.Exists(modsTxtPath))
+            {
+                var lines = File.ReadAllLines(modsTxtPath);
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    // Preserve comments or empty lines
+                    if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith(";") || trimmed.StartsWith("#") || trimmed.StartsWith("//"))
+                    {
+                        outputLines.Add(line);
+                        continue;
+                    }
+
+                    var parts = line.Split(':', 2);
+                    if (parts.Length == 2)
+                    {
+                        string modName = parts[0].Trim();
+                        // Check if we need to update this line
+                        if (toEnable.Contains(modName))
+                        {
+                            outputLines.Add($"{modName} : 1");
+                            processedMods.Add(modName);
+                        }
+                        else if (toDisable.Contains(modName))
+                        {
+                            outputLines.Add($"{modName} : 0");
+                            processedMods.Add(modName);
+                        }
+                        else
+                        {
+                            outputLines.Add(line);
+                        }
+                    }
+                    else
+                    {
+                        outputLines.Add(line);
+                    }
+                }
+            }
+
+            // Add new mods not found in file
+            foreach (var mod in toEnable)
+            {
+                if (!processedMods.Contains(mod))
+                {
+                    outputLines.Add($"{mod} : 1");
+                }
+            }
+
+            foreach (var mod in toDisable)
+            {
+                if (!processedMods.Contains(mod))
+                {
+                     outputLines.Add($"{mod} : 0");
+                }
+            }
+
+            File.WriteAllLines(modsTxtPath, outputLines);
         }
 
 
