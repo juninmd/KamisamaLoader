@@ -27,84 +27,7 @@ namespace KamisamaLoader.Services
         [Obsolete("Use LoadLocalModsAsync instead.")]
         public List<LocalMod> LoadLocalMods()
         {
-            var mods = new List<LocalMod>();
-            if (!Directory.Exists(ModsDirectory)) return mods;
-
-            // Load persisted config
-            List<LocalMod> savedMods = new List<LocalMod>();
-            string configPath = Path.Combine(ModsDirectory, ModsConfigFileName);
-            if (File.Exists(configPath))
-            {
-                try
-                {
-                    string json = File.ReadAllText(configPath);
-                    savedMods = JsonConvert.DeserializeObject<List<LocalMod>>(json) ?? new List<LocalMod>();
-                }
-                catch
-                {
-                    // Ignore load error
-                }
-            }
-
-            var directories = Directory.GetDirectories(ModsDirectory);
-            foreach (var dir in directories)
-            {
-                var dirInfo = new DirectoryInfo(dir);
-                // Check if we have saved state for this mod
-                var savedMod = savedMods.FirstOrDefault(m => m.Name == dirInfo.Name);
-
-                if (savedMod != null)
-                {
-                    // Update path just in case
-                    savedMod.FolderPath = dir;
-                    mods.Add(savedMod);
-                }
-                else
-                {
-                    // New mod
-                    mods.Add(new LocalMod
-                    {
-                        Name = dirInfo.Name,
-                        FolderPath = dir,
-                        IsEnabled = true,
-                        Priority = 0
-                    });
-                }
-            }
-
-            // Respect saved order if possible, append new ones at the end?
-            // Or just rely on the order in the list.
-            // But we reconstructed the list from directories, so order might be lost if we don't sort.
-            // Let's sort by index in savedMods if present.
-
-            var orderedMods = new List<LocalMod>();
-            // Use a dictionary of queues to handle potential duplicate names and preserve their order
-            var modDict = mods.Where(m => m.Name != null)
-                              .GroupBy(m => m.Name)
-                              .ToDictionary(g => g.Key, g => new Queue<LocalMod>(g));
-
-            var usedMods = new HashSet<LocalMod>();
-
-            foreach (var saved in savedMods)
-            {
-                if (saved.Name != null && modDict.TryGetValue(saved.Name, out var queue) && queue.Count > 0)
-                {
-                    var found = queue.Dequeue();
-                    orderedMods.Add(found);
-                    usedMods.Add(found);
-                }
-            }
-
-            // Add remaining mods, preserving their original order in 'mods'
-            foreach (var mod in mods)
-            {
-                if (!usedMods.Contains(mod))
-                {
-                    orderedMods.Add(mod);
-                }
-            }
-
-            return orderedMods;
+            return LoadLocalModsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<List<LocalMod>> LoadLocalModsAsync()
@@ -112,7 +35,6 @@ namespace KamisamaLoader.Services
             var mods = new List<LocalMod>();
             if (!Directory.Exists(ModsDirectory)) return mods;
 
-            // Load persisted config
             List<LocalMod> savedMods = new List<LocalMod>();
             string configPath = Path.Combine(ModsDirectory, ModsConfigFileName);
 
@@ -129,7 +51,6 @@ namespace KamisamaLoader.Services
                 }
             }
 
-            // Offload directory scanning and processing to a background thread to avoid blocking UI
             return await Task.Run(() =>
             {
                 var directories = Directory.GetDirectories(ModsDirectory);
@@ -138,18 +59,15 @@ namespace KamisamaLoader.Services
                 foreach (var dir in directories)
                 {
                     var dirInfo = new DirectoryInfo(dir);
-                    // Check if we have saved state for this mod
                     var savedMod = savedMods.FirstOrDefault(m => m.Name == dirInfo.Name);
 
                     if (savedMod != null)
                     {
-                        // Update path just in case
                         savedMod.FolderPath = dir;
                         localMods.Add(savedMod);
                     }
                     else
                     {
-                        // New mod
                         localMods.Add(new LocalMod
                         {
                             Name = dirInfo.Name,
@@ -160,6 +78,7 @@ namespace KamisamaLoader.Services
                     }
                 }
 
+                // Preserve saved order
                 var orderedMods = new List<LocalMod>();
                 foreach (var saved in savedMods)
                 {
@@ -170,7 +89,6 @@ namespace KamisamaLoader.Services
                         localMods.Remove(found);
                     }
                 }
-                // Add remaining (new) mods
                 orderedMods.AddRange(localMods);
 
                 return orderedMods;
@@ -206,6 +124,22 @@ namespace KamisamaLoader.Services
             });
         }
 
+        public void DeleteMod(LocalMod mod)
+        {
+            if (mod != null && Directory.Exists(mod.FolderPath))
+            {
+                try
+                {
+                    Directory.Delete(mod.FolderPath, true);
+                }
+                catch (Exception)
+                {
+                    // Handle potential locks or errors
+                    throw;
+                }
+            }
+        }
+
         public async Task BuildAsync(List<LocalMod> localMods)
         {
             string gameExePath = _settingsManager.CurrentSettings.GameExecutablePath;
@@ -214,68 +148,45 @@ namespace KamisamaLoader.Services
                 throw new Exception("Game Executable Path is not set or invalid.");
             }
 
-            // Capture necessary data before the background task to avoid threading issues with UI bound objects if any
-            // (LocalMod is a simple POCO, so it's fine, but good practice).
-            // However, localMods is passed in.
-
             await Task.Run(() =>
             {
                 FileInfo exeInfo = new FileInfo(gameExePath);
-                // exeInfo is .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
-                // rootDir is .../SparkingZero/
+                // Expected: .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
+                // Root: .../SparkingZero/
                 DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
                 string contentDir = Path.Combine(rootDir.FullName, "Content");
                 string paksDir = Path.Combine(contentDir, "Paks");
                 string modsDir = Path.Combine(paksDir, "~mods");
 
-                // UE4SS Paths
-                // LogicMods usually goes to Content/Paks/LogicMods
                 string logicModsDest = Path.Combine(paksDir, "LogicMods");
-                // Binaries/Win64/Mods
                 string binariesModsDest = Path.Combine(rootDir.FullName, "Binaries", "Win64", "Mods");
 
-                if (!Directory.Exists(modsDir))
-                {
-                    Directory.CreateDirectory(modsDir);
-                }
+                // Ensure directories exist
+                Directory.CreateDirectory(modsDir);
+                Directory.CreateDirectory(logicModsDest);
+                Directory.CreateDirectory(binariesModsDest);
 
                 // Clear ~mods folder
-                var existingFiles = Directory.GetFiles(modsDir);
-                Parallel.ForEach(existingFiles, (file) =>
+                foreach (var file in Directory.GetFiles(modsDir))
                 {
                     File.Delete(file);
-                });
+                }
 
-                // Note: We might want to clear LogicMods and Binaries/Mods too, but that could delete user-installed things.
-                // However, Unverum says "~mods folder will be erased". It doesn't explicitly say it erases LogicMods,
-                // but for a manager, it usually manages the state.
-                // For safety, let's NOT delete LogicMods/Binaries entirely, but we might overwrite.
-                // Or maybe we should? If a user disables a mod, it should be removed.
-                // Let's assume we should manage them.
-                // But deleting Binaries/Win64/Mods might remove UE4SS itself if not careful?
-                // Usually UE4SS is "installed" there.
-                // Unverum modifies mods.txt.
-                // Let's just copy for now (overwrite). Managing deletion of disabled UE4SS mods is harder without tracking.
-                // We will stick to additive for UE4SS for this iteration, as deleting ~mods is standard behavior but deleting Binaries is risky.
+                // Clear LogicMods folder (files only)
+                foreach (var file in Directory.GetFiles(logicModsDest))
+                {
+                    File.Delete(file);
+                }
 
-                // Save the state first (needs to be on UI thread? No, SaveLocalMods uses File IO, safe on bg thread)
+                // Save current state
                 SaveLocalMods(localMods);
 
-                // Get Enabled Mods
                 var enabledMods = localMods.Where(m => m.IsEnabled).ToList();
-
-                // Strategy: 0 is Top Priority (Loads Last).
-                // We want Top Priority to have highest prefix (e.g. 999).
-
-                // We use Parallel.For loop for standard mods, but for LogicMods/UE4SS we need to be careful about concurrency if multiple mods touch same files.
-                // Parallel is fine if files are different.
-
-                // Scan for UE4SS mods to update mods.txt
                 var ue4ssModsToEnable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var ue4ssModsToDisable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                // We scan ALL local mods to handle enabling/disabling correctly
+                // Scan for UE4SS mods to update mods.txt
                 foreach (var mod in localMods)
                 {
                     if (Directory.Exists(mod.FolderPath))
@@ -300,16 +211,93 @@ namespace KamisamaLoader.Services
                     }
                 }
 
-                Parallel.For(0, enabledMods.Count, (i) =>
+                // Install enabled mods
+                // Priority: 0 is highest (loads last, so highest prefix)
+                for (int i = 0; i < enabledMods.Count; i++)
                 {
                     var mod = enabledMods[i];
                     string prefix = (999 - i).ToString("D3") + "_";
-                    CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest);
-                });
+                    CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest, contentDir);
+                }
 
-                // Update mods.txt
+                // Update mods.txt for UE4SS
                 UpdateModsTxt(binariesModsDest, ue4ssModsToEnable, ue4ssModsToDisable);
             });
+        }
+
+        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir)
+        {
+            if (!Directory.Exists(sourceDir)) return;
+
+            var files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+
+            foreach (var file in files)
+            {
+                string relativePath = Path.GetRelativePath(sourceDir, file);
+                string[] parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                // 1. UE4SS (ue4ss/...) -> Binaries/Win64/Mods/...
+                int ue4ssIdx = Array.FindIndex(parts, p => p.Equals("ue4ss", StringComparison.OrdinalIgnoreCase));
+                if (ue4ssIdx >= 0 && ue4ssIdx < parts.Length - 1)
+                {
+                    string subPath = Path.Combine(parts.Skip(ue4ssIdx + 1).ToArray());
+                    string dest = Path.Combine(binariesModsDest, subPath);
+                    CopyFile(file, dest);
+                    continue;
+                }
+
+                // 2. LogicMods (LogicMods/...) -> Content/Paks/LogicMods/...
+                int logicIdx = Array.FindIndex(parts, p => p.Equals("LogicMods", StringComparison.OrdinalIgnoreCase));
+                if (logicIdx >= 0 && logicIdx < parts.Length - 1)
+                {
+                    string subPath = Path.Combine(parts.Skip(logicIdx + 1).ToArray());
+                    string dest = Path.Combine(logicModsDest, subPath);
+                    CopyFile(file, dest);
+                    continue;
+                }
+
+                // 3. Content (Content/...) -> Game/Content/...
+                int contentIdx = Array.FindIndex(parts, p => p.Equals("Content", StringComparison.OrdinalIgnoreCase));
+                if (contentIdx >= 0 && contentIdx < parts.Length - 1)
+                {
+                    string subPath = Path.Combine(parts.Skip(contentIdx + 1).ToArray());
+                    string dest = Path.Combine(gameContentDir, subPath);
+                    // This overwrites game files if they exist.
+                    // Ideally we should backup, but for now we follow "Unverum-like" replacement.
+                    CopyFile(file, dest);
+                    continue;
+                }
+
+                // 4. Standard Mod Files (Root or other folders) -> ~mods
+                string ext = Path.GetExtension(file).ToLower();
+                if (IsModFile(ext))
+                {
+                    string fileName = Path.GetFileName(file);
+                    // Only apply prefix for files going to ~mods
+                    string targetFileName = prefix + fileName;
+                    string dest = Path.Combine(targetDir, targetFileName);
+                    CopyFile(file, dest);
+                }
+            }
+        }
+
+        private void CopyFile(string source, string dest)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                File.Copy(source, dest, true);
+            }
+            catch (Exception)
+            {
+                // Log or ignore?
+            }
+        }
+
+        private bool IsModFile(string ext)
+        {
+            return ext == ".pak" || ext == ".sig" || ext == ".utoc" || ext == ".ucas" ||
+                   ext == ".awb" || ext == ".mp4" || ext == ".bmp" || ext == ".uasset" || ext == ".usm";
         }
 
         private void UpdateModsTxt(string binariesModsDir, HashSet<string> toEnable, HashSet<string> toDisable)
@@ -329,7 +317,6 @@ namespace KamisamaLoader.Services
                 foreach (var line in lines)
                 {
                     var trimmed = line.Trim();
-                    // Preserve comments or empty lines
                     if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith(";") || trimmed.StartsWith("#") || trimmed.StartsWith("//"))
                     {
                         outputLines.Add(line);
@@ -340,7 +327,6 @@ namespace KamisamaLoader.Services
                     if (parts.Length == 2)
                     {
                         string modName = parts[0].Trim();
-                        // Check if we need to update this line
                         if (toEnable.Contains(modName))
                         {
                             outputLines.Add($"{modName} : 1");
@@ -363,7 +349,6 @@ namespace KamisamaLoader.Services
                 }
             }
 
-            // Add new mods not found in file
             foreach (var mod in toEnable)
             {
                 if (!processedMods.Contains(mod))
@@ -376,101 +361,11 @@ namespace KamisamaLoader.Services
             {
                 if (!processedMods.Contains(mod))
                 {
-                     outputLines.Add($"{mod} : 0");
+                    outputLines.Add($"{mod} : 0");
                 }
             }
 
             File.WriteAllLines(modsTxtPath, outputLines);
-        }
-
-
-        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest)
-        {
-            if (!Directory.Exists(sourceDir)) return;
-
-            // Handle UE4SS Special Folders
-            // LogicMods
-            // Look for "LogicMods" folder in the root of the mod or subdirectories?
-            // Unverum: "Anything in a LogicMods folder"
-            // Let's look for immediate LogicMods folder or recurse?
-            // Usually mod structure is either:
-            // 1. LogicMods/MyMod.pak
-            // 2. ModName/LogicMods/MyMod.pak
-            // The recursive scan in original code flattened everything.
-            // We should check if we are INSIDE a special folder.
-
-            // Let's iterate all files and check their relative path?
-            // Or just check for specific folders first.
-
-            var directories = Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories);
-            // We also need the root sourceDir itself if it contains files.
-
-            // Actually, simply iterating files and checking path is easier.
-            var files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
-
-            foreach (var file in files)
-            {
-                string relativePath = Path.GetRelativePath(sourceDir, file);
-                string[] parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                // Check if part of LogicMods
-                if (parts.Any(p => p.Equals("LogicMods", StringComparison.OrdinalIgnoreCase)))
-                {
-                    // It goes to LogicModsDest
-                    // We need to preserve structure INSIDE LogicMods?
-                    // Usually yes.
-                    // Find the index of LogicMods
-                    int idx = Array.FindIndex(parts, p => p.Equals("LogicMods", StringComparison.OrdinalIgnoreCase));
-                    if (idx < parts.Length - 1)
-                    {
-                         // Path after LogicMods
-                         string subPath = Path.Combine(parts.Skip(idx + 1).ToArray());
-                         string dest = Path.Combine(logicModsDest, subPath);
-                         Directory.CreateDirectory(Path.GetDirectoryName(dest));
-                         File.Copy(file, dest, true);
-                    }
-                    else
-                    {
-                        // File IS "LogicMods" (impossible as it's a file) or inside but somehow weird.
-                    }
-                    continue; // Done with this file
-                }
-
-                // Check if part of ue4ss or Binaries
-                // Unverum: "anything in a ue4ss folder" -> Binaries/Win64/Mods
-                if (parts.Any(p => p.Equals("ue4ss", StringComparison.OrdinalIgnoreCase)))
-                {
-                    int idx = Array.FindIndex(parts, p => p.Equals("ue4ss", StringComparison.OrdinalIgnoreCase));
-                    if (idx < parts.Length - 1)
-                    {
-                         string subPath = Path.Combine(parts.Skip(idx + 1).ToArray());
-                         string dest = Path.Combine(binariesModsDest, subPath);
-                         Directory.CreateDirectory(Path.GetDirectoryName(dest));
-                         File.Copy(file, dest, true);
-                    }
-                    continue;
-                }
-
-                // If the mod structure mimics the game folder, e.g. "Binaries/Win64/Mods"
-                if (parts.Contains("Binaries") && parts.Contains("Mods"))
-                {
-                     // Complex check, but Unverum specifically mentions "ue4ss" folder mapping to Binaries/Win64/Mods.
-                     // It doesn't explicitly say "Binaries" folder maps.
-                     // I'll stick to "ue4ss" folder for now as per instructions/Unverum readme.
-                }
-
-                // Standard Mod Files
-                string ext = Path.GetExtension(file).ToLower();
-                // Expanded extensions list
-                if (ext == ".pak" || ext == ".sig" || ext == ".utoc" || ext == ".ucas" ||
-                    ext == ".awb" || ext == ".mp4" || ext == ".bmp" || ext == ".uasset" || ext == ".usm")
-                {
-                    string fileName = Path.GetFileName(file);
-                    string targetFileName = prefix + fileName;
-                    string targetPath = Path.Combine(targetDir, targetFileName);
-                    File.Copy(file, targetPath, true);
-                }
-            }
         }
     }
 }
