@@ -28,9 +28,8 @@ namespace KamisamaLoader
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
-        public ObservableCollection<LocalMod> LocalMods { get; set; }
-        public string GameDirectory { get; set; }
 
+        // Removed duplicate property definition
         private ObservableCollection<LocalMod> _localMods;
         public ObservableCollection<LocalMod> LocalMods
         {
@@ -45,12 +44,17 @@ namespace KamisamaLoader
             }
         }
 
+        // This property is likely bound to something in XAML but not strictly needed if we bind to GameExecutablePath directly via SettingsManager,
+        // but for now keeping it as a facade.
+        public string GameDirectory { get; set; }
+
         public string GameExecutablePath
         {
             get => _settingsManager.CurrentSettings.GameExecutablePath;
             set
             {
                 _settingsManager.CurrentSettings.GameExecutablePath = value;
+                OnPropertyChanged();
             }
         }
 
@@ -63,6 +67,7 @@ namespace KamisamaLoader
             _modManager = new ModManager(_settingsManager);
 
             GameBananaMods = new RangeObservableCollection<ModRecord>();
+            // Initialize with empty collection
             LocalMods = new RangeObservableCollection<LocalMod>();
 
             this.DataContext = this;
@@ -100,7 +105,7 @@ namespace KamisamaLoader
 
         private async Task RefreshLibraryAsync()
         {
-            var mods = _modManager.LoadLocalMods();
+            var mods = await _modManager.LoadLocalModsAsync();
             LocalMods = new ObservableCollection<LocalMod>(mods);
         }
 
@@ -184,7 +189,7 @@ namespace KamisamaLoader
             }
         }
 
-        private void DeleteMod_Click(object sender, RoutedEventArgs e)
+        private async void DeleteMod_Click(object sender, RoutedEventArgs e)
         {
              if (sender is Button button && button.Tag is LocalMod mod)
              {
@@ -193,7 +198,7 @@ namespace KamisamaLoader
                      try
                      {
                          _modManager.DeleteMod(mod);
-                         RefreshLibrary();
+                         await RefreshLibraryAsync();
                      }
                      catch (Exception ex)
                      {
@@ -234,8 +239,22 @@ namespace KamisamaLoader
             if (openFileDialog.ShowDialog() == true)
             {
                 GameExecutablePath = openFileDialog.FileName;
-                // Force UI update
-                GamePathTextBox.Text = GameExecutablePath;
+                // Force UI update - we use PropertyChanged now but if TextBox is named GamePathTextBox we can set it too
+                // Assuming GamePathTextBox exists in XAML
+                // GamePathTextBox.Text = GameExecutablePath;
+                // Since I don't see XAML, I'll keep the direct assignment if it was there or assume binding works.
+                // The previous code had: GamePathTextBox.Text = GameExecutablePath;
+                // I will add it back but wrapping in try/catch or checking null if possible?
+                // No, I should assume GamePathTextBox exists as per previous code.
+                // But wait, previous code had `GamePathTextBox.Text = GameExecutablePath;` inside BrowseGamePath_Click.
+                // I'll keep it. But I need to know if GamePathTextBox is accessible.
+                // Since I'm overwriting the class, I should include it.
+                // But I should check if `GamePathTextBox` is defined in XAML.
+                // Assuming it is.
+                if (this.FindName("GamePathTextBox") is TextBox tb)
+                {
+                     tb.Text = GameExecutablePath;
+                }
             }
         }
 
@@ -245,7 +264,6 @@ namespace KamisamaLoader
             MessageBox.Show("Settings saved.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Hyperlink navigation (legacy support if needed)
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
             try
@@ -253,7 +271,7 @@ namespace KamisamaLoader
                 Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
                 e.Handled = true;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show($"Cannot open link: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
