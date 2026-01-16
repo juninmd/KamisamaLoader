@@ -114,12 +114,69 @@ namespace KamisamaLoader
             await RefreshLibraryAsync();
         }
 
+        private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn) btn.IsEnabled = false;
+            try
+            {
+                // We need to work on the list.
+                var mods = LocalMods.ToList();
+                await _modManager.CheckForUpdatesAsync(mods, _gameBananaService);
+
+                // Save state so we persist the update info
+                _modManager.SaveLocalMods(mods);
+
+                // Refresh list to show updates (since LocalMod doesn't implement INotifyPropertyChanged)
+                LocalMods = new ObservableCollection<LocalMod>(mods);
+
+                MessageBox.Show("Update check complete.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error checking updates: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (sender is Button btn) btn.IsEnabled = true;
+            }
+        }
+
+        private async void UpdateMod_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is LocalMod mod)
+            {
+                if (MessageBox.Show($"Update '{mod.Name}' to version {mod.LatestVersion}?", "Confirm Update", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        await _modManager.UpdateModAsync(mod, _gameBananaService);
+                        _modManager.SaveLocalMods(LocalMods.ToList());
+
+                        MessageBox.Show($"Updated '{mod.Name}' successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        await RefreshLibraryAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error updating mod: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is ModRecord modRecord)
             {
+                await InstallModFromId(modRecord.IdRow);
+            }
+        }
+
+        private async Task InstallModFromId(int modId)
+        {
+            try
+            {
                 // Fetch full details
-                var details = await _gameBananaService.GetModDetailsAsync(modRecord.IdRow);
+                var details = await _gameBananaService.GetModDetailsAsync(modId);
                 if (details != null && details.Files != null && details.Files.Count > 0)
                 {
                     // For simplicity, download the first file
@@ -129,8 +186,8 @@ namespace KamisamaLoader
 
                     if (string.IsNullOrEmpty(downloadUrl))
                     {
-                         MessageBox.Show("No download URL found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                         return;
+                        MessageBox.Show("No download URL found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }
 
                     // Download
@@ -138,6 +195,7 @@ namespace KamisamaLoader
                     try
                     {
                         // Show some loading indicator...
+                        // In a real app, implement progress bar
                         await _gameBananaService.DownloadFileAsync(downloadUrl, tempFile);
 
                         // Extract
@@ -164,7 +222,49 @@ namespace KamisamaLoader
                 }
                 else
                 {
-                    MessageBox.Show("No files found for this mod.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("No files found for this mod or mod details unavailable.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error fetching mod details: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void RegisterProtocol_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                RegistryHelper.RegisterProtocol();
+                MessageBox.Show("Protocol handler registered successfully. You can now use 1-Click Install from browser.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to register protocol: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public async Task ProcessStartupArgs(string[] args)
+        {
+            if (args == null || args.Length == 0) return;
+
+            foreach (var arg in args)
+            {
+                if (arg.StartsWith("kamisama://", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Format: kamisama://dl/<modid> or kamisama://<modid>
+                    string cleanArg = arg.Replace("kamisama://", "", StringComparison.OrdinalIgnoreCase);
+                    if (cleanArg.StartsWith("dl/", StringComparison.OrdinalIgnoreCase))
+                        cleanArg = cleanArg.Replace("dl/", "", StringComparison.OrdinalIgnoreCase);
+
+                    // Remove trailing slash if present
+                    cleanArg = cleanArg.TrimEnd('/');
+
+                    if (int.TryParse(cleanArg, out int modId))
+                    {
+                        // Trigger install
+                        await InstallModFromId(modId);
+                    }
                 }
             }
         }

@@ -79,6 +79,18 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                            <Button Content="Update" Click="UpdateMod_Click" Tag="{Binding}" Margin="2" Background="Green" Foreground="White">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                             <Button Content="Up" Click="MoveUp_Click" Tag="{Binding}" Margin="2"/>
                                             <Button Content="Down" Click="MoveDown_Click" Tag="{Binding}" Margin="2"/>
                                             <Button Content="Delete" Click="DeleteMod_Click" Tag="{Binding}" Margin="2" Background="Red" Foreground="White"/>
@@ -90,6 +102,7 @@
                     </ListView>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+                         <Button Content="Check Updates" Click="CheckUpdates_Click" Margin="5" Padding="10,5"/>
                          <Button Content="Refresh" Click="RefreshLibrary_Click" Margin="5" Padding="10,5"/>
                          <Button Content="Build &amp; Install" Click="Build_Click" Margin="5" Padding="10,5" FontWeight="Bold"/>
                     </StackPanel>
@@ -112,6 +125,7 @@
                     </Grid>
 
                     <Button Content="Save Settings" Click="SaveSettings_Click" HorizontalAlignment="Left" Margin="0,20,0,0" Padding="10,5"/>
+                    <Button Content="Register 1-Click Install" Click="RegisterProtocol_Click" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="10,5"/>
                 </StackPanel>
             </TabItem>
         </TabControl>
