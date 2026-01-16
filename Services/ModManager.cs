@@ -140,6 +140,67 @@ namespace KamisamaLoader.Services
             }
         }
 
+        public async Task CheckForUpdatesAsync(List<LocalMod> mods, GameBananaService gbService)
+        {
+            if (mods == null || gbService == null) return;
+
+            foreach (var mod in mods)
+            {
+                if (mod.GameBananaId > 0)
+                {
+                    try
+                    {
+                        var details = await gbService.GetModDetailsAsync(mod.GameBananaId);
+                        if (details != null)
+                        {
+                            // Check if version differs
+                            if (!string.IsNullOrEmpty(details.Version) && !string.Equals(details.Version, mod.Version, StringComparison.OrdinalIgnoreCase))
+                            {
+                                mod.HasUpdate = true;
+                                mod.LatestVersion = details.Version;
+                                if (details.Files != null && details.Files.Count > 0)
+                                {
+                                    mod.LatestFileId = details.Files[0].IdRow;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore update check errors for single mod
+                    }
+                }
+            }
+        }
+
+        public async Task UpdateModAsync(LocalMod mod, GameBananaService gbService)
+        {
+            if (mod == null || gbService == null || mod.LatestFileId <= 0) return;
+
+            var details = await gbService.GetModDetailsAsync(mod.GameBananaId);
+            if (details == null || details.Files == null) return;
+
+            var file = details.Files.FirstOrDefault(f => f.IdRow == mod.LatestFileId);
+            if (file == null && details.Files.Count > 0) file = details.Files[0];
+
+            if (file != null && !string.IsNullOrEmpty(file.DownloadUrl))
+            {
+                string tempFile = Path.GetTempFileName();
+                try
+                {
+                    await gbService.DownloadFileAsync(file.DownloadUrl, tempFile);
+                    await InstallModAsync(tempFile, mod.Name);
+
+                    mod.Version = mod.LatestVersion;
+                    mod.HasUpdate = false;
+                }
+                finally
+                {
+                    if (File.Exists(tempFile)) File.Delete(tempFile);
+                }
+            }
+        }
+
         public async Task BuildAsync(List<LocalMod> localMods)
         {
             string gameExePath = _settingsManager.CurrentSettings.GameExecutablePath;
