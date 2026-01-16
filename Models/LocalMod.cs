@@ -10,5 +10,10 @@ namespace KamisamaLoader.Models
         public string Author { get; set; }
         public string IconUrl { get; set; }
         public int GameBananaId { get; set; }
+
+        // Update tracking
+        public bool HasUpdate { get; set; }
+        public string LatestVersion { get; set; }
+        public int LatestFileId { get; set; } // ID of the file to download for update
     }
 }

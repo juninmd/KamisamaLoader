@@ -27,6 +27,15 @@ namespace KamisamaLoader
             }
 
             base.OnStartup(e);
+
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
+
+            if (e.Args != null && e.Args.Length > 0)
+            {
+                // Process args asynchronously
+                _ = mainWindow.ProcessStartupArgs(e.Args);
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)
