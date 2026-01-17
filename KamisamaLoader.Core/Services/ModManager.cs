@@ -214,6 +214,11 @@ namespace KamisamaLoader.Services
                 FileInfo exeInfo = new FileInfo(gameExePath);
                 // Expected: .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
                 // Root: .../SparkingZero/
+                if (exeInfo.Directory == null || exeInfo.Directory.Parent == null || exeInfo.Directory.Parent.Parent == null)
+                {
+                    throw new DirectoryNotFoundException("Could not find game root directory structure.");
+                }
+
                 DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
                 string contentDir = Path.Combine(rootDir.FullName, "Content");
@@ -346,7 +351,11 @@ namespace KamisamaLoader.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                var destDir = Path.GetDirectoryName(dest);
+                if (destDir != null)
+                {
+                    Directory.CreateDirectory(destDir);
+                }
                 File.Copy(source, dest, true);
             }
             catch (Exception)
