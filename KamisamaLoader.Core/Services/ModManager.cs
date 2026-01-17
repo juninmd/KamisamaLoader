@@ -340,7 +340,7 @@ namespace KamisamaLoader.Services
                 {
                     string fileName = Path.GetFileName(file);
                     // Only apply prefix for files going to ~mods
-                    string targetFileName = prefix + fileName;
+                    string targetFileName = $"{prefix}{fileName}";
                     string dest = Path.Combine(targetDir, targetFileName);
                     CopyFile(file, dest);
                 }
