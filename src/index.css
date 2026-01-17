@@ -38,3 +38,34 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-500;
 }
+
+/* Ki Charge Animation */
+@keyframes aura-pulse {
+  0% {
+    box-shadow: 0 0 10px #facc15, 0 0 20px #facc15 inset;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 40px #facc15, 0 0 30px #eab308 inset;
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 10px #facc15, 0 0 20px #facc15 inset;
+    transform: scale(1);
+  }
+}
+
+.ki-charge {
+  animation: aura-pulse 2s infinite ease-in-out;
+}
+
+.ki-charge:hover {
+  animation-duration: 0.8s;
+}
+
+/* Lightning effect overlay (optional, requires additional DOM elements or pseudo-elements) */
+@keyframes lightning {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 0; }
+  50% { opacity: 1; }
+}
