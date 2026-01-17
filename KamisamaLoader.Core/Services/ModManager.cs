@@ -360,7 +360,7 @@ namespace KamisamaLoader.Services
             }
             catch (Exception)
             {
-                // Log or ignore?
+                // Ignore copy errors
             }
         }
 
