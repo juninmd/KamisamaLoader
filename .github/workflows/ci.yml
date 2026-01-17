@@ -20,10 +20,10 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore KamisamaLoader.sln
+      run: dotnet restore KamisamaLoader.Linux.sln
 
     - name: Build
-      run: dotnet build KamisamaLoader.sln --no-restore --configuration Release
+      run: dotnet build KamisamaLoader.Linux.sln --no-restore --configuration Release
 
     - name: Test
-      run: dotnet test KamisamaLoader.sln --no-build --verbosity normal --configuration Release
+      run: dotnet test KamisamaLoader.Linux.sln --no-build --verbosity normal --configuration Release
