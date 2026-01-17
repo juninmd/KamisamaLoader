@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using KamisamaLoader.Models;
-using KamisamaLoader.Services;
+using KamisamaLoader.Core.Models;
+using KamisamaLoader.Core.Services;
 
 namespace KamisamaLoader.Benchmark
 {

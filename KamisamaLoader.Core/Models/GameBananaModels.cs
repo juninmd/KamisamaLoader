@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace KamisamaLoader.Models
+namespace KamisamaLoader.Core.Models
 {
     // Classe raiz para a resposta da API do GameBanana
     public class GameBananaApiResponse

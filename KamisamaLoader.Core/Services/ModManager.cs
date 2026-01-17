@@ -4,10 +4,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using KamisamaLoader.Models;
+using KamisamaLoader.Core.Models;
 using Newtonsoft.Json;
 
-namespace KamisamaLoader.Services
+namespace KamisamaLoader.Core.Services
 {
     public class ModManager
     {

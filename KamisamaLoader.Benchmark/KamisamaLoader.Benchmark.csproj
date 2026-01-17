@@ -5,17 +5,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Services\ModManager.cs" Link="Services\ModManager.cs" />
-    <Compile Include="..\Services\SettingsManager.cs" Link="Services\SettingsManager.cs" />
-    <Compile Include="..\Models\LocalMod.cs" Link="Models\LocalMod.cs" />
-    <Compile Include="..\Models\AppSettings.cs" Link="Models\AppSettings.cs" />
+    <ProjectReference Include="..\KamisamaLoader.Core\KamisamaLoader.Core.csproj" />
   </ItemGroup>
 
 </Project>

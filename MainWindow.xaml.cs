@@ -10,8 +10,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
 using KamisamaLoader.Helpers;
-using KamisamaLoader.Models;
-using KamisamaLoader.Services;
+using KamisamaLoader.Core.Models;
+using KamisamaLoader.Core.Services;
 using Microsoft.Win32;
 
 namespace KamisamaLoader
@@ -25,7 +25,7 @@ namespace KamisamaLoader
         private readonly SettingsManager _settingsManager;
         private readonly ModManager _modManager;
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public ObservableCollection<ModRecord> GameBananaMods { get; set; }
 
@@ -75,7 +75,7 @@ namespace KamisamaLoader
             Loaded += MainWindow_Loaded;
         }
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -116,7 +116,8 @@ namespace KamisamaLoader
 
         private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn) btn.IsEnabled = false;
+            Button btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
             try
             {
                 // We need to work on the list.
@@ -137,7 +138,7 @@ namespace KamisamaLoader
             }
             finally
             {
-                if (sender is Button btn) btn.IsEnabled = true;
+                if (btn != null) btn.IsEnabled = true;
             }
         }
 
@@ -182,7 +183,7 @@ namespace KamisamaLoader
                     // For simplicity, download the first file
                     // In a real app, show a dialog to pick file
                     var fileToDownload = details.Files[0];
-                    string downloadUrl = fileToDownload.DownloadUrl;
+                    string? downloadUrl = fileToDownload.DownloadUrl;
 
                     if (string.IsNullOrEmpty(downloadUrl))
                     {
@@ -199,7 +200,7 @@ namespace KamisamaLoader
                         await _gameBananaService.DownloadFileAsync(downloadUrl, tempFile);
 
                         // Extract
-                        string modName = details.Name;
+                        string modName = details.Name ?? "Unknown";
                         // Clean mod name for file system
                         foreach (char c in System.IO.Path.GetInvalidFileNameChars())
                         {
@@ -271,9 +272,10 @@ namespace KamisamaLoader
 
         private async void Build_Click(object sender, RoutedEventArgs e)
         {
+            Button btn = sender as Button;
             try
             {
-                if (sender is Button btn) btn.IsEnabled = false;
+                if (btn != null) btn.IsEnabled = false;
 
                 // Pass the current list to Build, which will also save it
                 await _modManager.BuildAsync(LocalMods.ToList());
@@ -285,7 +287,7 @@ namespace KamisamaLoader
             }
             finally
             {
-                if (sender is Button btn) btn.IsEnabled = true;
+                if (btn != null) btn.IsEnabled = true;
             }
         }
 

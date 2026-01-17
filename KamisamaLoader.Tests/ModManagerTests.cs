@@ -4,8 +4,8 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
-using KamisamaLoader.Services;
-using KamisamaLoader.Models;
+using KamisamaLoader.Core.Services;
+using KamisamaLoader.Core.Models;
 
 namespace KamisamaLoader.Tests
 {

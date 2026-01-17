@@ -1,4 +1,4 @@
-namespace KamisamaLoader.Models
+namespace KamisamaLoader.Core.Models
 {
     public class LocalMod
     {
