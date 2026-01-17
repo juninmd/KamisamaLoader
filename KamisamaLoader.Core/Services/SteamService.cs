@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
-namespace KamisamaLoader.Services
+namespace KamisamaLoader.Core.Services
 {
     public class SteamService
     {

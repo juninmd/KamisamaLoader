@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using KamisamaLoader.Models;
+using KamisamaLoader.Core.Models;
 using System.Linq;
 
-namespace KamisamaLoader.Services
+namespace KamisamaLoader.Core.Services
 {
     public class GameBananaService
     {

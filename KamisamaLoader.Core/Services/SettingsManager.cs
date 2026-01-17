@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using Newtonsoft.Json;
-using KamisamaLoader.Models;
+using KamisamaLoader.Core.Models;
 
-namespace KamisamaLoader.Services
+namespace KamisamaLoader.Core.Services
 {
     public class SettingsManager
     {
