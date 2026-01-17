@@ -11,17 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="KamisamaLoader.Tests\**" />
-    <EmbeddedResource Remove="KamisamaLoader.Tests\**" />
-    <None Remove="KamisamaLoader.Tests\**" />
-    <Page Remove="KamisamaLoader.Tests\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="KamisamaLoader_Main.sln" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 

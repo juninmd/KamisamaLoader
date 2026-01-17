@@ -12,11 +12,11 @@ namespace KamisamaLoader.Core.Services
         private const string GameAppId = "1790600";
         private const string GameName = "DRAGON BALL Sparking! ZERO";
 
-        public string FindGameDirectory()
+        public string? FindGameDirectory()
         {
             try
             {
-                string steamPath = GetSteamInstallPath();
+                string? steamPath = GetSteamInstallPath();
                 if (string.IsNullOrEmpty(steamPath))
                 {
                     return null;
@@ -41,8 +41,13 @@ namespace KamisamaLoader.Core.Services
             return null;
         }
 
-        private string GetSteamInstallPath()
+        private string? GetSteamInstallPath()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return null;
+            }
+
             // For 64-bit OS, Steam path is in Wow6432Node
             var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam");
             if (key == null)
@@ -77,7 +82,7 @@ namespace KamisamaLoader.Core.Services
             return paths.Distinct().ToList();
         }
 
-        private string FindGameInLibrary(string libraryPath)
+        private string? FindGameInLibrary(string libraryPath)
         {
             var appManifestPath = Path.Combine(libraryPath, "steamapps", $"appmanifest_{GameAppId}.acf");
 

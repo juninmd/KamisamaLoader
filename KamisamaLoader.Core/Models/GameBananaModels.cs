@@ -7,10 +7,10 @@ namespace KamisamaLoader.Core.Models
     public class GameBananaApiResponse
     {
         [JsonProperty("_aMetadata")]
-        public Metadata Metadata { get; set; }
+        public Metadata? Metadata { get; set; }
 
         [JsonProperty("_aRecords")]
-        public List<ModRecord> Records { get; set; }
+        public List<ModRecord>? Records { get; set; }
     }
 
     public class Metadata
@@ -32,19 +32,19 @@ namespace KamisamaLoader.Core.Models
         public int IdRow { get; set; }
 
         [JsonProperty("_sModelName")]
-        public string ModelName { get; set; }
+        public string? ModelName { get; set; }
 
         [JsonProperty("_sSingularTitle")]
-        public string SingularTitle { get; set; }
+        public string? SingularTitle { get; set; }
 
         [JsonProperty("_sIconClasses")]
-        public string IconClasses { get; set; }
+        public string? IconClasses { get; set; }
 
         [JsonProperty("_sName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("_sProfileUrl")]
-        public string ProfileUrl { get; set; }
+        public string? ProfileUrl { get; set; }
 
         [JsonProperty("_tsDateAdded")]
         public long DateAdded { get; set; }
@@ -56,19 +56,19 @@ namespace KamisamaLoader.Core.Models
         public bool HasFiles { get; set; }
 
         [JsonProperty("_aTags")]
-        public List<string> Tags { get; set; }
+        public List<string>? Tags { get; set; }
 
         [JsonProperty("_aPreviewMedia")]
-        public PreviewMedia PreviewMedia { get; set; }
+        public PreviewMedia? PreviewMedia { get; set; }
 
         [JsonProperty("_aSubmitter")]
-        public Submitter Submitter { get; set; }
+        public Submitter? Submitter { get; set; }
 
         [JsonProperty("_aRootCategory")]
-        public RootCategory RootCategory { get; set; }
+        public RootCategory? RootCategory { get; set; }
 
         [JsonProperty("_sVersion")]
-        public string Version { get; set; }
+        public string? Version { get; set; }
 
         [JsonProperty("_tsDateUpdated")]
         public long? DateUpdated { get; set; }
@@ -77,7 +77,7 @@ namespace KamisamaLoader.Core.Models
         public bool IsObsolete { get; set; }
 
         [JsonProperty("_sInitialVisibility")]
-        public string InitialVisibility { get; set; }
+        public string? InitialVisibility { get; set; }
 
         [JsonProperty("_bHasContentRatings")]
         public bool HasContentRatings { get; set; }
@@ -98,16 +98,16 @@ namespace KamisamaLoader.Core.Models
         public bool? IsOwnedByAccessor { get; set; }
 
         [JsonProperty("_aStudio")]
-        public Studio Studio { get; set; }
+        public Studio? Studio { get; set; }
 
         [JsonProperty("_aFiles")]
-        public List<ModFile> Files { get; set; }
+        public List<ModFile>? Files { get; set; }
 
         [JsonProperty("_sDownloadUrl")]
-        public string DownloadUrl { get; set; }
+        public string? DownloadUrl { get; set; }
 
         // Propriedade auxiliar para obter a URL da imagem de preview
-        public string PreviewImageUrl
+        public string? PreviewImageUrl
         {
             get
             {
@@ -133,16 +133,16 @@ namespace KamisamaLoader.Core.Models
         public int IdRow { get; set; }
 
         [JsonProperty("_sFile")]
-        public string FileName { get; set; }
+        public string? FileName { get; set; }
 
         [JsonProperty("_nFilesize")]
         public long FileSize { get; set; }
 
         [JsonProperty("_sDownloadUrl")]
-        public string DownloadUrl { get; set; }
+        public string? DownloadUrl { get; set; }
 
         [JsonProperty("_sMd5Checksum")]
-        public string Md5Checksum { get; set; }
+        public string? Md5Checksum { get; set; }
     }
 
     public class Submitter
@@ -151,7 +151,7 @@ namespace KamisamaLoader.Core.Models
         public int IdRow { get; set; }
 
         [JsonProperty("_sName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("_bIsOnline")]
         public bool IsOnline { get; set; }
@@ -160,46 +160,46 @@ namespace KamisamaLoader.Core.Models
         public bool HasRipe { get; set; }
 
         [JsonProperty("_sProfileUrl")]
-        public string ProfileUrl { get; set; }
+        public string? ProfileUrl { get; set; }
 
         [JsonProperty("_sAvatarUrl")]
-        public string AvatarUrl { get; set; }
+        public string? AvatarUrl { get; set; }
 
         [JsonProperty("_aClearanceLevels")]
-        public List<string> ClearanceLevels { get; set; }
+        public List<string>? ClearanceLevels { get; set; }
     }
 
     public class RootCategory
     {
         [JsonProperty("_sName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("_sProfileUrl")]
-        public string ProfileUrl { get; set; }
+        public string? ProfileUrl { get; set; }
 
         [JsonProperty("_sIconUrl")]
-        public string IconUrl { get; set; }
+        public string? IconUrl { get; set; }
     }
 
     public class Studio
     {
         [JsonProperty("_sName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("_sBannerUrl")]
-        public string BannerUrl { get; set; }
+        public string? BannerUrl { get; set; }
 
         [JsonProperty("_sProfileUrl")]
-        public string ProfileUrl { get; set; }
+        public string? ProfileUrl { get; set; }
     }
 
     public class PreviewMedia
     {
         [JsonProperty("_aMetadata")]
-        public PreviewMediaMetadata Metadata { get; set; }
+        public PreviewMediaMetadata? Metadata { get; set; }
 
         [JsonProperty("_aImages")]
-        public List<ImageInfo> Images { get; set; }
+        public List<ImageInfo>? Images { get; set; }
     }
 
     public class PreviewMediaMetadata
@@ -208,31 +208,31 @@ namespace KamisamaLoader.Core.Models
         public int? Bounty { get; set; }
 
         [JsonProperty("_sSnippet")]
-        public string Snippet { get; set; }
+        public string? Snippet { get; set; }
 
         [JsonProperty("_sState")]
-        public string State { get; set; }
+        public string? State { get; set; }
 
         [JsonProperty("_nPostCount")]
         public int? PostCount { get; set; }
 
         [JsonProperty("_sAudioUrl")]
-        public string AudioUrl { get; set; }
+        public string? AudioUrl { get; set; }
     }
 
     public class ImageInfo
     {
         [JsonProperty("_sType")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonProperty("_sBaseUrl")]
-        public string BaseUrl { get; set; }
+        public string? BaseUrl { get; set; }
 
         [JsonProperty("_sFile")]
-        public string File { get; set; }
+        public string? File { get; set; }
 
         [JsonProperty("_sFile220")]
-        public string File220 { get; set; }
+        public string? File220 { get; set; }
 
         [JsonProperty("_hFile220")]
         public int? HFile220 { get; set; }
@@ -241,7 +241,7 @@ namespace KamisamaLoader.Core.Models
         public int? WFile220 { get; set; }
 
         [JsonProperty("_sFile530")]
-        public string File530 { get; set; }
+        public string? File530 { get; set; }
 
         [JsonProperty("_hFile530")]
         public int? HFile530 { get; set; }
@@ -250,7 +250,7 @@ namespace KamisamaLoader.Core.Models
         public int? WFile530 { get; set; }
 
         [JsonProperty("_sFile100")]
-        public string File100 { get; set; }
+        public string? File100 { get; set; }
 
         [JsonProperty("_hFile100")]
         public int? HFile100 { get; set; }
@@ -259,7 +259,7 @@ namespace KamisamaLoader.Core.Models
         public int? WFile100 { get; set; }
 
         [JsonProperty("_sFile800")]
-        public string File800 { get; set; }
+        public string? File800 { get; set; }
 
         [JsonProperty("_hFile800")]
         public int? HFile800 { get; set; }
@@ -268,6 +268,6 @@ namespace KamisamaLoader.Core.Models
         public int? WFile800 { get; set; }
 
         [JsonProperty("_sCaption")]
-        public string Caption { get; set; }
+        public string? Caption { get; set; }
     }
 }

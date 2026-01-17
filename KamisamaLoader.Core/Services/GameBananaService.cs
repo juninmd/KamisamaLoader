@@ -27,9 +27,9 @@ namespace KamisamaLoader.Core.Services
                 response.EnsureSuccessStatusCode();
 
                 string jsonResponse = await response.Content.ReadAsStringAsync();
-                GameBananaApiResponse apiResponse = JsonConvert.DeserializeObject<GameBananaApiResponse>(jsonResponse);
+                GameBananaApiResponse? apiResponse = JsonConvert.DeserializeObject<GameBananaApiResponse>(jsonResponse);
 
-                if (apiResponse?.Records != null)
+                if (apiResponse != null && apiResponse.Records != null)
                 {
                     return apiResponse.Records.Where(m => m.ModelName == "Mod").ToList();
                 }
@@ -42,7 +42,7 @@ namespace KamisamaLoader.Core.Services
             return new List<ModRecord>();
         }
 
-        public async Task<ModRecord> GetModDetailsAsync(int modId)
+        public async Task<ModRecord?> GetModDetailsAsync(int modId)
         {
             try
             {
@@ -51,7 +51,7 @@ namespace KamisamaLoader.Core.Services
                 response.EnsureSuccessStatusCode();
 
                 string jsonResponse = await response.Content.ReadAsStringAsync();
-                ModRecord modRecord = JsonConvert.DeserializeObject<ModRecord>(jsonResponse);
+                ModRecord? modRecord = JsonConvert.DeserializeObject<ModRecord>(jsonResponse);
 
                 return modRecord;
             }
@@ -61,7 +61,7 @@ namespace KamisamaLoader.Core.Services
             }
         }
 
-        public async Task<string> DownloadFileAsync(string url, string destinationPath)
+        public async Task<string?> DownloadFileAsync(string url, string destinationPath)
         {
              try
              {
