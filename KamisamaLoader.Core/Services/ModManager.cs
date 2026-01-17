@@ -215,6 +215,11 @@ namespace KamisamaLoader.Services
                 FileInfo exeInfo = new FileInfo(gameExePath);
                 // Expected: .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
                 // Root: .../SparkingZero/
+                if (exeInfo.Directory == null || exeInfo.Directory.Parent == null || exeInfo.Directory.Parent.Parent == null)
+                {
+                    throw new DirectoryNotFoundException("Could not find game root directory structure.");
+                }
+
                 DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
                 string contentDir = Path.Combine(rootDir.FullName, "Content");
@@ -390,7 +395,7 @@ namespace KamisamaLoader.Services
                 {
                     string fileName = Path.GetFileName(file);
                     // Only apply prefix for files going to ~mods
-                    string targetFileName = prefix + fileName;
+                    string targetFileName = $"{prefix}{fileName}";
                     string dest = Path.Combine(targetDir, targetFileName);
                     CopyFile(file, dest);
                     // No need to track ~mods as the whole folder is wiped
@@ -402,12 +407,16 @@ namespace KamisamaLoader.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                var destDir = Path.GetDirectoryName(dest);
+                if (destDir != null)
+                {
+                    Directory.CreateDirectory(destDir);
+                }
                 File.Copy(source, dest, true);
             }
             catch (Exception)
             {
-                // Log or ignore?
+                // Ignore copy errors
             }
         }
 
