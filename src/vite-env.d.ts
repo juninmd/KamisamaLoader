@@ -10,5 +10,7 @@ interface Window {
     toggleMod: (modId: string, isEnabled: boolean) => Promise<boolean>;
     saveSettings: (settings: any) => Promise<boolean>;
     searchOnlineMods: (page: number, search?: string) => Promise<any[]>;
+    checkForUpdates: () => Promise<string[]>; // Returns list of updated mod IDs
+    updateMod: (modId: string) => Promise<boolean>;
   }
 }

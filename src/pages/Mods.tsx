@@ -12,6 +12,7 @@ interface Mod {
     iconUrl?: string;
     description?: string;
     gameBananaId?: number;
+    folderPath?: string;
 }
 
 const Mods: React.FC = () => {
@@ -23,6 +24,9 @@ const Mods: React.FC = () => {
     const [loadingBrowse, setLoadingBrowse] = useState(false);
     const [browsePage, setBrowsePage] = useState(1);
     const [installedLoading, setInstalledLoading] = useState(true);
+
+    const [checkingUpdates, setCheckingUpdates] = useState(false);
+    const [updatingMods, setUpdatingMods] = useState<string[]>([]); // List of IDs currently updating
 
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
@@ -42,7 +46,8 @@ const Mods: React.FC = () => {
     }, [activeTab]);
 
     const loadInstalledMods = async () => {
-        setInstalledLoading(true);
+        // Don't show full loading spinner if just refreshing
+        if (installedMods.length === 0) setInstalledLoading(true);
         try {
             const mods = await window.electronAPI.getInstalledMods();
             setInstalledMods(mods);
@@ -81,33 +86,72 @@ const Mods: React.FC = () => {
 
     const hasUpdates = installedMods.some(m => m.hasUpdate);
 
-    const handleUpdateAll = () => {
-        // In real scenario, this would trigger updates via IPC
-        // For now, we optimistically update UI
-        const updated = installedMods.map(m => ({ ...m, hasUpdate: false, version: m.latestVersion || m.version }));
-        setInstalledMods(updated);
+    const handleCheckUpdates = async () => {
+        setCheckingUpdates(true);
+        try {
+            const updatedIds = await window.electronAPI.checkForUpdates();
+            if (updatedIds.length > 0) {
+                // Refresh list to show updates
+                await loadInstalledMods();
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setCheckingUpdates(false);
+        }
     };
 
-    const handleUpdateSingle = (id: string) => {
-        // Trigger update IPC
-        const updated = installedMods.map(m => m.id === id ? { ...m, hasUpdate: false, version: m.latestVersion || m.version } : m);
-        setInstalledMods(updated);
+    const handleUpdateAll = async () => {
+        const modsToUpdate = installedMods.filter(m => m.hasUpdate);
+        // Process sequentially or in small batches to avoid overload, but allow UI updates
+        for (const mod of modsToUpdate) {
+            await handleUpdateSingle(mod.id);
+        }
+    };
+
+    const handleUpdateSingle = async (id: string) => {
+        setUpdatingMods(prev => [...prev, id]);
+        try {
+            const success = await window.electronAPI.updateMod(id);
+            if (success) {
+                // Update local state to remove "hasUpdate" flag immediately
+                setInstalledMods(prev => prev.map(m => {
+                    if (m.id === id) {
+                        return {
+                            ...m,
+                            hasUpdate: false,
+                            version: m.latestVersion || m.version
+                        };
+                    }
+                    return m;
+                }));
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setUpdatingMods(prev => prev.filter(mid => mid !== id));
+        }
     };
 
     const handleToggle = async (id: string) => {
+         // Optimistic Update
+         setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: !m.isEnabled } : m));
+
          const mod = installedMods.find(m => m.id === id);
          if (mod) {
              const newState = !mod.isEnabled;
              const success = await window.electronAPI.toggleMod(id, newState);
-             if (success) {
-                setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: newState } : m));
+             if (!success) {
+                 // Revert if failed
+                 setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: !newState } : m));
              }
          }
     };
 
-    const handleInstall = async (mod: Mod) => {
-        // TODO: Implement installation
-        alert(`Request to install: ${mod.name} (ID: ${mod.gameBananaId})`);
+    const handleInstall = async (_mod: Mod) => {
+        // This would require a download URL in the browse data, which requires a profile fetch first usually
+        // For now, alerting as originally implemented, but check main.ts for install logic
+        alert(`Install feature for online mods requires fetching download URL first (Pending Implementation for Browse tab). Use Drag & Drop or Update for now.`);
     };
 
     // Drag and Drop Handlers
@@ -146,6 +190,8 @@ const Mods: React.FC = () => {
             if (result.success) {
                 // Refresh list
                 loadInstalledMods();
+                // Optional: Show success toast
+            } else {
                 alert(result.message);
             }
         }
@@ -221,30 +267,42 @@ const Mods: React.FC = () => {
 
                     {/* Filter (Only for Installed) */}
                     {activeTab === 'installed' && (
-                        <div className="relative">
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value as any)}
-                                className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
-                            >
-                                <option value="all">All Mods</option>
-                                <option value="enabled">Enabled Only</option>
-                                <option value="disabled">Disabled Only</option>
-                                <option value="updates">Updates Available</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
-                    )}
+                        <>
+                            <div className="relative">
+                                <select
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value as any)}
+                                    className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
+                                >
+                                    <option value="all">All Mods</option>
+                                    <option value="enabled">Enabled Only</option>
+                                    <option value="disabled">Disabled Only</option>
+                                    <option value="updates">Updates Available</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                            </div>
 
-                     {/* Update All Button */}
-                     {activeTab === 'installed' && hasUpdates && (
-                        <button
-                            onClick={handleUpdateAll}
-                            className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 transition-all animate-pulse hover:animate-none"
-                        >
-                            <RefreshCw size={16} />
-                            <span>Update All</span>
-                        </button>
+                            {/* Check Updates Button */}
+                            <button
+                                onClick={handleCheckUpdates}
+                                disabled={checkingUpdates}
+                                className={`flex items-center space-x-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <RefreshCw size={16} className={checkingUpdates ? "animate-spin" : ""} />
+                                <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
+                            </button>
+
+                             {/* Update All Button */}
+                             {hasUpdates && (
+                                <button
+                                    onClick={handleUpdateAll}
+                                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 transition-all animate-pulse hover:animate-none"
+                                >
+                                    <Download size={16} />
+                                    <span>Update All</span>
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
@@ -264,6 +322,7 @@ const Mods: React.FC = () => {
                             mods={filteredInstalledMods}
                             onToggle={handleToggle}
                             onUpdate={handleUpdateSingle}
+                            updatingMods={updatingMods}
                         />
                     )
                 ) : (
@@ -278,7 +337,8 @@ const InstalledList: React.FC<{
     mods: Mod[];
     onToggle: (id: string) => void;
     onUpdate: (id: string) => void;
-}> = ({ mods, onToggle, onUpdate }) => {
+    updatingMods: string[];
+}> = ({ mods, onToggle, onUpdate, updatingMods }) => {
     if (mods.length === 0) {
         return (
             <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl">
@@ -326,10 +386,11 @@ const InstalledList: React.FC<{
                         {mod.hasUpdate && (
                              <button
                                 onClick={() => onUpdate(mod.id)}
-                                className="flex items-center space-x-2 px-3 py-1.5 bg-green-600/20 text-green-300 hover:bg-green-600 hover:text-white rounded-lg transition-colors border border-green-600/30 text-xs font-bold"
+                                disabled={updatingMods.includes(mod.id)}
+                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors border text-xs font-bold ${updatingMods.includes(mod.id) ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-green-600/20 text-green-300 hover:bg-green-600 hover:text-white border-green-600/30'}`}
                              >
-                                <Download size={14} />
-                                <span>Update to v{mod.latestVersion}</span>
+                                <Download size={14} className={updatingMods.includes(mod.id) ? "animate-bounce" : ""} />
+                                <span>{updatingMods.includes(mod.id) ? 'Updating...' : `Update to v${mod.latestVersion}`}</span>
                              </button>
                         )}
 
