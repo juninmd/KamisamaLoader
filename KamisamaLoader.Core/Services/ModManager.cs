@@ -253,8 +253,6 @@ namespace KamisamaLoader.Services
                                     }
                                 }
                             }
-
-                            // Optional: Cleanup empty directories for those files could be added here
                         }
                     }
                     catch
