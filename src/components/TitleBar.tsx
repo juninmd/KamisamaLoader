@@ -1,19 +1,6 @@
 import React from 'react';
 import { Minus, Square, X } from 'lucide-react';
 
-declare global {
-  interface Window {
-    electronAPI: {
-      minimize: () => void;
-      maximize: () => void;
-      close: () => void;
-      getInstalledMods: () => Promise<any[]>;
-      installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
-      toggleMod: (modId: string, isEnabled: boolean) => Promise<boolean>;
-      saveSettings: (settings: any) => Promise<boolean>;
-    };
-  }
-}
 
 const TitleBar: React.FC = () => {
   return (
