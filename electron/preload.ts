@@ -10,4 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installMod: (filePath: string) => ipcRenderer.invoke('install-mod', filePath),
   toggleMod: (modId: string, isEnabled: boolean) => ipcRenderer.invoke('toggle-mod', modId, isEnabled),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
+
+  // Online Mods
+  searchOnlineMods: (page: number, search?: string) => ipcRenderer.invoke('search-online-mods', page, search),
 });
