@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Services\ModManager.cs" Link="Services\ModManager.cs" />
+    <Compile Include="..\Services\SettingsManager.cs" Link="Services\SettingsManager.cs" />
+    <Compile Include="..\Services\GameBananaService.cs" Link="Services\GameBananaService.cs" />
+    <Compile Include="..\Models\LocalMod.cs" Link="Models\LocalMod.cs" />
+    <Compile Include="..\Models\AppSettings.cs" Link="Models\AppSettings.cs" />
+    <Compile Include="..\Models\GameBananaModels.cs" Link="Models\GameBananaModels.cs" />
+  </ItemGroup>
+
+</Project>
