@@ -8,7 +8,7 @@ namespace KamisamaLoader.Services
     public class SettingsManager
     {
         private const string SettingsFileName = "settings.json";
-        public AppSettings CurrentSettings { get; private set; }
+        public AppSettings CurrentSettings { get; private set; } = new AppSettings();
 
         public SettingsManager()
         {
@@ -22,7 +22,11 @@ namespace KamisamaLoader.Services
                 try
                 {
                     string json = File.ReadAllText(SettingsFileName);
-                    CurrentSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                    var settings = JsonConvert.DeserializeObject<AppSettings>(json);
+                    if (settings != null)
+                    {
+                        CurrentSettings = settings;
+                    }
                 }
                 catch (Exception)
                 {
