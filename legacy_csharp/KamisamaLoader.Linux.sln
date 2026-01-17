@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KamisamaLoader.Core", "KamisamaLoader.Core\KamisamaLoader.Core.csproj", "{30C24F40-11CA-4112-B804-B10E51A845A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KamisamaLoader.Tests", "KamisamaLoader.Tests\KamisamaLoader.Tests.csproj", "{6849A5DD-E6E6-46EC-A445-E8E77E3236F9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30C24F40-11CA-4112-B804-B10E51A845A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30C24F40-11CA-4112-B804-B10E51A845A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30C24F40-11CA-4112-B804-B10E51A845A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30C24F40-11CA-4112-B804-B10E51A845A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6849A5DD-E6E6-46EC-A445-E8E77E3236F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6849A5DD-E6E6-46EC-A445-E8E77E3236F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6849A5DD-E6E6-46EC-A445-E8E77E3236F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6849A5DD-E6E6-46EC-A445-E8E77E3236F9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
