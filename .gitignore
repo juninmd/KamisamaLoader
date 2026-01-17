@@ -387,3 +387,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+verification/
