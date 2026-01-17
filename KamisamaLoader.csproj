@@ -13,9 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models\LocalMod.cs" />
-    <Compile Include="Services\GameBananaService.cs" />
-    <Compile Include="Services\SteamService.cs" />
+    <ProjectReference Include="KamisamaLoader.Core\KamisamaLoader.Core.csproj" />
   </ItemGroup>
 
 </Project>
