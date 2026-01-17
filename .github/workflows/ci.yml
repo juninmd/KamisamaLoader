@@ -8,22 +8,27 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        dotnet-version: 8.0.x
+        node-version: 20
+        cache: 'npm'
 
-    - name: Restore dependencies
-      run: dotnet restore KamisamaLoader.Linux.sln
+    - name: Install dependencies
+      run: npm install
 
-    - name: Build
-      run: dotnet build KamisamaLoader.Linux.sln --no-restore --configuration Release
+    - name: Build and Package
+      run: npm run dist
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Test
-      run: dotnet test KamisamaLoader.Linux.sln --no-build --verbosity normal --configuration Release
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: KamisamaLoader-Windows
+        path: release/*.exe
