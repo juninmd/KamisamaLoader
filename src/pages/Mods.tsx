@@ -7,57 +7,63 @@ interface Mod {
     author: string;
     version: string;
     isEnabled: boolean;
-    hasUpdate: boolean;
+    hasUpdate?: boolean;
     latestVersion?: string;
     iconUrl?: string;
     description?: string;
+    gameBananaId?: number;
 }
-
-const MOCK_INSTALLED_MODS: Mod[] = [
-    { id: '1', name: 'Goku UI Omen', author: 'ModderKing', version: '1.0', isEnabled: true, hasUpdate: true, latestVersion: '1.2', description: 'Adds UI Omen Goku.' },
-    { id: '2', name: 'Vegeta Ego', author: 'PrinceOfAll', version: '2.1', isEnabled: true, hasUpdate: false, description: 'Adds Ultra Ego Vegeta.' },
-    { id: '3', name: 'Gohan Beast (Fixed)', author: 'ScholarWarrior', version: '1.5', isEnabled: false, hasUpdate: false, description: 'Fixes hair physics.' },
-    { id: '4', name: 'Classic BGM Pack', author: 'RetroFan', version: '3.0', isEnabled: true, hasUpdate: true, latestVersion: '3.1', description: 'Replaces BGM with classic tunes.' },
-    { id: '5', name: 'High Res Textures', author: '4K_Enjoyer', version: '1.0', isEnabled: false, hasUpdate: false, description: 'Upscales environment textures.' },
-];
 
 const Mods: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'installed' | 'browse'>('installed');
-    const [installedMods, setInstalledMods] = useState<Mod[]>(MOCK_INSTALLED_MODS);
+    const [installedMods, setInstalledMods] = useState<Mod[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'enabled' | 'disabled' | 'updates'>('all');
     const [browseMods, setBrowseMods] = useState<Mod[]>([]);
     const [loadingBrowse, setLoadingBrowse] = useState(false);
     const [browsePage, setBrowsePage] = useState(1);
+    const [installedLoading, setInstalledLoading] = useState(true);
 
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
 
     const dragCounter = useRef(0);
 
-    // Initial load for Browse Mods
+    // Initial load for Installed Mods
     useEffect(() => {
-        loadBrowseMods(1);
+        loadInstalledMods();
     }, []);
 
-    const loadBrowseMods = (page: number) => {
-        setLoadingBrowse(true);
-        // Simulate API delay
-        setTimeout(() => {
-            const newMods = Array.from({ length: 9 }).map((_, i) => ({
-                id: `browse-${page}-${i}`,
-                name: `Community Mod ${page}-${i + 1}`,
-                author: `User${Math.floor(Math.random() * 1000)}`,
-                version: '1.0',
-                isEnabled: false,
-                hasUpdate: false,
-                description: 'A fantastic community created mod that enhances your game experience.',
-                iconUrl: 'https://via.placeholder.com/150'
-            }));
+    // Load Browse Mods on tab change if empty
+    useEffect(() => {
+        if (activeTab === 'browse' && browseMods.length === 0) {
+            loadBrowseMods(1);
+        }
+    }, [activeTab]);
 
-            setBrowseMods(prev => [...prev, ...newMods]);
+    const loadInstalledMods = async () => {
+        setInstalledLoading(true);
+        try {
+            const mods = await window.electronAPI.getInstalledMods();
+            setInstalledMods(mods);
+        } catch (error) {
+            console.error('Failed to load installed mods', error);
+        } finally {
+            setInstalledLoading(false);
+        }
+    };
+
+    const loadBrowseMods = async (page: number) => {
+        if (loadingBrowse) return;
+        setLoadingBrowse(true);
+        try {
+            const newMods = await window.electronAPI.searchOnlineMods(page);
+            setBrowseMods(prev => page === 1 ? newMods : [...prev, ...newMods]);
+        } catch (error) {
+            console.error('Failed to load online mods', error);
+        } finally {
             setLoadingBrowse(false);
-        }, 800);
+        }
     };
 
     // Filter Logic
@@ -68,7 +74,7 @@ const Mods: React.FC = () => {
         let matchesFilter = true;
         if (filterStatus === 'enabled') matchesFilter = mod.isEnabled;
         if (filterStatus === 'disabled') matchesFilter = !mod.isEnabled;
-        if (filterStatus === 'updates') matchesFilter = mod.hasUpdate;
+        if (filterStatus === 'updates') matchesFilter = mod.hasUpdate || false;
 
         return matchesSearch && matchesFilter;
     });
@@ -76,19 +82,32 @@ const Mods: React.FC = () => {
     const hasUpdates = installedMods.some(m => m.hasUpdate);
 
     const handleUpdateAll = () => {
-        // Simulate updating all
+        // In real scenario, this would trigger updates via IPC
+        // For now, we optimistically update UI
         const updated = installedMods.map(m => ({ ...m, hasUpdate: false, version: m.latestVersion || m.version }));
         setInstalledMods(updated);
     };
 
     const handleUpdateSingle = (id: string) => {
+        // Trigger update IPC
         const updated = installedMods.map(m => m.id === id ? { ...m, hasUpdate: false, version: m.latestVersion || m.version } : m);
         setInstalledMods(updated);
     };
 
-    const handleToggle = (id: string) => {
-         const updated = installedMods.map(m => m.id === id ? { ...m, isEnabled: !m.isEnabled } : m);
-         setInstalledMods(updated);
+    const handleToggle = async (id: string) => {
+         const mod = installedMods.find(m => m.id === id);
+         if (mod) {
+             const newState = !mod.isEnabled;
+             const success = await window.electronAPI.toggleMod(id, newState);
+             if (success) {
+                setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: newState } : m));
+             }
+         }
+    };
+
+    const handleInstall = async (mod: Mod) => {
+        // TODO: Implement installation
+        alert(`Request to install: ${mod.name} (ID: ${mod.gameBananaId})`);
     };
 
     // Drag and Drop Handlers
@@ -115,16 +134,20 @@ const Mods: React.FC = () => {
         e.stopPropagation();
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
         dragCounter.current = 0;
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // Simulate install
-            const fileName = e.dataTransfer.files[0].name;
-            alert(`Simulated Install: ${fileName}`);
+            const filePath = (e.dataTransfer.files[0] as any).path;
+            const result = await window.electronAPI.installMod(filePath);
+            if (result.success) {
+                // Refresh list
+                loadInstalledMods();
+                alert(result.message);
+            }
         }
     };
 
@@ -232,13 +255,19 @@ const Mods: React.FC = () => {
                 onScroll={handleScroll}
             >
                 {activeTab === 'installed' ? (
-                    <InstalledList
-                        mods={filteredInstalledMods}
-                        onToggle={handleToggle}
-                        onUpdate={handleUpdateSingle}
-                    />
+                    installedLoading ? (
+                        <div className="h-64 flex items-center justify-center text-gray-500">
+                             <RefreshCw size={24} className="animate-spin mb-2" />
+                        </div>
+                    ) : (
+                        <InstalledList
+                            mods={filteredInstalledMods}
+                            onToggle={handleToggle}
+                            onUpdate={handleUpdateSingle}
+                        />
+                    )
                 ) : (
-                    <BrowseList mods={browseMods} loading={loadingBrowse} />
+                    <BrowseList mods={browseMods} loading={loadingBrowse} onInstall={handleInstall} />
                 )}
             </div>
         </div>
@@ -254,8 +283,8 @@ const InstalledList: React.FC<{
         return (
             <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl">
                 <Folder size={48} className="mb-4 opacity-50" />
-                <p className="text-lg font-medium">No mods found matching criteria.</p>
-                <p className="text-sm">Try changing filters or drag a file here to install.</p>
+                <p className="text-lg font-medium">No mods installed.</p>
+                <p className="text-sm">Browse online or drag files to install.</p>
             </div>
         );
     }
@@ -322,23 +351,33 @@ const InstalledList: React.FC<{
     );
 }
 
-const BrowseList: React.FC<{ mods: Mod[]; loading: boolean }> = ({ mods, loading }) => (
+const BrowseList: React.FC<{ mods: Mod[]; loading: boolean; onInstall: (mod: Mod) => void }> = ({ mods, loading, onInstall }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {mods.map((mod) => (
              <div key={mod.id} className="glass-panel overflow-hidden group flex flex-col hover:-translate-y-1 transition-transform duration-300 border border-white/5 hover:border-blue-500/30">
                 <div className="h-40 bg-gray-800 relative group-hover:scale-105 transition-transform duration-700">
                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                     {mod.iconUrl ? (
+                        <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                     ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                            <Folder size={40} className="text-gray-500" />
+                        </div>
+                     )}
                      <span className="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">Mod</span>
-                     <div className="absolute bottom-3 left-4 right-4">
-                         <h4 className="font-bold text-white text-lg leading-tight line-clamp-1">{mod.name}</h4>
-                         <p className="text-xs text-gray-300 mt-1">by {mod.author}</p>
+                     <div className="absolute bottom-3 left-4 right-4 z-10">
+                         <h4 className="font-bold text-white text-lg leading-tight line-clamp-1 drop-shadow-md">{mod.name}</h4>
+                         <p className="text-xs text-gray-300 mt-1 drop-shadow-sm">by {mod.author}</p>
                      </div>
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between bg-black/20">
                      <p className="text-sm text-gray-400 line-clamp-2 mb-4 h-10">
                         {mod.description}
                      </p>
-                     <button className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-blue-600 text-white py-2.5 rounded-lg transition-all text-sm font-bold border border-white/5 hover:border-blue-500 shadow-lg hover:shadow-blue-600/25 active:scale-95">
+                     <button
+                        onClick={() => onInstall(mod)}
+                        className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-blue-600 text-white py-2.5 rounded-lg transition-all text-sm font-bold border border-white/5 hover:border-blue-500 shadow-lg hover:shadow-blue-600/25 active:scale-95"
+                     >
                         <Download size={16} />
                         <span>Install</span>
                      </button>
