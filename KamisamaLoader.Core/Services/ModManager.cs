@@ -340,10 +340,6 @@ namespace KamisamaLoader.Core.Services
         }
 
         private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir, List<string> installedFiles)
-            });
-        }
-
-        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir)
         {
             if (!Directory.Exists(sourceDir)) return;
 
