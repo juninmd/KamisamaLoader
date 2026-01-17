@@ -13,6 +13,7 @@ namespace KamisamaLoader.Core.Services
     {
         private const string ModsDirectory = "Mods";
         private const string ModsConfigFileName = "mods.json";
+        private const string InstalledFilesConfigName = "installed_files.json";
         private readonly SettingsManager _settingsManager;
 
         public ModManager(SettingsManager settingsManager)
@@ -214,6 +215,11 @@ namespace KamisamaLoader.Core.Services
                 FileInfo exeInfo = new FileInfo(gameExePath);
                 // Expected: .../SparkingZero/Binaries/Win64/SparkingZero-Win64-Shipping.exe
                 // Root: .../SparkingZero/
+                if (exeInfo.Directory == null || exeInfo.Directory.Parent == null || exeInfo.Directory.Parent.Parent == null)
+                {
+                    throw new DirectoryNotFoundException("Could not find game root directory structure.");
+                }
+
                 DirectoryInfo rootDir = exeInfo.Directory.Parent.Parent;
 
                 string contentDir = Path.Combine(rootDir.FullName, "Content");
@@ -227,6 +233,39 @@ namespace KamisamaLoader.Core.Services
                 Directory.CreateDirectory(modsDir);
                 Directory.CreateDirectory(logicModsDest);
                 Directory.CreateDirectory(binariesModsDest);
+
+                // --- CLEANUP START ---
+                // Load previously installed files (Loose files & UE4SS files) and delete them
+                string installedFilesPath = Path.Combine(ModsDirectory, InstalledFilesConfigName);
+                if (File.Exists(installedFilesPath))
+                {
+                    try
+                    {
+                        var oldFiles = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(installedFilesPath));
+                        if (oldFiles != null)
+                        {
+                            foreach (var oldFile in oldFiles)
+                            {
+                                if (File.Exists(oldFile))
+                                {
+                                    try
+                                    {
+                                        File.Delete(oldFile);
+                                    }
+                                    catch
+                                    {
+                                        // Best effort delete
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore corruption in installed_files.json
+                    }
+                }
+                // --- CLEANUP END ---
 
                 // Clear ~mods folder
                 foreach (var file in Directory.GetFiles(modsDir))
@@ -246,6 +285,9 @@ namespace KamisamaLoader.Core.Services
                 var enabledMods = localMods.Where(m => m.IsEnabled).ToList();
                 var ue4ssModsToEnable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var ue4ssModsToDisable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // List to track newly installed loose/UE4SS files
+                var newInstalledFiles = new List<string>();
 
                 // Scan for UE4SS mods to update mods.txt
                 foreach (var mod in localMods)
@@ -278,11 +320,26 @@ namespace KamisamaLoader.Core.Services
                 {
                     var mod = enabledMods[i];
                     string prefix = (999 - i).ToString("D3") + "_";
-                    CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest, contentDir);
-                }
+                    CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest, contentDir, newInstalledFiles);
+               }
 
                 // Update mods.txt for UE4SS
                 UpdateModsTxt(binariesModsDest, ue4ssModsToEnable, ue4ssModsToDisable);
+
+                // Save the new list of installed files
+                try
+                {
+                    string json = JsonConvert.SerializeObject(newInstalledFiles, Formatting.Indented);
+                    File.WriteAllText(installedFilesPath, json);
+                }
+                catch
+                {
+                    // Handle error saving manifest
+                }
+            });
+        }
+
+        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir, List<string> installedFiles)
             });
         }
 
@@ -304,6 +361,7 @@ namespace KamisamaLoader.Core.Services
                     string subPath = Path.Combine(parts.Skip(ue4ssIdx + 1).ToArray());
                     string dest = Path.Combine(binariesModsDest, subPath);
                     CopyFile(file, dest);
+                    installedFiles.Add(dest);
                     continue;
                 }
 
@@ -314,6 +372,7 @@ namespace KamisamaLoader.Core.Services
                     string subPath = Path.Combine(parts.Skip(logicIdx + 1).ToArray());
                     string dest = Path.Combine(logicModsDest, subPath);
                     CopyFile(file, dest);
+                    // No need to track LogicMods as the whole folder is wiped
                     continue;
                 }
 
@@ -326,6 +385,7 @@ namespace KamisamaLoader.Core.Services
                     // This overwrites game files if they exist.
                     // Ideally we should backup, but for now we follow "Unverum-like" replacement.
                     CopyFile(file, dest);
+                    installedFiles.Add(dest);
                     continue;
                 }
 
@@ -335,9 +395,10 @@ namespace KamisamaLoader.Core.Services
                 {
                     string fileName = Path.GetFileName(file);
                     // Only apply prefix for files going to ~mods
-                    string targetFileName = prefix + fileName;
+                    string targetFileName = $"{prefix}{fileName}";
                     string dest = Path.Combine(targetDir, targetFileName);
                     CopyFile(file, dest);
+                    // No need to track ~mods as the whole folder is wiped
                 }
             }
         }
@@ -346,12 +407,16 @@ namespace KamisamaLoader.Core.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                var destDir = Path.GetDirectoryName(dest);
+                if (destDir != null)
+                {
+                    Directory.CreateDirectory(destDir);
+                }
                 File.Copy(source, dest, true);
             }
             catch (Exception)
             {
-                // Log or ignore?
+                // Ignore copy errors
             }
         }
 
