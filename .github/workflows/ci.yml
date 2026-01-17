@@ -9,21 +9,24 @@ on:
 jobs:
   build:
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
       with:
-        dotnet-version: 8.0.x
+        version: 9
 
-    - name: Restore dependencies
-      run: dotnet restore KamisamaLoader.Linux.sln
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install
 
     - name: Build
-      run: dotnet build KamisamaLoader.Linux.sln --no-restore --configuration Release
-
-    - name: Test
-      run: dotnet test KamisamaLoader.Linux.sln --no-build --verbosity normal --configuration Release
+      run: pnpm run build
