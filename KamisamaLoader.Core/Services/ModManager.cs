@@ -316,7 +316,7 @@ namespace KamisamaLoader.Services
                     var mod = enabledMods[i];
                     string prefix = (999 - i).ToString("D3") + "_";
                     CopyModFiles(mod.FolderPath, modsDir, prefix, logicModsDest, binariesModsDest, contentDir, newInstalledFiles);
-                }
+               }
 
                 // Update mods.txt for UE4SS
                 UpdateModsTxt(binariesModsDest, ue4ssModsToEnable, ue4ssModsToDisable);
@@ -335,6 +335,10 @@ namespace KamisamaLoader.Services
         }
 
         private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir, List<string> installedFiles)
+            });
+        }
+
+        private void CopyModFiles(string sourceDir, string targetDir, string prefix, string logicModsDest, string binariesModsDest, string gameContentDir)
         {
             if (!Directory.Exists(sourceDir)) return;
 
