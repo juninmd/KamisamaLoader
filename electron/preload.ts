@@ -17,4 +17,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Online Mods
   searchOnlineMods: (page: number, search?: string) => ipcRenderer.invoke('search-online-mods', page, search),
+  installOnlineMod: (mod: any) => ipcRenderer.invoke('install-online-mod', mod),
 });
