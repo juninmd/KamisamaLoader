@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream, existsSync } from 'fs';
 import AdmZip from 'adm-zip';
+import { searchOnlineMods, fetchModProfile } from './gamebanana.js';
 
 let mainWindow: BrowserWindow | null;
 
@@ -200,37 +201,25 @@ function createWindow() {
 
           try {
               // Fetch Profile
-               await new Promise<void>((resolve) => {
-                  const request = net.request(`https://gamebanana.com/apiv11/Mod/${mod.gameBananaId}/ProfilePage`);
-                  request.on('response', (response) => {
-                      let body = '';
-                      response.on('data', chunk => body += chunk);
-                      response.on('end', () => {
-                          try {
-                              const data = JSON.parse(body);
-                              const latestFile = data._aFiles?.[0]; // Usually the first one is main/latest
-                              if (latestFile) {
-                                  // Check version or ID
-                                  const isNewer = (mod.latestFileId && latestFile._idRow > mod.latestFileId) ||
-                                                  (!mod.latestFileId && data._sVersion !== mod.version);
+              const data = await fetchModProfile(mod.gameBananaId);
+              if (data) {
+                  const latestFile = data._aFiles?.[0]; // Usually the first one is main/latest
+                  if (latestFile) {
+                      // Check version or ID
+                      const isNewer = (mod.latestFileId && latestFile._idRow > mod.latestFileId) ||
+                                      (!mod.latestFileId && data._sVersion !== mod.version);
 
-                                  if (isNewer) {
-                                      mod.hasUpdate = true;
-                                      mod.latestVersion = data._sVersion;
-                                      mod.latestFileId = latestFile._idRow;
-                                      mod.latestFileUrl = latestFile._sDownloadUrl;
-                                      updates.push(mod.id);
-                                  } else {
-                                      mod.hasUpdate = false;
-                                  }
-                              }
-                          } catch (e) { console.error(e); }
-                          resolve();
-                      });
-                  });
-                  request.on('error', () => resolve());
-                  request.end();
-              });
+                      if (isNewer) {
+                          mod.hasUpdate = true;
+                          mod.latestVersion = data._sVersion;
+                          mod.latestFileId = latestFile._idRow;
+                          mod.latestFileUrl = latestFile._sDownloadUrl;
+                          updates.push(mod.id);
+                      } else {
+                          mod.hasUpdate = false;
+                      }
+                  }
+              }
           } catch (e) { console.error(e); }
       }
 
@@ -290,44 +279,7 @@ function createWindow() {
 
   // Online Mods
   ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
-    return new Promise((resolve, reject) => {
-      const request = net.request(`https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=${page}&_nPerpage=15`);
-      request.on('response', (response) => {
-        let body = '';
-        response.on('data', (chunk) => { body += chunk.toString(); });
-        response.on('end', () => {
-          try {
-            const json = JSON.parse(body);
-            if (json._aRecords) {
-                const mods = json._aRecords.map((record: any) => {
-                    const image = record._aPreviewMedia?._aImages?.[0];
-                    const iconUrl = image ? `${image._sBaseUrl}/${image._sFile220}` : '';
-                    return {
-                        id: record._idRow.toString(),
-                        name: record._sName,
-                        author: record._aSubmitter?._sName || 'Unknown',
-                        version: record._sVersion || '1.0',
-                        description: `Category: ${record._aRootCategory?._sName || 'Misc'}`,
-                        isEnabled: false,
-                        iconUrl: iconUrl,
-                        gameBananaId: record._idRow,
-                        latestVersion: record._sVersion || '1.0'
-                    };
-                });
-                resolve(mods);
-            } else {
-                resolve([]);
-            }
-          } catch (e) {
-            resolve([]);
-          }
-        });
-      });
-      request.on('error', (error) => {
-         resolve([]);
-      });
-      request.end();
-    });
+      return await searchOnlineMods(page);
   });
 }
 
