@@ -389,3 +389,4 @@ dist-ssr
 *.sw?
 
 verification/
+test-results/
