@@ -12,5 +12,6 @@ interface Window {
     searchOnlineMods: (page: number, search?: string) => Promise<any[]>;
     checkForUpdates: () => Promise<string[]>; // Returns list of updated mod IDs
     updateMod: (modId: string) => Promise<boolean>;
+    installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string }>;
   }
 }
