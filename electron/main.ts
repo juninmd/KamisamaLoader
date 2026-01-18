@@ -7,12 +7,16 @@ import AdmZip from 'adm-zip';
 let mainWindow: BrowserWindow | null;
 
 // Ensure Mods directory exists
-const MODS_DIR = path.join(path.dirname(app.getPath('exe')), 'Mods');
+// In production: ./Mods (relative to executable)
+// In test: ./Mods (relative to cwd/project root)
+const MODS_DIR = process.env.NODE_ENV === 'test'
+  ? path.join(process.cwd(), 'Mods')
+  : path.join(path.dirname(app.getPath('exe')), 'Mods');
 
 async function ensureModsDir() {
   try {
     let targetDir = MODS_DIR;
-    if (!app.isPackaged) {
+    if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
       targetDir = path.join(__dirname, '../../Mods');
     }
     await fs.mkdir(targetDir, { recursive: true });
@@ -25,7 +29,7 @@ async function ensureModsDir() {
 
 async function getModsDirPath() {
     let targetDir = MODS_DIR;
-    if (!app.isPackaged) {
+    if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
       targetDir = path.join(__dirname, '../../Mods');
     }
     return targetDir;
@@ -77,7 +81,7 @@ function createWindow() {
     frame: false,
     transparent: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
