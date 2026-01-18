@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, net, shell, dialog } from 'electron';
 import path from 'path';
 import { ModManager } from './mod-manager.js';
 
@@ -56,9 +56,24 @@ function createWindow() {
     return await modManager.toggleMod(modId, isEnabled);
   });
 
+  ipcMain.handle('get-settings', async () => {
+      return await modManager.getSettings();
+  });
+
   ipcMain.handle('save-settings', async (_event, settings) => {
-    console.log('Saving settings:', settings);
-    return true;
+      return await modManager.saveSettings(settings);
+  });
+
+  ipcMain.handle('select-game-directory', async () => {
+      if (!mainWindow) return null;
+      const result = await dialog.showOpenDialog(mainWindow, {
+          properties: ['openDirectory'],
+          title: 'Select Dragon Ball: Sparking! ZERO Game Directory'
+      });
+      if (!result.canceled && result.filePaths.length > 0) {
+          return result.filePaths[0];
+      }
+      return null;
   });
 
   ipcMain.handle('check-for-updates', async () => {
