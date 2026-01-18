@@ -36,7 +36,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             transition-all duration-300 transform
                             ${launching ? 'scale-110' : 'hover:scale-105'}
                             ki-charge
-                            shadow-orange-500/50
+                            shadow-lg shadow-orange-500/50
+                            hover:shadow-orange-400/80 hover:shadow-xl
                         `}
                     >
                         {launching ? (
@@ -44,10 +45,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         ) : (
                             <Play fill="currentColor" />
                         )}
-                        <span>{launching ? 'CHARGING...' : 'LAUNCH GAME'}</span>
+                        <span className={launching ? "animate-pulse" : ""}>{launching ? 'CHARGING...' : 'LAUNCH GAME'}</span>
 
                         {/* Internal glow for extra DBZ feel */}
-                        <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute inset-0 rounded-full bg-white/30 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
                     </button>
                  </div>
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown } from 'lucide-react';
+import { useToast } from '../components/ToastContext';
+import Skeleton from '../components/Skeleton';
 
 interface Mod {
     id: string;
@@ -16,6 +18,7 @@ interface Mod {
 }
 
 const Mods: React.FC = () => {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<'installed' | 'browse'>('installed');
     const [installedMods, setInstalledMods] = useState<Mod[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +56,7 @@ const Mods: React.FC = () => {
             setInstalledMods(mods);
         } catch (error) {
             console.error('Failed to load installed mods', error);
+            showToast('Failed to load installed mods', 'error');
         } finally {
             setInstalledLoading(false);
         }
@@ -66,6 +70,7 @@ const Mods: React.FC = () => {
             setBrowseMods(prev => page === 1 ? newMods : [...prev, ...newMods]);
         } catch (error) {
             console.error('Failed to load online mods', error);
+            showToast('Failed to load online mods', 'error');
         } finally {
             setLoadingBrowse(false);
         }
@@ -125,9 +130,13 @@ const Mods: React.FC = () => {
                     }
                     return m;
                 }));
+                showToast('Mod updated successfully', 'success');
+            } else {
+                showToast('Failed to update mod', 'error');
             }
         } catch (e) {
             console.error(e);
+            showToast('Failed to update mod', 'error');
         } finally {
             setUpdatingMods(prev => prev.filter(mid => mid !== id));
         }
@@ -144,14 +153,25 @@ const Mods: React.FC = () => {
              if (!success) {
                  // Revert if failed
                  setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: !newState } : m));
+                 showToast('Failed to toggle mod', 'error');
              }
          }
     };
 
-    const handleInstall = async (_mod: Mod) => {
-        // This would require a download URL in the browse data, which requires a profile fetch first usually
-        // For now, alerting as originally implemented, but check main.ts for install logic
-        alert(`Install feature for online mods requires fetching download URL first (Pending Implementation for Browse tab). Use Drag & Drop or Update for now.`);
+    const handleInstall = async (mod: Mod) => {
+        showToast(`Installing ${mod.name}...`, 'info');
+        try {
+            const result = await window.electronAPI.installOnlineMod(mod);
+            if (result.success) {
+                showToast(result.message, 'success');
+                // Refresh installed mods to show the new one
+                loadInstalledMods();
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (e) {
+            showToast('Installation failed unexpectedly', 'error');
+        }
     };
 
     // Drag and Drop Handlers
@@ -190,9 +210,9 @@ const Mods: React.FC = () => {
             if (result.success) {
                 // Refresh list
                 loadInstalledMods();
-                // Optional: Show success toast
+                showToast('Mod installed successfully', 'success');
             } else {
-                alert(result.message);
+                showToast(result.message, 'error');
             }
         }
     };
@@ -413,7 +433,7 @@ const InstalledList: React.FC<{
 }
 
 const BrowseList: React.FC<{ mods: Mod[]; loading: boolean; onInstall: (mod: Mod) => void }> = ({ mods, loading, onInstall }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
         {mods.map((mod) => (
              <div key={mod.id} className="glass-panel overflow-hidden group flex flex-col hover:-translate-y-1 transition-transform duration-300 border border-white/5 hover:border-blue-500/30">
                 <div className="h-40 bg-gray-800 relative group-hover:scale-105 transition-transform duration-700">
@@ -446,10 +466,11 @@ const BrowseList: React.FC<{ mods: Mod[]; loading: boolean; onInstall: (mod: Mod
              </div>
         ))}
         {loading && (
-            <div className="col-span-full py-8 flex flex-col items-center justify-center text-gray-500 animate-pulse">
-                <RefreshCw size={24} className="animate-spin mb-2" />
-                <p className="text-sm font-medium">Loading more mods...</p>
-            </div>
+             <>
+                <Skeleton />
+                <Skeleton />
+                <Skeleton />
+             </>
         )}
     </div>
 );
