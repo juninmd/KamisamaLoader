@@ -93,8 +93,48 @@ export class ModManager {
 
         const paksDir = path.join(root, 'SparkingZERO', 'Content', 'Paks', '~mods');
         const logicModsDir = path.join(root, 'SparkingZERO', 'Content', 'Paks', 'LogicMods');
+        const binariesDir = path.join(root, 'SparkingZERO', 'Binaries', 'Win64');
 
-        return { paksDir, logicModsDir };
+        return { paksDir, logicModsDir, binariesDir };
+    }
+
+    private async updateUE4SSModsTxt(binariesDir: string, modName: string, enabled: boolean) {
+        const modsTxtPath = path.join(binariesDir, 'Mods', 'mods.txt');
+        try {
+            await fs.mkdir(path.dirname(modsTxtPath), { recursive: true });
+            let content = '';
+            try {
+                content = await fs.readFile(modsTxtPath, 'utf-8');
+            } catch {
+                // File might not exist yet
+            }
+
+            const lines = content.split(/\r?\n/);
+            let found = false;
+            const newLines = lines.map(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return line;
+
+                // Split by : or =
+                const parts = cleanLine.split(/[:=]/);
+                if (parts.length >= 2) {
+                    const key = parts[0].trim();
+                    if (key.toLowerCase() === modName.toLowerCase()) {
+                        found = true;
+                        return `${modName} : ${enabled ? '1' : '0'}`;
+                    }
+                }
+                return line;
+            });
+
+            if (!found) {
+                newLines.push(`${modName} : ${enabled ? '1' : '0'}`);
+            }
+
+            await fs.writeFile(modsTxtPath, newLines.join('\n'));
+        } catch (e) {
+            console.error('Failed to update mods.txt', e);
+        }
     }
 
     private async getAllFiles(dir: string, fileList: string[] = []) {
@@ -119,16 +159,38 @@ export class ModManager {
             return false;
         }
 
-        const { paksDir } = this.resolveGamePaths(settings.gamePath);
+        const { paksDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
         const deployedFiles: string[] = [];
+        let ue4ssModName: string | null = null;
 
         try {
             // Ensure ~mods exists
             await fs.mkdir(paksDir, { recursive: true });
 
             const files = await this.getAllFiles(mod.folderPath);
+            const ue4ssDir = path.join(mod.folderPath, 'ue4ss');
+            let isUe4ss = false;
+            try { isUe4ss = (await fs.stat(ue4ssDir)).isDirectory(); } catch { }
 
             for (const src of files) {
+                // If it is inside ue4ss dir
+                if (isUe4ss && src.startsWith(ue4ssDir)) {
+                    const relativePath = path.relative(ue4ssDir, src);
+                    const dest = path.join(binariesDir, relativePath);
+
+                    // Try to identify ModName from "Mods/ModName/..."
+                    // relativePath matches "Mods\ModName\..." on Windows
+                    const parts = relativePath.split(path.sep);
+                    if (parts[0] === 'Mods' && parts.length >= 2) {
+                        ue4ssModName = parts[1];
+                    }
+
+                    await fs.mkdir(path.dirname(dest), { recursive: true });
+                    await fs.copyFile(src, dest);
+                    deployedFiles.push(dest);
+                    continue;
+                }
+
                 const ext = path.extname(src).toLowerCase();
                 const filename = path.basename(src);
 
@@ -144,6 +206,11 @@ export class ModManager {
                 }
             }
 
+            if (ue4ssModName) {
+                await this.updateUE4SSModsTxt(binariesDir, ue4ssModName, true);
+                mod.ue4ssModName = ue4ssModName; // Save for undeploy
+            }
+
             mod.deployedFiles = deployedFiles;
             return true;
         } catch (e) {
@@ -155,6 +222,18 @@ export class ModManager {
 
     async undeployMod(mod: any) {
         console.log(`Undeploying mod: ${mod.name}`);
+
+        // Handle UE4SS disable
+        if (mod.ue4ssModName) {
+            try {
+                const settings = await this.getSettings();
+                if (settings.gamePath) {
+                    const { binariesDir } = this.resolveGamePaths(settings.gamePath);
+                    await this.updateUE4SSModsTxt(binariesDir, mod.ue4ssModName, false);
+                }
+            } catch (e) { console.error('Failed to disable UE4SS mod in mods.txt', e); }
+        }
+
         if (!mod.deployedFiles || !Array.isArray(mod.deployedFiles)) {
             return true;
         }
@@ -430,9 +509,6 @@ export class ModManager {
                 const img = profile._aPreviewMedia._aImages[0];
                 mod.iconUrl = `${img._sBaseUrl}/${img._sFile220}`;
             }
-
-            const latestFile = profile._aFiles[0];
-
 
             const latestFile = profile._aFiles[0];
             const downloadUrl = latestFile._sDownloadUrl;
