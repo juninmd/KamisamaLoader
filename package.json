@@ -3,18 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "main": "dist-electron/main.js",
-  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:electron\" \"npm run dev:vite\"",
-    "dev:vite": "vite",
-    "dev:electron": "tsc -p tsconfig.electron.json && wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "dev:vite": "vite --port 12352 --strictPort",
+    "dev:electron": "tsc -p tsconfig.electron.json && wait-on tcp:12352 && cross-env VITE_DEV_SERVER_URL=http://localhost:12352 electron .",
     "build": "tsc -b && vite build && tsc -p tsconfig.electron.json",
     "lint": "eslint .",
     "test:unit": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.562.0",
     "p-limit": "^7.2.0",
     "react": "^19.2.0",

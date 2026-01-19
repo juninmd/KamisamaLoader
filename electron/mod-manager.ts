@@ -7,11 +7,15 @@ import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
 import { fetchModProfile, searchOnlineMods, Mod } from './gamebanana.js';
 
+import { DownloadManager } from './download-manager';
+
 export class ModManager {
     private modsDir: string;
     private settingsFile: string;
+    private downloadManager: DownloadManager | null = null;
 
-    constructor() {
+    constructor(downloadManager?: DownloadManager) {
+        if (downloadManager) this.downloadManager = downloadManager;
         this.modsDir = path.join(path.dirname(app.getPath('exe')), 'Mods');
         this.settingsFile = path.join(this.modsDir, 'settings.json');
         if (!app.isPackaged) {
@@ -130,7 +134,11 @@ export class ModManager {
 
                 // Deploy .pak, .sig, .utoc, .ucas
                 if (['.pak', '.sig', '.utoc', '.ucas'].includes(ext)) {
-                    const dest = path.join(paksDir, filename);
+                    // Priority prefix: 001_ModName.pak
+                    const priority = (mod.priority || 0).toString().padStart(3, '0');
+                    const destFilename = `${priority}_${filename}`;
+                    const dest = path.join(paksDir, destFilename);
+
                     await fs.copyFile(src, dest);
                     deployedFiles.push(dest);
                 }
@@ -189,6 +197,10 @@ export class ModManager {
             let mods = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
+            // Calculate new priority (highest + 1)
+            const maxPriority = mods.reduce((max: number, m: any) => Math.max(max, m.priority || 0), 0);
+            const newPriority = maxPriority + 1;
+
             // Check if exists
             const existingIdx = mods.findIndex((m: any) => m.name === modName);
             const newMod = {
@@ -198,7 +210,8 @@ export class ModManager {
                 version: '1.0',
                 description: 'Locally installed mod',
                 isEnabled: true,
-                folderPath: modDestDir
+                folderPath: modDestDir,
+                priority: newPriority
             };
 
             if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newMod };
@@ -218,8 +231,28 @@ export class ModManager {
             const data = await fs.readFile(modsFile, 'utf-8');
             const mods = JSON.parse(data);
             const modIndex = mods.findIndex((m: any) => m.id === modId);
+
             if (modIndex !== -1) {
-                // Update state first
+                const targetMod = mods[modIndex];
+
+                // Conflict Check (Only when enabling)
+                let conflictMessage = null;
+                if (isEnabled) {
+                    const conflictingMod = mods.find((m: any) =>
+                        m.isEnabled &&
+                        m.id !== modId &&
+                        m.category && targetMod.category &&
+                        m.category === targetMod.category &&
+                        // Ignore generic categories
+                        !['UI', 'Misc', 'Sounds', 'Music', 'Other'].includes(targetMod.category)
+                    );
+
+                    if (conflictingMod) {
+                        conflictMessage = `Warning: This mod conflicts with "${conflictingMod.name}" (Same Category: ${targetMod.category}). Higher priority mod will take precedence.`;
+                    }
+                }
+
+                // Update state
                 mods[modIndex].isEnabled = isEnabled;
 
                 // Deploy or Undeploy
@@ -230,12 +263,12 @@ export class ModManager {
                 }
 
                 await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-                return true;
+                return { success: true, conflict: conflictMessage };
             }
         } catch (e) {
             console.error(e);
         }
-        return false;
+        return { success: false };
     }
 
     async checkForUpdates() {
@@ -322,40 +355,55 @@ export class ModManager {
             if (!mod || !mod.latestFileUrl) return false;
 
             const tempDir = app.getPath('temp');
-            const tempFile = path.join(tempDir, `update_${mod.id}.zip`);
+            // Check if we have download manager
+            if (this.downloadManager) {
+                return new Promise((resolve) => {
+                    const fileName = `update_${mod.id}.zip`;
+                    const id = this.downloadManager!.startDownload(mod.latestFileUrl, tempDir, fileName, { type: 'update', modId });
 
-            // Download
-            await this.downloadFile(mod.latestFileUrl, tempFile);
+                    const onComplete = async (dlId: string) => {
+                        if (dlId === id) {
+                            // Proceed with install
+                            const tempFile = path.join(tempDir, fileName);
+                            const success = await this.finalizeUpdate(mod, tempFile, mods, modsFile);
+                            this.downloadManager!.removeListener('download-completed', onComplete);
+                            resolve(success);
+                        }
+                    };
 
-            // Install (Overwrite)
-            const modDestDir = mod.folderPath || path.join(this.modsDir, mod.name);
-
-            // Ensure dir exists
-            await fs.mkdir(modDestDir, { recursive: true });
-
-            // Extract
-            try {
-                const zip = new AdmZip(tempFile);
-                zip.extractAllTo(modDestDir, true);
-            } catch (e) {
-                console.error('Extraction failed', e);
-                await fs.unlink(tempFile);
+                    this.downloadManager!.on('download-completed', onComplete);
+                    // Handle error too... simplify for now or assume UI handles it
+                });
+            } else {
+                // Fallback / Legacy (keep or remove? Let's remove to force usage)
                 return false;
             }
 
-            // Cleanup
+        } catch (e) {
+            console.error('Update failed', e);
+            return false;
+        }
+    }
+
+    // Helper to finalize update after download
+    private async finalizeUpdate(mod: any, tempFile: string, mods: any[], modsFile: string) {
+        try {
+            // Install (Overwrite)
+            const modDestDir = mod.folderPath || path.join(this.modsDir, mod.name);
+            await fs.mkdir(modDestDir, { recursive: true });
+
+            const zip = new AdmZip(tempFile);
+            zip.extractAllTo(modDestDir, true);
+
             await fs.unlink(tempFile);
 
-            // Update Info
             mod.version = mod.latestVersion;
             mod.hasUpdate = false;
-            // mod.latestFileId = mod.latestFileId; // Keep this for next check
 
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
             return true;
-
         } catch (e) {
-            console.error('Update failed', e);
+            console.error(e);
             return false;
         }
     }
@@ -366,11 +414,25 @@ export class ModManager {
 
     async installOnlineMod(mod: Mod) {
         try {
-            // 1. Fetch Profile to get download URL
+            console.log(`Installing mod: ${mod.gameBananaId}`);
+            // 1. Fetch Profile to get download URL and missing details
             const profile = await fetchModProfile(mod.gameBananaId);
             if (!profile || !profile._aFiles || profile._aFiles.length === 0) {
                 return { success: false, message: 'No download files found for this mod.' };
             }
+
+            // Fallback for missing details (e.g. from Protocol Handler)
+            if (!mod.name || mod.name === 'Unknown') mod.name = profile._sName;
+            if (!mod.author || mod.author === 'Unknown') mod.author = profile._aSubmitter?._sName || 'Unknown';
+            if (!mod.version || mod.version === '1.0') mod.version = profile._sVersion || '1.0';
+            if (!mod.description) mod.description = profile._sText || '';
+            if (!mod.iconUrl && profile._aPreviewMedia?._aImages?.[0]) {
+                const img = profile._aPreviewMedia._aImages[0];
+                mod.iconUrl = `${img._sBaseUrl}/${img._sFile220}`;
+            }
+
+            const latestFile = profile._aFiles[0];
+
 
             const latestFile = profile._aFiles[0];
             const downloadUrl = latestFile._sDownloadUrl;
@@ -426,6 +488,171 @@ export class ModManager {
         } catch (e) {
             console.error(e);
             return { success: false, message: `Installation failed: ${(e as Error).message}` };
+        }
+    }
+
+    async getModChangelog(modId: string) {
+        const modsFile = await this.getModsFilePath();
+        let mods: any[] = [];
+        try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
+
+        const mod = mods.find(m => m.id === modId);
+        if (!mod || !mod.gameBananaId) return null;
+
+        return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId));
+    }
+
+    async setModPriority(modId: string, direction: 'up' | 'down') {
+        try {
+            const modsFile = await this.getModsFilePath();
+            const data = await fs.readFile(modsFile, 'utf-8');
+            let mods = JSON.parse(data);
+
+            // Sort by priority first to ensure index matches logical order
+            mods.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
+
+            const index = mods.findIndex((m: any) => m.id === modId);
+            if (index === -1) return false;
+
+            const targetIndex = direction === 'up' ? index + 1 : index - 1; // Higher priority = executed later = "Up" visually? 
+            // Usually "Top" of list = High Priority (Overwrites others).
+            // But in file system, Z_Mod overwrites A_Mod.
+            // If "Up" means "Higher in list" which means "Higher Priority" -> It should have a HIGHER alphanumeric name?
+            // Wait. Alphabetical: A loads first, Z loads last (Z wins).
+            // So Higher Priority = Higher Number (999).
+            // Visual List: usually High Priority is at the TOP.
+            // If I move a mod UP the list, I want it to WIN over the one below it.
+            // So "Up" = Increase Priority Number.
+
+            if (targetIndex < 0 || targetIndex >= mods.length) return false;
+
+            const currentMod = mods[index];
+            const targetMod = mods[targetIndex];
+
+            // Swap priorities
+            const temp = currentMod.priority || 0;
+            currentMod.priority = targetMod.priority || 0;
+            targetMod.priority = temp;
+
+            // Redeploy both if enabled
+            if (currentMod.isEnabled) {
+                await this.undeployMod(currentMod);
+                await this.deployMod(currentMod);
+            }
+            if (targetMod.isEnabled) {
+                await this.undeployMod(targetMod);
+                await this.deployMod(targetMod);
+            }
+
+            // Save
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    private async getProfilesPath() {
+        await this.ensureModsDir();
+        return path.join(this.modsDir, 'profiles.json');
+    }
+
+    async getProfiles() {
+        try {
+            const profilesFile = await this.getProfilesPath();
+            const data = await fs.readFile(profilesFile, 'utf-8');
+            return JSON.parse(data);
+        } catch (error) {
+            return [];
+        }
+    }
+
+    async createProfile(name: string) {
+        try {
+            const mods = await this.getInstalledMods();
+            const enabledModIds = mods.filter((m: any) => m.isEnabled).map((m: any) => m.id);
+
+            const profiles = await this.getProfiles();
+            const newProfile = {
+                id: Date.now().toString(),
+                name,
+                modIds: enabledModIds
+            };
+
+            profiles.push(newProfile);
+
+            const profilesFile = await this.getProfilesPath();
+            await fs.writeFile(profilesFile, JSON.stringify(profiles, null, 2));
+            return { success: true, profile: newProfile };
+        } catch (e) {
+            console.error(e);
+            return { success: false, message: (e as Error).message };
+        }
+    }
+
+    async deleteProfile(profileId: string) {
+        try {
+            let profiles = await this.getProfiles();
+            profiles = profiles.filter((p: any) => p.id !== profileId);
+
+            const profilesFile = await this.getProfilesPath();
+            await fs.writeFile(profilesFile, JSON.stringify(profiles, null, 2));
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    async loadProfile(profileId: string) {
+        try {
+            const profiles = await this.getProfiles();
+            const profile = profiles.find((p: any) => p.id === profileId);
+            if (!profile) return { success: false, message: 'Profile not found' };
+
+            const modsFile = await this.getModsFilePath();
+            const data = await fs.readFile(modsFile, 'utf-8');
+            const mods = JSON.parse(data);
+
+            const targetEnabledIds = new Set(profile.modIds);
+
+            // Calculate diff
+            const toDisable: any[] = [];
+            const toEnable: any[] = [];
+
+            for (const mod of mods) {
+                const shouldBeEnabled = targetEnabledIds.has(mod.id);
+                if (mod.isEnabled && !shouldBeEnabled) {
+                    toDisable.push(mod);
+                } else if (!mod.isEnabled && shouldBeEnabled) {
+                    toEnable.push(mod);
+                }
+                // Update state in memory
+                mod.isEnabled = shouldBeEnabled;
+            }
+
+            console.log(`Loading Profile: Disabling ${toDisable.length}, Enabling ${toEnable.length}`);
+
+            // Apply Changes
+            // 1. Disable first to clear conflicts/space
+            for (const mod of toDisable) {
+                await this.undeployMod(mod);
+            }
+
+            // 2. Enable new ones
+            for (const mod of toEnable) {
+                await this.deployMod(mod);
+            }
+
+            // Save mods.json
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+            return { success: true };
+
+        } catch (e) {
+            console.error('Failed to load profile', e);
+            return { success: false, message: (e as Error).message };
         }
     }
 
