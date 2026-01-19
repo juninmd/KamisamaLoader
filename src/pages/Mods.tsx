@@ -7,6 +7,10 @@ import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
 import { DownloadsList } from '../components/DownloadsList';
 import ProfileManager from '../components/ProfileManager';
+import FilterBar from '../components/FilterBar';
+import type { FilterState } from '../components/FilterBar';
+import CategorySidebar from '../components/CategorySidebar';
+import type { Category } from '../components/CategorySidebar';
 
 interface Mod {
     id: string;
@@ -50,6 +54,16 @@ const Mods: React.FC = () => {
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
 
+    // New: Filter and Category state
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [filters, setFilters] = useState<FilterState>({
+        categories: [],
+        sortBy: 'downloads',
+        order: 'desc',
+        dateRange: 'all'
+    });
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
     const dragCounter = useRef(0);
 
     // Initial load for Installed Mods
@@ -69,9 +83,32 @@ const Mods: React.FC = () => {
     // Load Browse Mods on tab change if empty
     useEffect(() => {
         if (activeTab === 'browse' && browseMods.length === 0) {
-            loadBrowseMods(1);
+            loadCategories();
+            loadBrowseMods(1, true);
         }
     }, [activeTab]);
+
+    // Reload when filters change
+    useEffect(() => {
+        if (activeTab === 'browse') {
+            loadBrowseMods(1, true);
+        }
+    }, [filters]);
+
+    const loadCategories = async () => {
+        try {
+            const cats = await window.electronAPI.fetchCategories();
+            if (cats && Array.isArray(cats)) {
+                setCategories(cats.map((cat: any, idx: number) => ({
+                    id: cat._idRow || idx,
+                    name: cat._sName || cat.name || 'Unknown',
+                    count: cat._nModCount || 0
+                })));
+            }
+        } catch (error) {
+            console.error('[Categories] Failed to load', error);
+        }
+    };
 
     const loadInstalledMods = async () => {
         // Don't show full loading spinner if just refreshing
@@ -87,12 +124,31 @@ const Mods: React.FC = () => {
         }
     };
 
-    const loadBrowseMods = async (page: number) => {
+    const loadBrowseMods = async (page: number, reset: boolean = false) => {
         if (loadingBrowse) return;
         setLoadingBrowse(true);
         try {
-            const newMods = await window.electronAPI.searchOnlineMods(page);
-            setBrowseMods(prev => page === 1 ? newMods : [...prev, ...newMods]);
+            let newMods: Mod[];
+
+            // Use advanced search if filters are active
+            if (filters.categories.length > 0 || filters.sortBy !== 'downloads' || filters.dateRange !== 'all') {
+                console.log('[Browse] Using searchBySection with filters:', filters);
+                newMods = await window.electronAPI.searchBySection({
+                    page,
+                    perPage: 20,
+                    sort: filters.sortBy,
+                    order: filters.order,
+                    // TODO: Add category filtering when API supports it
+                });
+            } else {
+                // Fallback to simple search
+                newMods = await window.electronAPI.searchOnlineMods(page);
+            }
+
+            setBrowseMods(prev => reset || page === 1 ? newMods : [...prev, ...newMods]);
+            if (reset || page === 1) {
+                setBrowsePage(1);
+            }
         } catch (error) {
             console.error('Failed to load online mods', error);
             showToast('Failed to load online mods', 'error');
@@ -310,132 +366,175 @@ const Mods: React.FC = () => {
                     >
                         Browse Online
                     </button>
-                <button
-                    onClick={() => setActiveTab('downloads')}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'downloads'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
-                >
-                    Downloads
-                </button>
-            </div>
-
-            {/* Actions Row */}
-            <div className="flex items-center space-x-3 w-full xl:w-auto">
-                {/* Profile Manager */}
-                {activeTab === 'installed' && (
-                    <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
-                )}
-
-                {/* Search */}
-                <div className="relative group flex-1 xl:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search mods..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-black/30 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
+                    <button
+                        onClick={() => setActiveTab('downloads')}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'downloads'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        Downloads
+                    </button>
                 </div>
 
-                {/* Filter (Only for Installed) */}
-                {activeTab === 'installed' && (
-                    <>
-                        <div className="relative">
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value as any)}
-                                className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
-                            >
-                                <option value="all">All Mods</option>
-                                <option value="enabled">Enabled Only</option>
-                                <option value="disabled">Disabled Only</option>
-                                <option value="updates">Updates Available</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                        </div>
+                {/* Actions Row */}
+                <div className="flex items-center space-x-3 w-full xl:w-auto">
+                    {/* Profile Manager */}
+                    {activeTab === 'installed' && (
+                        <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
+                    )}
 
-                        {/* Check Updates Button */}
-                        <button
-                            onClick={handleCheckUpdates}
-                            disabled={checkingUpdates}
-                            className={`flex items-center space-x-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <RefreshCw size={16} className={checkingUpdates ? "animate-spin" : ""} />
-                            <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
-                        </button>
+                    {/* Search */}
+                    <div className="relative group flex-1 xl:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search mods..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-black/30 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                        />
+                    </div>
 
-                        {/* Update All Button */}
-                        {hasUpdates && (
+                    {/* Filter (Only for Installed) */}
+                    {activeTab === 'installed' && (
+                        <>
+                            <div className="relative">
+                                <select
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value as any)}
+                                    className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
+                                >
+                                    <option value="all">All Mods</option>
+                                    <option value="enabled">Enabled Only</option>
+                                    <option value="disabled">Disabled Only</option>
+                                    <option value="updates">Updates Available</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                            </div>
+
+                            {/* Check Updates Button */}
                             <button
-                                onClick={handleUpdateAll}
-                                className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 transition-all animate-pulse hover:animate-none"
+                                onClick={handleCheckUpdates}
+                                disabled={checkingUpdates}
+                                className={`flex items-center space-x-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                <Download size={16} />
-                                <span>Update All</span>
+                                <RefreshCw size={16} className={checkingUpdates ? "animate-spin" : ""} />
+                                <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
                             </button>
-                        )}
-                    </>
+
+                            {/* Update All Button */}
+                            {hasUpdates && (
+                                <button
+                                    onClick={handleUpdateAll}
+                                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 transition-all animate-pulse hover:animate-none"
+                                >
+                                    <Download size={16} />
+                                    <span>Update All</span>
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div
+                className="flex-1 overflow-y-auto pr-2 pb-4 scroll-smooth"
+                onScroll={handleScroll}
+            >
+                {activeTab === 'installed' ? (
+                    installedLoading ? (
+                        <div className="h-64 flex items-center justify-center text-gray-500">
+                            <RefreshCw size={24} className="animate-spin mb-2" />
+                        </div>
+                    ) : (
+                        <InstalledList
+                            mods={filteredInstalledMods}
+                            onToggle={handleToggle}
+                            onUpdate={(mod) => handleUpdateClick(mod)}
+                            onPriorityChange={async (id, dir) => {
+                                await window.electronAPI.setModPriority(id, dir);
+                                loadInstalledMods();
+                            }}
+                            updatingMods={updatingMods}
+                            onSelect={(mod) => setSelectedMod(mod)}
+                        />
+                    )
+                ) : activeTab === 'downloads' ? (
+                    <DownloadsList />
+                ) : (
+                    <div className="flex space-x-4 h-full">
+                        {/* Category Sidebar */}
+                        <CategorySidebar
+                            categories={categories}
+                            selectedCategories={selectedCategories}
+                            onCategorySelect={(category) => {
+                                setSelectedCategories(prev =>
+                                    prev.includes(category)
+                                        ? prev.filter(c => c !== category)
+                                        : [...prev, category]
+                                );
+                                setFilters(f => ({
+                                    ...f,
+                                    categories: selectedCategories.includes(category)
+                                        ? selectedCategories.filter(c => c !== category)
+                                        : [...selectedCategories, category]
+                                }));
+                            }}
+                        />
+
+                        {/* Main Content */}
+                        <div className="flex-1 flex flex-col min-w-0">
+                            {/* Filter Bar */}
+                            <FilterBar
+                                availableCategories={categories}
+                                activeFilters={filters}
+                                onFilterChange={(newFilters) => {
+                                    console.log('[FilterBar] New filters:', newFilters);
+                                    setFilters(newFilters);
+                                    setSelectedCategories(newFilters.categories);
+                                }}
+                            />
+
+                            {/* Browse List */}
+                            <div className="flex-1 overflow-auto">
+                                <BrowseList
+                                    mods={browseMods}
+                                    loading={loadingBrowse}
+                                    onInstall={handleInstall}
+                                    onSelect={(mod) => setSelectedMod(mod)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
-        </div>
 
-            {/* Content Area */ }
-    <div
-        className="flex-1 overflow-y-auto pr-2 pb-4 scroll-smooth"
-        onScroll={handleScroll}
-    >
-        {activeTab === 'installed' ? (
-            installedLoading ? (
-                <div className="h-64 flex items-center justify-center text-gray-500">
-                    <RefreshCw size={24} className="animate-spin mb-2" />
-                </div>
-            ) : (
-                <InstalledList
-                    mods={filteredInstalledMods}
-                    onToggle={handleToggle}
-                    onUpdate={(mod) => handleUpdateClick(mod)}
-                    onPriorityChange={async (id, dir) => {
-                        await window.electronAPI.setModPriority(id, dir);
-                        loadInstalledMods();
-                    }}
-                    updatingMods={updatingMods}
-                    onSelect={(mod) => setSelectedMod(mod)}
-                />
-            )
-        ) : activeTab === 'downloads' ? (
-            <DownloadsList />
-        ) : (
-            <BrowseList mods={browseMods} loading={loadingBrowse} onInstall={handleInstall} onSelect={(mod) => setSelectedMod(mod)} />
-        )}
-    </div>
+            {/* Mod Details Modal */}
+            {
+                selectedMod && (
+                    <ModDetailsModal
+                        mod={selectedMod}
+                        isOpen={!!selectedMod}
+                        onClose={() => setSelectedMod(null)}
+                        onInstall={(mod) => handleInstall(mod as any)}
+                    />
+                )
+            }
 
-    {/* Mod Details Modal */ }
-    {
-        selectedMod && (
-            <ModDetailsModal
-                mod={selectedMod}
-                isOpen={!!selectedMod}
-                onClose={() => setSelectedMod(null)}
-                onInstall={(mod) => handleInstall(mod as any)}
-            />
-        )
-    }
-
-    {/* Update Dialog */ }
-    {
-        updateDialogMod && (
-            <UpdateDialog
-                mod={updateDialogMod}
-                changelog={updateChangelog}
-                isUpdating={updatingMods.includes(updateDialogMod.id)}
-                onUpdate={() => handlePerformUpdate(updateDialogMod.id)}
-                onClose={() => setUpdateDialogMod(null)}
-            />
-        )
-    }
+            {/* Update Dialog */}
+            {
+                updateDialogMod && (
+                    <UpdateDialog
+                        mod={updateDialogMod}
+                        changelog={updateChangelog}
+                        isUpdating={updatingMods.includes(updateDialogMod.id)}
+                        onUpdate={() => handlePerformUpdate(updateDialogMod.id)}
+                        onClose={() => setUpdateDialogMod(null)}
+                    />
+                )
+            }
         </div >
     );
 };

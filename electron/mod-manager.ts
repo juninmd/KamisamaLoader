@@ -491,6 +491,26 @@ export class ModManager {
         return await searchOnlineMods(page);
     }
 
+    async searchBySection(options: any) {
+        const { searchBySection } = await import('./gamebanana.js');
+        return await searchBySection(options);
+    }
+
+    async fetchCategories(gameId: number = 21179) {
+        const { fetchCategories } = await import('./gamebanana.js');
+        return await fetchCategories(gameId);
+    }
+
+    async fetchNewMods(page: number = 1) {
+        const { fetchNewMods } = await import('./gamebanana.js');
+        return await fetchNewMods(page);
+    }
+
+    async fetchFeaturedMods() {
+        const { fetchFeaturedMods } = await import('./gamebanana.js');
+        return await fetchFeaturedMods();
+    }
+
     async installOnlineMod(mod: Mod) {
         try {
             console.log(`Installing mod: ${mod.gameBananaId}`);
@@ -638,8 +658,17 @@ export class ModManager {
         try {
             const profilesFile = await this.getProfilesPath();
             const data = await fs.readFile(profilesFile, 'utf-8');
-            return JSON.parse(data);
-        } catch (error) {
+            try {
+                return JSON.parse(data);
+            } catch (jsonErr) {
+                console.error('Profiles file corrupted:', jsonErr);
+                return []; // Return empty if corrupted
+            }
+        } catch (error: any) {
+            // File not found is fine, return empty
+            if (error.code !== 'ENOENT') {
+                console.error('Failed to read profiles:', error);
+            }
             return [];
         }
     }
@@ -660,10 +689,11 @@ export class ModManager {
 
             const profilesFile = await this.getProfilesPath();
             await fs.writeFile(profilesFile, JSON.stringify(profiles, null, 2));
+            console.log(`Profile created: ${name} (${newProfile.id})`);
             return { success: true, profile: newProfile };
-        } catch (e) {
-            console.error(e);
-            return { success: false, message: (e as Error).message };
+        } catch (e: any) {
+            console.error('Failed to create profile:', e);
+            return { success: false, message: e.message || 'Unknown error' };
         }
     }
 

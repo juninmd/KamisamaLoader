@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Online Mods
   searchOnlineMods: (page: number, search?: string) => ipcRenderer.invoke('search-online-mods', page, search),
+  searchBySection: (options: any) => ipcRenderer.invoke('search-by-section', options),
+  fetchCategories: (gameId?: number) => ipcRenderer.invoke('fetch-categories', gameId),
+  fetchNewMods: (page?: number) => ipcRenderer.invoke('fetch-new-mods', page),
+  fetchFeaturedMods: () => ipcRenderer.invoke('fetch-featured-mods'),
+
   // Profiles
   getProfiles: () => ipcRenderer.invoke('get-profiles'),
   createProfile: (name: string) => ipcRenderer.invoke('create-profile', name),
@@ -32,4 +37,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadProfile: (id: string) => ipcRenderer.invoke('load-profile', id),
 
   installOnlineMod: (mod: any) => ipcRenderer.invoke('install-online-mod', mod),
+
+  // Additional helpers
+  launchGame: () => ipcRenderer.invoke('launch-game'),
+  setModPriority: (modId: string, direction: 'up' | 'down') => ipcRenderer.invoke('set-mod-priority', modId, direction),
+  getModChangelog: (modId: string) => ipcRenderer.invoke('get-mod-changelog', modId),
+  getDownloads: () => ipcRenderer.invoke('get-downloads'),
+  pauseDownload: (id: string) => ipcRenderer.invoke('pause-download', id),
+  resumeDownload: (id: string) => ipcRenderer.invoke('resume-download', id),
+  onDownloadScanFinished: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('download-scan-finished');
+    ipcRenderer.on('download-scan-finished', callback);
+  },
 });
