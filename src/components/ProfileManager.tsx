@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, ChevronDown, Check, Folder, Plus } from 'lucide-react';
+import { Save, Trash2, ChevronDown, Folder, Plus } from 'lucide-react';
 import { useToast } from './ToastContext';
 
 interface Profile {

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { X, Check, XCircle, ArrowRight, RefreshCw } from 'lucide-react';
+import { X, Check, ArrowRight, RefreshCw } from 'lucide-react';
 
 interface Mod {
     id: string;

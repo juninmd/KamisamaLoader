@@ -8,8 +8,8 @@ interface Mod {
     name: string;
     author: string;
     version: string;
-    description: string;
-    iconUrl: string;
+    description?: string;
+    iconUrl?: string;
     images?: string[];
     viewCount?: number;
     likeCount?: number;
@@ -19,6 +19,7 @@ interface Mod {
     fileSize?: number;
     license?: string;
     submitter?: string;
+    isEnabled?: boolean; // Added optional property
 }
 
 interface ModDetailsModalProps {
