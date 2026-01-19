@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
 import { app } from 'electron';
+import { execFile } from 'child_process';
+
+// Mock child_process
+vi.mock('child_process', () => ({
+    execFile: vi.fn((path, args, opts, cb) => cb && cb(null)),
+}));
 
 // Mock electron app
 vi.mock('electron', () => ({
@@ -60,5 +66,24 @@ describe('ModManager', () => {
         const writeCall = (fs.writeFile as any).mock.calls[0];
         const writtenData = JSON.parse(writeCall[1]);
         expect(writtenData[0].isEnabled).toBe(true);
+    });
+    it('launchGame should execute correct binary', async () => {
+        // Mock checking path
+        (fs.stat as any).mockResolvedValue({ isDirectory: () => true });
+        (fs.access as any).mockResolvedValue(undefined); // Success
+        // Mock settings
+        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/mock/game/path' }));
+
+        const result = await modManager.launchGame();
+
+        expect(result).toBe(true);
+        expect(execFile).toHaveBeenCalled();
+        const callArgs = (execFile as any).mock.calls[0];
+        expect(callArgs[0]).toContain('SparkingZERO.exe');
+    });
+
+    it('launchGame should fail if not configured', async () => {
+        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '' }));
+        await expect(modManager.launchGame()).rejects.toThrow('configured');
     });
 });

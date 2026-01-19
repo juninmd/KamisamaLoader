@@ -15,5 +15,6 @@ interface Window {
     checkForUpdates: () => Promise<string[]>; // Returns list of updated mod IDs
     updateMod: (modId: string) => Promise<boolean>;
     installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string }>;
+    launchGame: () => Promise<boolean>;
   }
 }

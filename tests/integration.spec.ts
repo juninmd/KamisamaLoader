@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, it, expect, vi } from 'vitest';
 import { searchOnlineMods, fetchModProfile } from '../electron/gamebanana';
 
-test.describe('Real API Integration Tests', () => {
+describe('Real API Integration Tests', () => {
 
-    test('searchOnlineMods fetches real data from GameBanana', async () => {
+    it('searchOnlineMods fetches real data from GameBanana', async () => {
         // Fetch page 1
         const mods = await searchOnlineMods(1);
 
@@ -22,7 +22,7 @@ test.describe('Real API Integration Tests', () => {
         console.log('Sample Mod:', firstMod.name, 'by', firstMod.author);
     });
 
-    test('searchOnlineMods handles pagination (fetching page 2)', async () => {
+    it('searchOnlineMods handles pagination (fetching page 2)', async () => {
         const modsPage1 = await searchOnlineMods(1);
         const modsPage2 = await searchOnlineMods(2);
 
@@ -32,12 +32,12 @@ test.describe('Real API Integration Tests', () => {
         }
     });
 
-    test('fetchModProfile fetches update info for a specific mod', async () => {
+    it('fetchModProfile fetches update info for a specific mod', async () => {
         // First find a mod ID from the search to use
         const mods = await searchOnlineMods(1);
         const mod = mods[0];
 
-        if (!mod) test.skip('No mods found to test profile fetch');
+        if (!mod) return; // Skip if no mods found
 
         const profile = await fetchModProfile(mod.gameBananaId);
         expect(profile).toBeDefined();
@@ -46,9 +46,9 @@ test.describe('Real API Integration Tests', () => {
         expect(profile).toHaveProperty('_aFiles');
 
         if (profile._aFiles && profile._aFiles.length > 0) {
-             const latestFile = profile._aFiles[0];
-             expect(latestFile).toHaveProperty('_sDownloadUrl');
-             console.log('Download URL found:', latestFile._sDownloadUrl);
+            const latestFile = profile._aFiles[0];
+            expect(latestFile).toHaveProperty('_sDownloadUrl');
+            console.log('Download URL found:', latestFile._sDownloadUrl);
         }
     });
 

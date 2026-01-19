@@ -27,8 +27,8 @@ function createWindow() {
 
   // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
-      return { action: 'deny' };
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 
   mainWindow.on('closed', () => {
@@ -57,45 +57,49 @@ function createWindow() {
   });
 
   ipcMain.handle('get-settings', async () => {
-      return await modManager.getSettings();
+    return await modManager.getSettings();
   });
 
   ipcMain.handle('save-settings', async (_event, settings) => {
-      return await modManager.saveSettings(settings);
+    return await modManager.saveSettings(settings);
   });
 
   ipcMain.handle('select-game-directory', async () => {
-      if (!mainWindow) return null;
-      const result = await dialog.showOpenDialog(mainWindow, {
-          properties: ['openDirectory'],
-          title: 'Select Dragon Ball: Sparking! ZERO Game Directory'
-      });
-      if (!result.canceled && result.filePaths.length > 0) {
-          return result.filePaths[0];
-      }
-      return null;
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: 'Select Dragon Ball: Sparking! ZERO Game Directory'
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
   });
 
   ipcMain.handle('check-for-updates', async () => {
-      return await modManager.checkForUpdates();
+    return await modManager.checkForUpdates();
   });
 
   ipcMain.handle('update-mod', async (_event, modId) => {
-      return await modManager.updateMod(modId);
+    return await modManager.updateMod(modId);
   });
 
   ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
-      return await modManager.searchOnlineMods(page, search);
+    return await modManager.searchOnlineMods(page, search);
   });
 
   ipcMain.handle('install-online-mod', async (_event, mod) => {
-      return await modManager.installOnlineMod(mod);
+    return await modManager.installOnlineMod(mod);
+  });
+
+  ipcMain.handle('launch-game', async () => {
+    return await modManager.launchGame();
   });
 }
 
 app.whenReady().then(async () => {
-    await modManager.ensureModsDir();
-    createWindow();
+  await modManager.ensureModsDir();
+  createWindow();
 });
 
 app.on('window-all-closed', () => {
