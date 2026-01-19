@@ -63,7 +63,7 @@ const downloadFile = (url: string, destPath: string): Promise<void> => {
                 fileStream.end();
                 resolve();
             });
-            response.on('error', (err) => {
+            response.on('error', (err: Error) => {
                 fileStream.close();
                 fs.unlink(destPath).catch(() => {});
                 reject(err);
