@@ -55,7 +55,7 @@ export async function fetchModProfile(gameBananaId: number): Promise<any> {
     try {
         const response = await fetch(`https://gamebanana.com/apiv11/Mod/${gameBananaId}/ProfilePage`);
         if (!response.ok) {
-             return null;
+            return null;
         }
         return await response.json();
     } catch (error) {

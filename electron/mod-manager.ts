@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream } from 'fs';
+import { execFile } from 'child_process';
 import { app, net } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
@@ -110,8 +111,8 @@ export class ModManager {
         console.log(`Deploying mod: ${mod.name}`);
         const settings = await this.getSettings();
         if (!settings.gamePath) {
-             console.error('Game path not set');
-             return false;
+            console.error('Game path not set');
+            return false;
         }
 
         const { paksDir } = this.resolveGamePaths(settings.gamePath);
@@ -129,9 +130,9 @@ export class ModManager {
 
                 // Deploy .pak, .sig, .utoc, .ucas
                 if (['.pak', '.sig', '.utoc', '.ucas'].includes(ext)) {
-                     const dest = path.join(paksDir, filename);
-                     await fs.copyFile(src, dest);
-                     deployedFiles.push(dest);
+                    const dest = path.join(paksDir, filename);
+                    await fs.copyFile(src, dest);
+                    deployedFiles.push(dest);
                 }
             }
 
@@ -186,7 +187,7 @@ export class ModManager {
             // Update mods.json
             const modsFile = await this.getModsFilePath();
             let mods = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch {}
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             // Check if exists
             const existingIdx = mods.findIndex((m: any) => m.name === modName);
@@ -256,7 +257,7 @@ export class ModManager {
                     if (latestFile) {
                         // Check version or ID
                         const isNewer = (mod.latestFileId && latestFile._idRow > mod.latestFileId) ||
-                                        (!mod.latestFileId && data._sVersion !== mod.version);
+                            (!mod.latestFileId && data._sVersion !== mod.version);
 
                         if (isNewer) {
                             mod.hasUpdate = true;
@@ -283,15 +284,15 @@ export class ModManager {
             const request = net.request(url);
             request.on('response', (response) => {
                 if (response.statusCode !== 200 && response.statusCode !== 302) {
-                     reject(new Error(`Download failed with status code: ${response.statusCode}`));
-                     return;
+                    reject(new Error(`Download failed with status code: ${response.statusCode}`));
+                    return;
                 }
 
                 // Handle redirect if needed (GameBanana often redirects)
                 if (response.statusCode === 302 && response.headers['location']) {
-                     const redirectUrl = Array.isArray(response.headers['location']) ? response.headers['location'][0] : response.headers['location'];
-                     this.downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
-                     return;
+                    const redirectUrl = Array.isArray(response.headers['location']) ? response.headers['location'][0] : response.headers['location'];
+                    this.downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
+                    return;
                 }
 
                 const fileStream = createWriteStream(destPath);
@@ -302,7 +303,7 @@ export class ModManager {
                 });
                 response.on('error', (err) => {
                     fileStream.close();
-                    fs.unlink(destPath).catch(() => {});
+                    fs.unlink(destPath).catch(() => { });
                     reject(err);
                 });
             });
@@ -337,9 +338,9 @@ export class ModManager {
                 const zip = new AdmZip(tempFile);
                 zip.extractAllTo(modDestDir, true);
             } catch (e) {
-                 console.error('Extraction failed', e);
-                 await fs.unlink(tempFile);
-                 return false;
+                console.error('Extraction failed', e);
+                await fs.unlink(tempFile);
+                return false;
             }
 
             // Cleanup
@@ -397,12 +398,12 @@ export class ModManager {
             // 4. Update mods.json
             const modsFile = await this.getModsFilePath();
             let mods = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch {}
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
-             // Check if exists
-             const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
+            // Check if exists
+            const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
 
-             const newModEntry = {
+            const newModEntry = {
                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
                 name: mod.name,
                 author: mod.author,
@@ -426,5 +427,46 @@ export class ModManager {
             console.error(e);
             return { success: false, message: `Installation failed: ${(e as Error).message}` };
         }
+    }
+
+    async launchGame() {
+        const settings = await this.getSettings();
+        if (!settings.gamePath) {
+            throw new Error('Game path not configured');
+        }
+
+        let exePath = settings.gamePath;
+        // If directory, try to find exe.
+        // Steam: .../DRAGON BALL Sparking! ZERO/SparkingZERO.exe
+        // Or .../DRAGON BALL Sparking! ZERO/SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe
+
+        // Start simplistic: Assume root has the exe or they selected the exe.
+        const stats = await fs.stat(exePath);
+        if (stats.isDirectory()) {
+            // Common steam path check
+            const possibleExe = path.join(exePath, 'SparkingZERO.exe');
+            try {
+                await fs.access(possibleExe);
+                exePath = possibleExe;
+            } catch {
+                // Try binaries
+                const binExe = path.join(exePath, 'SparkingZERO', 'Binaries', 'Win64', 'SparkingZERO-Win64-Shipping.exe');
+                try {
+                    await fs.access(binExe);
+                    exePath = binExe;
+                } catch {
+                    throw new Error('Could not find SparkingZERO.exe in the selected directory.');
+                }
+            }
+        }
+
+        console.log(`Launching game at: ${exePath}`);
+        // Use -fileopenlog to ensure mods load if needed (Unreal quirk, sometimes helpful)
+        execFile(exePath, [], { cwd: path.dirname(exePath) }, (error) => {
+            if (error) {
+                console.error('Failed to launch game:', error);
+            }
+        });
+        return true;
     }
 }
