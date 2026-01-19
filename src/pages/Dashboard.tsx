@@ -8,17 +8,22 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     const [launching, setLaunching] = useState(false);
 
-    const handleLaunch = () => {
+    const handleLaunch = async () => {
         setLaunching(true);
-        // Simulate launch delay
-        setTimeout(() => setLaunching(false), 3000);
+        try {
+            await window.electronAPI.launchGame();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setTimeout(() => setLaunching(false), 5000); // Keep loading state briefly
+        }
     };
 
     return (
         <div className="flex flex-col h-full space-y-6">
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-white/10 p-8 flex items-center justify-between shadow-2xl">
-                 <div className="relative z-10 max-w-lg">
+                <div className="relative z-10 max-w-lg">
                     <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-md">
                         Sparking! ZERO
                     </h1>
@@ -36,7 +41,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             transition-all duration-300 transform
                             ${launching ? 'scale-110' : 'hover:scale-105'}
                             ki-charge
-                            shadow-orange-500/50
+                            shadow-lg shadow-orange-500/50
+                            hover:shadow-orange-400/80 hover:shadow-xl
                         `}
                     >
                         {launching ? (
@@ -44,17 +50,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         ) : (
                             <Play fill="currentColor" />
                         )}
-                        <span>{launching ? 'CHARGING...' : 'LAUNCH GAME'}</span>
+                        <span className={launching ? "animate-pulse" : ""}>{launching ? 'CHARGING...' : 'LAUNCH GAME'}</span>
 
                         {/* Internal glow for extra DBZ feel */}
-                        <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute inset-0 rounded-full bg-white/30 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
                     </button>
-                 </div>
+                </div>
 
-                 {/* Decorative Icon/Image */}
-                 <div className="hidden lg:block relative z-10 opacity-80 transform rotate-12">
+                {/* Decorative Icon/Image */}
+                <div className="hidden lg:block relative z-10 opacity-80 transform rotate-12">
                     <Sparkles size={120} className="text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-                 </div>
+                </div>
             </div>
 
             {/* Quick Actions / Featured */}
@@ -65,7 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         <h3 className="font-bold text-lg">Mod Status</h3>
                     </div>
                     <p className="text-gray-300 text-sm">
-                        12 Mods Installed<br/>
+                        12 Mods Installed<br />
                         <span className="text-green-400">All Systems Normal</span>
                     </p>
                 </div>
@@ -81,11 +87,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
 
                 <div className="glass-panel p-5 relative overflow-hidden group">
-                     <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                     <h3 className="font-bold text-lg text-red-400 mb-2">Daily Saiyan Quote</h3>
-                     <p className="text-gray-300 italic text-sm relative z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <h3 className="font-bold text-lg text-red-400 mb-2">Daily Saiyan Quote</h3>
+                    <p className="text-gray-300 italic text-sm relative z-10">
                         "Power comes in response to a need, not a desire. You have to create that need."
-                     </p>
+                    </p>
                 </div>
             </div>
         </div>
