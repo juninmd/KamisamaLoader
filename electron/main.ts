@@ -5,6 +5,18 @@ import { DownloadManager } from './download-manager';
 
 let mainWindow: BrowserWindow | null;
 
+// Ensure Mods directory exists
+// In production: ./Mods (relative to executable)
+// In test: ./Mods (relative to cwd/project root)
+const MODS_DIR = process.env.NODE_ENV === 'test'
+  ? path.join(process.cwd(), 'Mods')
+  : path.join(path.dirname(app.getPath('exe')), 'Mods');
+
+async function ensureModsDir() {
+  try {
+    let targetDir = MODS_DIR;
+    if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
+      targetDir = path.join(__dirname, '../../Mods');
 const downloadManager = new DownloadManager();
 const modManager = new ModManager(downloadManager); // Pass dependency
 
@@ -25,6 +37,10 @@ if (!gotTheLock) {
     if (url) handleProtocolUrl(url);
   });
 
+async function getModsDirPath() {
+    let targetDir = MODS_DIR;
+    if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
+      targetDir = path.join(__dirname, '../../Mods');
   // Protocol Handler registration
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
@@ -44,6 +60,35 @@ if (!gotTheLock) {
   });
 }
 
+// Helper: Download File
+const downloadFile = (url: string, destPath: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const request = net.request(url);
+        request.on('response', (response) => {
+            if (response.statusCode !== 200 && response.statusCode !== 302) {
+                 reject(new Error(`Download failed with status code: ${response.statusCode}`));
+                 return;
+            }
+
+            // Handle redirect if needed (GameBanana often redirects)
+            if (response.statusCode === 302 && response.headers['location']) {
+                 const redirectUrl = Array.isArray(response.headers['location']) ? response.headers['location'][0] : response.headers['location'];
+                 downloadFile(redirectUrl, destPath).then(resolve).catch(reject);
+                 return;
+            }
+
+            const fileStream = createWriteStream(destPath);
+            response.on('data', (chunk) => fileStream.write(chunk));
+            response.on('end', () => {
+                fileStream.end();
+                resolve();
+            });
+            response.on('error', (err: Error) => {
+                fileStream.close();
+                fs.unlink(destPath).catch(() => {});
+                reject(err);
+            });
+}
 function handleProtocolUrl(url: string) {
   console.log('Received Protocol URL:', url);
   try {
@@ -103,7 +148,7 @@ function createWindow() {
     frame: false, // Custom frame
     backgroundColor: '#000000', // Start black to match dark theme
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
