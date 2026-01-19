@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, List, LayoutDashboard, Zap } from 'lucide-react';
 import TitleBar from './TitleBar';
+import { useSettings } from './SettingsContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate }) => {
+  const { settings } = useSettings();
   const navItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'mods', icon: List, label: 'Mods' },
@@ -26,7 +28,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate }) => 
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-900 to-black"></div>
 
             {/* Subtle Texture/Image */}
-            <div className="absolute inset-0 bg-[url('https://images7.alphacoders.com/936/936566.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay pointer-events-none"></div>
+            <div
+                className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay pointer-events-none transition-all duration-500"
+                style={{ backgroundImage: `url('${settings.backgroundImage || 'https://images7.alphacoders.com/936/936566.jpg'}')` }}
+            ></div>
 
             {/* Blur overlay to ensure readability */}
             <div className="absolute inset-0 backdrop-blur-sm bg-black/40"></div>

@@ -1,8 +1,7 @@
-import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, net, shell, dialog } from 'electron';
 import path from 'path';
-import fs from 'fs/promises';
-import { createWriteStream, existsSync } from 'fs';
-import AdmZip from 'adm-zip';
+import { ModManager } from './mod-manager.js';
+import { DownloadManager } from './download-manager';
 
 let mainWindow: BrowserWindow | null;
 
@@ -18,26 +17,47 @@ async function ensureModsDir() {
     let targetDir = MODS_DIR;
     if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
       targetDir = path.join(__dirname, '../../Mods');
+const downloadManager = new DownloadManager();
+const modManager = new ModManager(downloadManager); // Pass dependency
+
+// Single Instance Lock
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Someone tried to run a second instance, we should focus our window.
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
-    await fs.mkdir(targetDir, { recursive: true });
-    return targetDir;
-  } catch (error) {
-    console.error('Failed to create Mods directory:', error);
-    return null;
-  }
-}
+    // Handle Protocol on Windows
+    const url = commandLine.find(arg => arg.startsWith('kamisama://'));
+    if (url) handleProtocolUrl(url);
+  });
 
 async function getModsDirPath() {
     let targetDir = MODS_DIR;
     if (!app.isPackaged && process.env.NODE_ENV !== 'test') {
       targetDir = path.join(__dirname, '../../Mods');
+  // Protocol Handler registration
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('kamisama', process.execPath, [path.resolve(process.argv[1])]);
     }
-    return targetDir;
-}
+  } else {
+    app.setAsDefaultProtocolClient('kamisama');
+  }
 
-async function getModsFilePath() {
-    const dir = await getModsDirPath();
-    return path.join(dir, 'mods.json');
+  // Handle Startup URL (Windows)
+  const startupsUrl = process.argv.find(arg => arg.startsWith('kamisama://'));
+  if (startupsUrl) handleProtocolUrl(startupsUrl);
+
+  app.whenReady().then(async () => {
+    await modManager.ensureModsDir();
+    createWindow();
+  });
 }
 
 // Helper: Download File
@@ -68,25 +88,74 @@ const downloadFile = (url: string, destPath: string): Promise<void> => {
                 fs.unlink(destPath).catch(() => {});
                 reject(err);
             });
+}
+function handleProtocolUrl(url: string) {
+  console.log('Received Protocol URL:', url);
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.host === 'install') {
+      const id = urlObj.searchParams.get('id');
+      const gameBananaId = id ? parseInt(id) : 0;
+
+      if (gameBananaId > 0) {
+        console.log(`Deep link install triggered for ID: ${gameBananaId}`);
+        // Create a basic Mod object, the rest will be fetched by installOnlineMod
+        const modStub = {
+          id: Date.now().toString(),
+          name: 'Unknown',
+          author: 'Unknown',
+          version: '1.0',
+          description: '',
+          isEnabled: true,
+          iconUrl: '',
+          gameBananaId: gameBananaId,
+          latestVersion: '1.0'
+        };
+
+        modManager.installOnlineMod(modStub as any).then((result) => {
+          console.log('Deep link install result:', result);
+          if (mainWindow) {
+            // You might want to notify UI here via IPC if you have a toast system
+            mainWindow.webContents.send('download-scan-finished'); // Hacky refresh?
+          }
         });
-        request.on('error', reject);
-        request.end();
-    });
-};
+      }
+    }
+  } catch (e) {
+    console.error('Invalid protocol URL', e);
+  }
+}
 
 function createWindow() {
+  // Downloads IPC
+  ipcMain.handle('get-downloads', () => downloadManager.getDownloads());
+  ipcMain.handle('pause-download', (_, id) => downloadManager.pauseDownload(id));
+  ipcMain.handle('resume-download', (_, id) => downloadManager.resumeDownload(id));
+  ipcMain.handle('cancel-download', (_, id) => downloadManager.cancelDownload(id));
+
+  // Existing IPC
+  // Downloads IPC
+  ipcMain.handle('get-downloads', () => downloadManager.getDownloads());
+  ipcMain.handle('pause-download', (_, id) => downloadManager.pauseDownload(id));
+  ipcMain.handle('resume-download', (_, id) => downloadManager.resumeDownload(id));
+  ipcMain.handle('cancel-download', (_, id) => downloadManager.cancelDownload(id));
+
+  // Mods IPC
+  ipcMain.handle('get-installed-mods', () => modManager.getInstalledMods());
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    frame: false,
-    transparent: true,
+    frame: false, // Custom frame
+    backgroundColor: '#000000', // Start black to match dark theme
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
-    backgroundColor: '#00000000',
+    titleBarStyle: 'hidden',
   });
+
+  downloadManager.setWindow(mainWindow);
 
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -96,8 +165,8 @@ function createWindow() {
 
   // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
-      return { action: 'deny' };
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 
   mainWindow.on('closed', () => {
@@ -114,236 +183,82 @@ function createWindow() {
 
   // Mod Management IPC Handlers
   ipcMain.handle('get-installed-mods', async () => {
-    try {
-      const modsFile = await getModsFilePath();
-      const data = await fs.readFile(modsFile, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      return [];
-    }
+    return await modManager.getInstalledMods();
   });
 
   ipcMain.handle('install-mod', async (_event, filePath) => {
-    try {
-        const modsDir = await getModsDirPath();
-        const fileName = path.basename(filePath);
-        const modName = path.parse(fileName).name; // Simple name extraction
-        const modDestDir = path.join(modsDir, modName);
-
-        // Check if zip
-        if (filePath.endsWith('.zip')) {
-            const zip = new AdmZip(filePath);
-            zip.extractAllTo(modDestDir, true);
-        } else {
-            // Copy file directly (e.g. .pak)
-            await fs.mkdir(modDestDir, { recursive: true });
-            await fs.copyFile(filePath, path.join(modDestDir, fileName));
-        }
-
-        // Update mods.json
-        const modsFile = await getModsFilePath();
-        let mods = [];
-        try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch {}
-
-        // Check if exists
-        const existingIdx = mods.findIndex((m: any) => m.name === modName);
-        const newMod = {
-            id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
-            name: modName,
-            author: 'Local',
-            version: '1.0',
-            description: 'Locally installed mod',
-            isEnabled: true,
-            folderPath: modDestDir
-        };
-
-        if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newMod };
-        else mods.push(newMod);
-
-        await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-        return { success: true, message: 'Mod installed successfully' };
-    } catch (e) {
-        console.error(e);
-        return { success: false, message: `Installation failed: ${(e as Error).message}` };
-    }
+    return await modManager.installMod(filePath);
   });
 
   ipcMain.handle('toggle-mod', async (_event, modId, isEnabled) => {
-    try {
-      const modsFile = await getModsFilePath();
-      const data = await fs.readFile(modsFile, 'utf-8');
-      const mods = JSON.parse(data);
-      const modIndex = mods.findIndex((m: any) => m.id === modId);
-      if (modIndex !== -1) {
-        mods[modIndex].isEnabled = isEnabled;
-        await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-        return true;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return false;
+    return await modManager.toggleMod(modId, isEnabled);
+  });
+
+  ipcMain.handle('get-settings', async () => {
+    return await modManager.getSettings();
   });
 
   ipcMain.handle('save-settings', async (_event, settings) => {
-    console.log('Saving settings:', settings);
-    return true;
+    return await modManager.saveSettings(settings);
   });
 
-  // Check for Updates
-  ipcMain.handle('check-for-updates', async () => {
-      const modsFile = await getModsFilePath();
-      let mods = [];
-      try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return []; }
-
-      const updates: string[] = [];
-
-      // Process strictly sequentially or with limited concurrency to prevent "freezing" network
-      for (const mod of mods) {
-          if (!mod.gameBananaId) continue;
-
-          try {
-              // Fetch Profile
-               await new Promise<void>((resolve) => {
-                  const request = net.request(`https://gamebanana.com/apiv11/Mod/${mod.gameBananaId}/ProfilePage`);
-                  request.on('response', (response) => {
-                      let body = '';
-                      response.on('data', chunk => body += chunk);
-                      response.on('end', () => {
-                          try {
-                              const data = JSON.parse(body);
-                              const latestFile = data._aFiles?.[0]; // Usually the first one is main/latest
-                              if (latestFile) {
-                                  // Check version or ID
-                                  const isNewer = (mod.latestFileId && latestFile._idRow > mod.latestFileId) ||
-                                                  (!mod.latestFileId && data._sVersion !== mod.version);
-
-                                  if (isNewer) {
-                                      mod.hasUpdate = true;
-                                      mod.latestVersion = data._sVersion;
-                                      mod.latestFileId = latestFile._idRow;
-                                      mod.latestFileUrl = latestFile._sDownloadUrl;
-                                      updates.push(mod.id);
-                                  } else {
-                                      mod.hasUpdate = false;
-                                  }
-                              }
-                          } catch (e) { console.error(e); }
-                          resolve();
-                      });
-                  });
-                  request.on('error', () => resolve());
-                  request.end();
-              });
-          } catch (e) { console.error(e); }
-      }
-
-      await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-      return updates;
-  });
-
-  // Update Mod
-  ipcMain.handle('update-mod', async (_event, modId) => {
-      try {
-          const modsFile = await getModsFilePath();
-          let mods = [];
-          try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return false; }
-
-          const mod = mods.find((m: any) => m.id === modId);
-          if (!mod || !mod.latestFileUrl) return false;
-
-          const tempDir = app.getPath('temp');
-          const tempFile = path.join(tempDir, `update_${mod.id}.zip`);
-
-          // Download
-          await downloadFile(mod.latestFileUrl, tempFile);
-
-          // Install (Overwrite)
-          const modsDir = await getModsDirPath();
-          const modDestDir = mod.folderPath || path.join(modsDir, mod.name);
-
-          // Ensure dir exists
-          await fs.mkdir(modDestDir, { recursive: true });
-
-          // Extract
-          try {
-            const zip = new AdmZip(tempFile);
-            zip.extractAllTo(modDestDir, true);
-          } catch (e) {
-             console.error('Extraction failed', e);
-             await fs.unlink(tempFile);
-             return false;
-          }
-
-          // Cleanup
-          await fs.unlink(tempFile);
-
-          // Update Info
-          mod.version = mod.latestVersion;
-          mod.hasUpdate = false;
-          mod.latestFileId = mod.latestFileId; // Keep this for next check
-
-          await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-          return true;
-
-      } catch (e) {
-          console.error('Update failed', e);
-          return false;
-      }
-  });
-
-  // Online Mods
-  ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
-    return new Promise((resolve, reject) => {
-      const request = net.request(`https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=${page}&_nPerpage=15`);
-      request.on('response', (response) => {
-        let body = '';
-        response.on('data', (chunk) => { body += chunk.toString(); });
-        response.on('end', () => {
-          try {
-            const json = JSON.parse(body);
-            if (json._aRecords) {
-                const mods = json._aRecords.map((record: any) => {
-                    const image = record._aPreviewMedia?._aImages?.[0];
-                    const iconUrl = image ? `${image._sBaseUrl}/${image._sFile220}` : '';
-                    return {
-                        id: record._idRow.toString(),
-                        name: record._sName,
-                        author: record._aSubmitter?._sName || 'Unknown',
-                        version: record._sVersion || '1.0',
-                        description: `Category: ${record._aRootCategory?._sName || 'Misc'}`,
-                        isEnabled: false,
-                        iconUrl: iconUrl,
-                        gameBananaId: record._idRow,
-                        latestVersion: record._sVersion || '1.0'
-                    };
-                });
-                resolve(mods);
-            } else {
-                resolve([]);
-            }
-          } catch (e) {
-            resolve([]);
-          }
-        });
-      });
-      request.on('error', (error) => {
-         resolve([]);
-      });
-      request.end();
+  ipcMain.handle('select-game-directory', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: 'Select Dragon Ball: Sparking! ZERO Game Directory'
     });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
+  });
+
+  ipcMain.handle('check-for-updates', async () => {
+    return await modManager.checkForUpdates();
+  });
+
+  ipcMain.handle('update-mod', async (_event, modId) => {
+    return await modManager.updateMod(modId);
+  });
+
+  ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
+    return await modManager.searchOnlineMods(page, search);
+  });
+
+  ipcMain.handle('install-online-mod', async (_event, mod) => {
+    return await modManager.installOnlineMod(mod);
+  });
+
+  ipcMain.handle('launch-game', async () => {
+    return await modManager.launchGame();
+  });
+
+  ipcMain.handle('set-mod-priority', async (event, modId, direction) => {
+    return await modManager.setModPriority(modId, direction);
+  });
+
+  ipcMain.handle('get-profiles', async () => modManager.getProfiles());
+  ipcMain.handle('create-profile', async (_event, name) => modManager.createProfile(name));
+  ipcMain.handle('delete-profile', async (_event, id) => modManager.deleteProfile(id));
+  ipcMain.handle('load-profile', async (_event, id) => modManager.loadProfile(id));
+
+  ipcMain.handle('get-mod-changelog', async (event, modId) => {
+    return await modManager.getModChangelog(modId);
   });
 }
 
-app.whenReady().then(async () => {
-    await ensureModsDir();
-    createWindow();
-});
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleProtocolUrl(url);
 });
 
 app.on('activate', () => {
