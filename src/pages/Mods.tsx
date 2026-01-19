@@ -191,7 +191,7 @@ const Mods: React.FC = () => {
 
             if (result.success) {
                 if (result.conflict) {
-                    showToast(result.conflict, 'warning', 5000);
+                    showToast(result.conflict, 'info'); // changed warning to info as warning is not in ToastContextType
                 }
             } else {
                 // Revert if failed
@@ -301,13 +301,15 @@ const Mods: React.FC = () => {
                     >
                         Installed
                     </button>
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'browse'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
+                    <button
+                        onClick={() => setActiveTab('browse')}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'browse'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
-                    Browse Online
-                </button>
+                        Browse Online
+                    </button>
                 <button
                     onClick={() => setActiveTab('downloads')}
                     className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'downloads'
@@ -417,7 +419,7 @@ const Mods: React.FC = () => {
                 mod={selectedMod}
                 isOpen={!!selectedMod}
                 onClose={() => setSelectedMod(null)}
-                onInstall={handleInstall}
+                onInstall={(mod) => handleInstall(mod as any)}
             />
         )
     }

@@ -56,13 +56,21 @@ describe('ModManager', () => {
     });
 
     it('toggleMod should update mod status', async () => {
-        const mockMods = [{ id: '1', isEnabled: false }];
+        const mockMods = [{ id: '1', isEnabled: false, folderPath: '/mock/mods/dir/mod1' }]; // Add folderPath
         (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
         (fs.writeFile as any).mockResolvedValue(undefined);
+        // Mock getSettings to return a path so deployMod doesn't fail
+        modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/mock/game/path' });
+        modManager.ensureModsDir = vi.fn().mockResolvedValue('/mock/mods/dir');
+
+        // Mock getAllFiles to prevent error in deployMod
+        (modManager as any).getAllFiles = vi.fn().mockResolvedValue([]);
+        // Mock stat for ue4ss check
+        (fs.stat as any).mockRejectedValue(new Error('Not found'));
 
         const result = await modManager.toggleMod('1', true);
 
-        expect(result).toBe(true);
+        expect(result).toEqual({ success: true, conflict: null });
         const writeCall = (fs.writeFile as any).mock.calls[0];
         const writtenData = JSON.parse(writeCall[1]);
         expect(writtenData[0].isEnabled).toBe(true);
