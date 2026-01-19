@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
 import { ModManager } from './mod-manager.js';
-import { DownloadManager } from './download-manager';
+import { DownloadManager } from './download-manager.js';
 
 let mainWindow: BrowserWindow | null;
 
@@ -115,7 +115,7 @@ function createWindow() {
     frame: false, // Custom frame
     backgroundColor: '#000000', // Start black to match dark theme
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
     },

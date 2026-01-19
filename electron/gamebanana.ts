@@ -99,7 +99,9 @@ export async function searchOnlineMods(page: number = 1): Promise<Mod[]> {
                     images: images,
                     category: record._aRootCategory?._sName || 'Misc',
                     submitter: record._aSubmitter?._sName || 'Unknown',
-                    license: record._sLicense || 'Unknown'
+                    submitterUrl: record._aSubmitter?._sProfileUrl || '',
+                    license: record._sLicense || 'Unknown',
+                    isNsfw: record._bHasNsfw || record._bIsNsfw || false
                 };
             });
         }
@@ -152,50 +154,36 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
     const cacheKey = `search_${JSON.stringify(options)}`;
 
     const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+        console.log(`[API] Cache hit for search`);
+        return cached;
+    }
 
     await checkRateLimit();
 
     try {
         const {
-            itemType = 'Mod',
             gameId = 21179, // Dragon Ball Sparking ZERO
             page = 1,
             perPage = 20,
-            sort = 'downloads',
-            order = 'desc',
             categoryId,
-            filters = {}
         } = options;
 
+        // Use the simple Subfeed endpoint that works
         let url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}`;
 
-        // Add sorting
-        const sortMap: Record<string, string> = {
-            downloads: '_nDownloadCount',
-            views: '_nViewCount',
-            likes: '_nLikeCount',
-            date: '_tsDateAdded',
-            name: '_sName'
-        };
-        if (sortMap[sort]) {
-            url += `&_sSort=${sortMap[sort]}`;
-            url += `&_sDirection=${order}`;
-        }
-
-        // Add category filter
+        // Add category filter if specified
         if (categoryId) {
-            url += `&_idCategoryRow=${categoryId}`;
+            url += `&_aModelFilter[]=Mod&_idCategoryRowFilter=${categoryId}`;
         }
 
-        // Add custom filters
-        for (const [key, value] of Object.entries(filters)) {
-            url += `&${key}=${encodeURIComponent(value)}`;
-        }
+        console.log(`[API] Fetching: ${url}`);
 
         const response = await apiLimit(() => fetch(url));
         if (!response.ok) {
-            console.error(`[API] Search failed: ${response.status}`);
+            console.error(`[API] Search failed: ${response.status} - ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(`[API] Error body: ${errorText.substring(0, 200)}`);
             return [];
         }
 
@@ -343,8 +331,30 @@ export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelo
             };
         }
         return null;
+        return null;
     } catch (error) {
         console.error(`Error fetching updates for mod ${gameBananaId}:`, error);
         return null;
+    }
+}
+
+export async function getModChangelog(gameBananaId: number): Promise<any[]> {
+    try {
+        const response = await fetch(`https://gamebanana.com/apiv11/Mod/${gameBananaId}/Updates`);
+        if (!response.ok) return [];
+
+        const updates = await response.json();
+        if (Array.isArray(updates) && updates.length > 0) {
+            return updates.map((u: any) => ({
+                version: u._sVersion || 'Update',
+                date: u._tsDateAdded,
+                text: u._sText || u._sTitle || '',
+                title: u._sTitle
+            }));
+        }
+        return [];
+    } catch (error) {
+        console.error(`Error fetching changelog for mod ${gameBananaId}:`, error);
+        return [];
     }
 }
