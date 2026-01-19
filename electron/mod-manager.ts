@@ -5,9 +5,11 @@ import { execFile } from 'child_process';
 import { app, net } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, Mod } from './gamebanana.js';
+import { fetchModProfile, searchOnlineMods, Mod, getModChangelog } from './gamebanana.js';
 
-import { DownloadManager } from './download-manager';
+import { DownloadManager } from './download-manager.js';
+
+
 
 export class ModManager {
     private modsDir: string;
@@ -793,13 +795,28 @@ export class ModManager {
             }
         }
 
+        // Get enabled mods to potentially pass as parameters
+        const mods = await this.getInstalledMods();
+        const enabledMods = mods.filter((m: any) => m.isEnabled);
+        console.log(`Launching game with ${enabledMods.length} mods enabled`);
+
         console.log(`Launching game at: ${exePath}`);
-        // Use -fileopenlog to ensure mods load if needed (Unreal quirk, sometimes helpful)
-        execFile(exePath, [], { cwd: path.dirname(exePath) }, (error) => {
+
+        // Launch parameters for Unreal Engine mod loading
+        // -fileopenlog helps with mod loading diagnostics
+        // The ~mods folder should be in the game's content directory
+        const launchArgs = ['-fileopenlog'];
+
+        execFile(exePath, launchArgs, { cwd: path.dirname(exePath) }, (error) => {
             if (error) {
                 console.error('Failed to launch game:', error);
             }
         });
         return true;
+    }
+    async getModChangelog(modId: string) {
+        const id = parseInt(modId);
+        if (!id) return [];
+        return await getModChangelog(id);
     }
 }

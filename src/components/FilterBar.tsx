@@ -6,6 +6,9 @@ export interface FilterState {
     sortBy: 'downloads' | 'views' | 'likes' | 'date' | 'name';
     order: 'asc' | 'desc';
     dateRange: 'week' | 'month' | 'year' | 'all';
+    nsfw?: boolean;
+    zeroSpark?: boolean;
+    colorZ?: boolean;
 }
 
 interface FilterBarProps {
@@ -160,6 +163,28 @@ const FilterBar: React.FC<FilterBarProps> = ({
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* Content Filters */}
+                <div className="flex items-center space-x-2 border-l border-white/10 pl-3 ml-1">
+                    <button
+                        onClick={() => onFilterChange({ ...activeFilters, nsfw: !activeFilters.nsfw })}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.nsfw ? 'bg-red-600/20 border-red-500/50 text-red-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                        NSFW
+                    </button>
+                    <button
+                        onClick={() => onFilterChange({ ...activeFilters, zeroSpark: !activeFilters.zeroSpark })}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.zeroSpark ? 'bg-yellow-600/20 border-yellow-500/50 text-yellow-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                        ZeroSpark
+                    </button>
+                    <button
+                        onClick={() => onFilterChange({ ...activeFilters, colorZ: !activeFilters.colorZ })}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.colorZ ? 'bg-purple-600/20 border-purple-500/50 text-purple-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                        ColorZ
+                    </button>
                 </div>
 
                 {/* Clear All */}

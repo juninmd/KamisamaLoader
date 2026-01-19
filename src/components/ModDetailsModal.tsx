@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Download, ChevronLeft, ChevronRight, Eye, Heart, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,6 +20,7 @@ interface Mod {
     license?: string;
     submitter?: string;
     isEnabled?: boolean; // Added optional property
+    submitterUrl?: string;
 }
 
 interface ModDetailsModalProps {
@@ -31,7 +32,16 @@ interface ModDetailsModalProps {
 
 const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose, onInstall }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [changelog, setChangelog] = useState<any[]>([]);
     const images = mod.images && mod.images.length > 0 ? mod.images : [mod.iconUrl];
+
+    useEffect(() => {
+        if (isOpen && mod.id) {
+            window.electronAPI.getModChangelog(mod.id).then((logs: any) => {
+                if (Array.isArray(logs)) setChangelog(logs);
+            });
+        }
+    }, [mod.id, isOpen]);
 
     if (!isOpen) return null;
 
@@ -127,7 +137,19 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">Submitter</span>
-                                <span className="text-white break-words">{mod.submitter || mod.author}</span>
+                                {mod.submitterUrl ? (
+                                    <a
+                                        href={mod.submitterUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-white break-words hover:text-blue-400 hover:underline transition-colors"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {mod.submitter || mod.author}
+                                    </a>
+                                ) : (
+                                    <span className="text-white break-words">{mod.submitter || mod.author}</span>
+                                )}
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">License</span>
@@ -146,6 +168,26 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                                 {mod.description}
                             </p>
                         </div>
+
+                        {/* Changelog */}
+                        {changelog && changelog.length > 0 && (
+                            <div>
+                                <h3 className="text-lg font-bold text-white mb-4">Changelog</h3>
+                                <div className="space-y-3">
+                                    {changelog.map((log, index) => (
+                                        <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-bold text-white text-sm">{log.version}</span>
+                                                <span className="text-xs text-gray-400">
+                                                    {log.date ? formatDistanceToNow(new Date(log.date * 1000), { addSuffix: true }) : ''}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm text-gray-300 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: log.text }}></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

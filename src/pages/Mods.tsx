@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Calendar, ChevronUp } from 'lucide-react';
+import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Calendar, ChevronUp, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../components/ToastContext';
 import Skeleton from '../components/Skeleton';
@@ -32,6 +32,8 @@ interface Mod {
     category?: string;
     license?: string;
     submitter?: string;
+    submitterUrl?: string; // Added for author link
+    isNsfw?: boolean;
 }
 
 const Mods: React.FC = () => {
@@ -60,7 +62,10 @@ const Mods: React.FC = () => {
         categories: [],
         sortBy: 'downloads',
         order: 'desc',
-        dateRange: 'all'
+        dateRange: 'all',
+        nsfw: false,
+        zeroSpark: false,
+        colorZ: false
     });
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -127,30 +132,74 @@ const Mods: React.FC = () => {
     const loadBrowseMods = async (page: number, reset: boolean = false) => {
         if (loadingBrowse) return;
         setLoadingBrowse(true);
+        console.log(`[Browse] Loading page ${page}, reset=${reset}, filters:`, filters);
         try {
-            let newMods: Mod[];
+            // Get installed mod IDs to mark them
+            const installed = await window.electronAPI.getInstalledMods();
+            const installedIds = new Set(installed.map((m: any) => m.gameBananaId));
 
-            // Use advanced search if filters are active
-            if (filters.categories.length > 0 || filters.sortBy !== 'downloads' || filters.dateRange !== 'all') {
-                console.log('[Browse] Using searchBySection with filters:', filters);
-                newMods = await window.electronAPI.searchBySection({
-                    page,
-                    perPage: 20,
-                    sort: filters.sortBy,
-                    order: filters.order,
-                    // TODO: Add category filtering when API supports it
-                });
+            // Fetch mods from API
+            const newMods = await window.electronAPI.searchOnlineMods(page);
+            console.log(`[Browse] Received ${newMods?.length || 0} mods from API`);
+
+            if (!newMods || newMods.length === 0) {
+                if (reset || page === 1) {
+                    setBrowseMods([]);
+                }
+                console.log('[Browse] No mods returned from API');
             } else {
-                // Fallback to simple search
-                newMods = await window.electronAPI.searchOnlineMods(page);
+                // Mark mods that are already installed
+                let processedMods = newMods.map((mod: any) => ({
+                    ...mod,
+                    isInstalled: installedIds.has(mod.gameBananaId)
+                }));
+
+                // Apply Filters
+                if (!filters.nsfw) {
+                    processedMods = processedMods.filter((m: any) => !m.isNsfw);
+                }
+
+                if (filters.zeroSpark) {
+                    processedMods = processedMods.filter((m: any) =>
+                        (m.name && m.name.toLowerCase().includes('zerospark')) ||
+                        (m.description && m.description.toLowerCase().includes('zerospark'))
+                    );
+                }
+
+                if (filters.colorZ) {
+                    processedMods = processedMods.filter((m: any) =>
+                        (m.name && m.name.toLowerCase().includes('colorz')) ||
+                        (m.description && m.description.toLowerCase().includes('colorz'))
+                    );
+                }
+
+                // Apply client-side sorting based on filters
+                let sortedMods = [...processedMods];
+                if (filters.sortBy === 'downloads') {
+                    sortedMods.sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
+                } else if (filters.sortBy === 'likes') {
+                    sortedMods.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+                } else if (filters.sortBy === 'views') {
+                    sortedMods.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+                } else if (filters.sortBy === 'date') {
+                    sortedMods.sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
+                } else if (filters.sortBy === 'name') {
+                    sortedMods.sort((a, b) => a.name.localeCompare(b.name));
+                }
+
+                // Reverse if ascending order
+                if (filters.order === 'asc') {
+                    sortedMods.reverse();
+                }
+
+                setBrowseMods(prev => reset || page === 1 ? sortedMods : [...prev, ...sortedMods]);
             }
 
-            setBrowseMods(prev => reset || page === 1 ? newMods : [...prev, ...newMods]);
             if (reset || page === 1) {
                 setBrowsePage(1);
             }
         } catch (error) {
-            console.error('Failed to load online mods', error);
+            console.error('[Browse] Failed to load online mods:', error);
             showToast('Failed to load online mods', 'error');
         } finally {
             setLoadingBrowse(false);
@@ -464,28 +513,24 @@ const Mods: React.FC = () => {
                 ) : activeTab === 'downloads' ? (
                     <DownloadsList />
                 ) : (
-                    <div className="flex space-x-4 h-full">
-                        {/* Category Sidebar */}
-                        <CategorySidebar
-                            categories={categories}
-                            selectedCategories={selectedCategories}
-                            onCategorySelect={(category) => {
-                                setSelectedCategories(prev =>
-                                    prev.includes(category)
-                                        ? prev.filter(c => c !== category)
-                                        : [...prev, category]
-                                );
-                                setFilters(f => ({
-                                    ...f,
-                                    categories: selectedCategories.includes(category)
+                    <div className="flex gap-4 h-full overflow-hidden">
+                        {/* Category Sidebar - Fixed width, non-overlapping */}
+                        <div className="flex-shrink-0">
+                            <CategorySidebar
+                                categories={categories}
+                                selectedCategories={selectedCategories}
+                                onCategorySelect={(category) => {
+                                    const newSelected = selectedCategories.includes(category)
                                         ? selectedCategories.filter(c => c !== category)
-                                        : [...selectedCategories, category]
-                                }));
-                            }}
-                        />
+                                        : [...selectedCategories, category];
+                                    setSelectedCategories(newSelected);
+                                    setFilters(f => ({ ...f, categories: newSelected }));
+                                }}
+                            />
+                        </div>
 
-                        {/* Main Content */}
-                        <div className="flex-1 flex flex-col min-w-0">
+                        {/* Main Content - Takes remaining space */}
+                        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                             {/* Filter Bar */}
                             <FilterBar
                                 availableCategories={categories}
@@ -498,12 +543,20 @@ const Mods: React.FC = () => {
                             />
 
                             {/* Browse List */}
-                            <div className="flex-1 overflow-auto">
+                            <div className="flex-1 overflow-hidden">
                                 <BrowseList
                                     mods={browseMods}
+                                    installedModIds={installedMods.map(m => m.gameBananaId).filter((id): id is number => id !== undefined)}
                                     loading={loadingBrowse}
                                     onInstall={handleInstall}
                                     onSelect={(mod) => setSelectedMod(mod)}
+                                    onLoadMore={() => {
+                                        if (!loadingBrowse) {
+                                            const nextPage = browsePage + 1;
+                                            setBrowsePage(nextPage);
+                                            loadBrowseMods(nextPage, false);
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
@@ -638,68 +691,114 @@ const InstalledList: React.FC<{
     );
 }
 
-const BrowseList: React.FC<{ mods: Mod[]; loading: boolean; onInstall: (mod: Mod) => void; onSelect: (mod: Mod) => void }> = ({ mods, loading, onInstall, onSelect }) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
-        {mods.map((mod) => (
-            <div
-                key={mod.id}
-                onClick={() => onSelect(mod)}
-                className="glass-panel overflow-hidden group flex flex-col hover:-translate-y-1 transition-transform duration-300 border border-white/5 hover:border-blue-500/30 cursor-pointer"
-            >
-                <div className="h-32 bg-gray-800 relative group-hover:scale-105 transition-transform duration-700">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                    {mod.iconUrl ? (
-                        <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                            <Folder size={40} className="text-gray-500" />
-                        </div>
-                    )}
-                    <span className="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">Mod</span>
-                    <div className="absolute bottom-2 left-3 right-3 z-10">
-                        <h4 className="font-bold text-white text-sm leading-tight line-clamp-1 drop-shadow-md" title={mod.name}>{mod.name}</h4>
-                        <p className="text-[10px] text-gray-300 mt-0.5 drop-shadow-sm">by {mod.author}</p>
-                    </div>
-                </div>
-                <div className="p-3 flex-1 flex flex-col justify-between bg-black/20">
-                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-2">
-                        <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-0.5" title="Views">
-                                <Eye size={10} />
-                                <span>{mod.viewCount?.toLocaleString() || 0}</span>
-                            </div>
-                            <div className="flex items-center space-x-0.5" title="Likes">
-                                <Heart size={10} />
-                                <span>{mod.likeCount?.toLocaleString() || 0}</span>
-                            </div>
-                        </div>
-                        {mod.dateAdded && (
-                            <div className="flex items-center space-x-0.5" title="Date Added">
-                                <Calendar size={10} />
-                                <span>{formatDistanceToNow(new Date(mod.dateAdded * 1000), { addSuffix: true })}</span>
-                            </div>
-                        )}
-                    </div>
+const BrowseList: React.FC<{
+    mods: Mod[];
+    installedModIds?: number[];
+    loading: boolean;
+    onInstall: (mod: Mod) => void;
+    onSelect: (mod: Mod) => void;
+    onLoadMore?: () => void;
+}> = ({ mods, installedModIds = [], loading, onInstall, onSelect, onLoadMore }) => {
+    const listRef = React.useRef<HTMLDivElement>(null);
 
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onInstall(mod); }}
-                        className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-xs font-bold border border-white/5 hover:border-blue-500 shadow-lg hover:shadow-blue-600/25 active:scale-95"
+    // Infinite scroll
+    React.useEffect(() => {
+        const container = listRef.current;
+        if (!container || !onLoadMore) return;
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            if (scrollHeight - scrollTop - clientHeight < 200 && !loading) {
+                onLoadMore();
+            }
+        };
+
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, [loading, onLoadMore]);
+
+    return (
+        <div ref={listRef} className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-10 overflow-auto h-full p-2">
+            {mods.map((mod) => {
+                const isInstalled = (mod.gameBananaId !== undefined && installedModIds.includes(mod.gameBananaId)) || (mod as any).isInstalled;
+                return (
+                    <div
+                        key={mod.id}
+                        onClick={() => onSelect(mod)}
+                        className={`glass-panel overflow-hidden group flex flex-col hover:-translate-y-1 transition-transform duration-300 border cursor-pointer ${isInstalled ? 'border-green-500/30 bg-green-900/10' : 'border-white/5 hover:border-blue-500/30'}`}
                     >
-                        <Download size={14} />
-                        <span>Install</span>
-                    </button>
-                </div>
-            </div>
-        ))}
-        {loading && (
-            <>
-                <Skeleton />
-                <Skeleton />
-                <Skeleton />
-                <Skeleton />
-            </>
-        )}
-    </div>
-);
+                        <div className="h-32 bg-gray-800 relative group-hover:scale-105 transition-transform duration-700">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                            {mod.iconUrl ? (
+                                <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                                    <Folder size={40} className="text-gray-500" />
+                                </div>
+                            )}
+                            {isInstalled ? (
+                                <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider flex items-center gap-1">
+                                    <Check size={10} /> Installed
+                                </span>
+                            ) : (
+                                <span className="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider">Mod</span>
+                            )}
+                            <div className="absolute bottom-2 left-3 right-3 z-10">
+                                <h4 className="font-bold text-white text-sm leading-tight line-clamp-1 drop-shadow-md" title={mod.name}>{mod.name}</h4>
+                                <p className="text-[10px] text-gray-300 mt-0.5 drop-shadow-sm">by {mod.author}</p>
+                            </div>
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col justify-between bg-black/20">
+                            <div className="flex items-center justify-between text-[10px] text-gray-500 mb-2">
+                                <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-0.5" title="Downloads">
+                                        <Download size={10} />
+                                        <span>{mod.downloadCount?.toLocaleString() || 0}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-0.5" title="Views">
+                                        <Eye size={10} />
+                                        <span>{mod.viewCount?.toLocaleString() || 0}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-0.5" title="Likes">
+                                        <Heart size={10} className="text-red-400" />
+                                        <span>{mod.likeCount?.toLocaleString() || 0}</span>
+                                    </div>
+                                </div>
+                                {mod.dateAdded && (
+                                    <div className="flex items-center space-x-0.5" title="Date Added">
+                                        <Calendar size={10} />
+                                        <span>{formatDistanceToNow(new Date(mod.dateAdded * 1000), { addSuffix: true })}</span>
+                                    </div>
+                                )}
+                            </div>
+                            {isInstalled ? (
+                                <div className="w-full flex items-center justify-center space-x-2 bg-green-600/20 text-green-400 py-2 rounded-lg text-xs font-bold border border-green-500/30">
+                                    <Check size={14} />
+                                    <span>Already Installed</span>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onInstall(mod); }}
+                                    className="w-full flex items-center justify-center space-x-2 bg-white/10 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-xs font-bold border border-white/5 hover:border-blue-500 shadow-lg hover:shadow-blue-600/25 active:scale-95"
+                                >
+                                    <Download size={14} />
+                                    <span>Install</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+            {loading && (
+                <>
+                    <Skeleton />
+                    <Skeleton />
+                    <Skeleton />
+                    <Skeleton />
+                </>
+            )}
+        </div>
+    );
+};
 
 export default Mods;
