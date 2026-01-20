@@ -120,14 +120,14 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
  * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
 export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
-    const cache = getAPICache();
-    const cacheKey = `search_${JSON.stringify(options)}`;
+    // const cache = getAPICache();
+    // const cacheKey = `search_${JSON.stringify(options)}`;
 
-    const cached = await cache.get(cacheKey);
-    if (cached) {
-        console.log(`[API] Cache hit for search`);
-        return cached;
-    }
+    // const cached = await cache.get(cacheKey);
+    // if (cached) {
+    //     console.log(`[API] Cache hit for search`);
+    //     return cached;
+    // }
 
     await checkRateLimit();
 
@@ -201,7 +201,6 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                 };
             });
 
-            await cache.set(cacheKey, mods, 3 * 60 * 1000); // 3 minutes cache
             return mods;
         }
         return [];
@@ -304,11 +303,14 @@ export async function fetchModProfile(gameBananaId: number): Promise<any> {
 
         console.log(`[API] Mod Profile Status: ${response.status}`);
         if (!response.ok) {
+            console.error(`[API] Failed to fetch mod profile: ${response.status} - ${response.statusText}`);
             return null;
         }
-        return await response.json();
+        const data = await response.json();
+        console.log(`[API] Successfully fetched mod profile for ${gameBananaId}`);
+        return data;
     } catch (error) {
-        console.error(`Error fetching profile for mod ${gameBananaId}:`, error);
+        console.error(`[API] Error fetching profile for mod ${gameBananaId}:`, error);
         return null;
     }
 }
@@ -320,12 +322,16 @@ export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelo
         const response = await fetch(url);
         console.log(`[API] Update Info Status: ${response.status}`);
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.error(`[API] Failed to fetch mod updates: ${response.status} - ${response.statusText}`);
+            return null;
+        }
 
         const updates = await response.json();
         if (Array.isArray(updates) && updates.length > 0) {
             // Get latest update
             const latest = updates[0];
+            console.log(`[API] Successfully fetched mod updates for ${gameBananaId}`);
             return {
                 version: latest._sVersion,
                 date: latest._tsDateAdded,
@@ -333,9 +339,10 @@ export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelo
                 title: latest._sName || latest._sTitle
             };
         }
+        console.log(`[API] No updates found for mod ${gameBananaId}`);
         return null;
     } catch (error) {
-        console.error(`Error fetching updates for mod ${gameBananaId}:`, error);
+        console.error(`[API] Error fetching updates for mod ${gameBananaId}:`, error);
         return null;
     }
 }
@@ -343,10 +350,14 @@ export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelo
 export async function getModChangelog(gameBananaId: number): Promise<any[]> {
     try {
         const response = await fetch(`https://gamebanana.com/apiv11/Mod/${gameBananaId}/Updates`);
-        if (!response.ok) return [];
+        if (!response.ok) {
+            console.error(`[API] Failed to fetch changelog: ${response.status} - ${response.statusText}`);
+            return [];
+        }
 
         const updates = await response.json();
         if (Array.isArray(updates) && updates.length > 0) {
+            console.log(`[API] Successfully fetched changelog for ${gameBananaId}`);
             return updates.map((u: any) => ({
                 version: u._sVersion || 'Update',
                 date: u._tsDateAdded,
@@ -354,9 +365,10 @@ export async function getModChangelog(gameBananaId: number): Promise<any[]> {
                 title: u._sTitle
             }));
         }
+        console.log(`[API] No changelog found for mod ${gameBananaId}`);
         return [];
     } catch (error) {
-        console.error(`Error fetching changelog for mod ${gameBananaId}:`, error);
+        console.error(`[API] Error fetching changelog for mod ${gameBananaId}:`, error);
         return [];
     }
 }
@@ -374,6 +386,7 @@ export async function fetchModDetails(gameBananaId: number): Promise<any> {
         const images = profile._aPreviewMedia?._aImages?.map((img: any) => `${img._sBaseUrl}/${img._sFile}`) || [];
         console.log(`[API] Found ${images.length} images for ${gameBananaId}`);
 
+        console.log(`[API] Successfully fetched mod details for ${gameBananaId}`);
         return {
             description: profile._sText || '', // HTML Description
             images: images,
@@ -384,7 +397,7 @@ export async function fetchModDetails(gameBananaId: number): Promise<any> {
             credits: profile._aCredits || []
         };
     } catch (error) {
-        console.error(`Error fetching details for mod ${gameBananaId}:`, error);
+        console.error(`[API] Error fetching details for mod ${gameBananaId}:`, error);
         return null;
     }
 }

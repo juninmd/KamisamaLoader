@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Check, XCircle, ChevronUp } from 'lucide-react';
+import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Check, XCircle, ChevronUp, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../components/ToastContext';
 import Skeleton from '../components/Skeleton';
@@ -360,6 +360,24 @@ const Mods: React.FC = () => {
         }
     };
 
+    const handleUninstall = async (id: string) => {
+        // Using native confirm for simplicity, a custom modal would be better for UX
+        if (window.confirm('Are you sure you want to permanently uninstall this mod?')) {
+            try {
+                const result = await window.electronAPI.uninstallMod(id);
+                if (result.success) {
+                    showToast('Mod uninstalled successfully', 'success');
+                    loadInstalledMods(); // Refresh the list
+                } else {
+                    showToast(result.message || 'Failed to uninstall mod', 'error');
+                }
+            } catch (error) {
+                console.error('Uninstall error:', error);
+                showToast('An error occurred during uninstallation.', 'error');
+            }
+        }
+    };
+
     // Drag and Drop Handlers
     const handleDragEnter = (e: React.DragEvent) => {
         e.preventDefault();
@@ -555,6 +573,7 @@ const Mods: React.FC = () => {
                                 await window.electronAPI.setModPriority(id, dir);
                                 loadInstalledMods();
                             }}
+                            onUninstall={handleUninstall}
                             updatingMods={updatingMods}
                             onSelect={(mod) => setSelectedMod(mod)}
                         />
@@ -562,7 +581,7 @@ const Mods: React.FC = () => {
                 ) : activeTab === 'downloads' ? (
                     <DownloadsList />
                 ) : (
-                    <div className="flex gap-4 h-full overflow-hidden">
+                    <div className="flex gap-4">
                         {/* Category Sidebar - Fixed width, non-overlapping */}
                         <div className="flex-shrink-0">
                             <CategorySidebar
@@ -579,7 +598,7 @@ const Mods: React.FC = () => {
                         </div>
 
                         {/* Main Content - Takes remaining space */}
-                        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                        <div className="flex-1 flex flex-col min-w-0">
                             {/* Filter Bar */}
                             <FilterBar
                                 availableCategories={categories}
@@ -592,7 +611,7 @@ const Mods: React.FC = () => {
                             />
 
                             {/* Browse List */}
-                            <div className="flex-1 overflow-hidden">
+                            <div className="flex-1">
                                 <BrowseList
                                     mods={browseMods}
                                     installedModIds={installedMods.map(m => m.gameBananaId).filter((id): id is number => id !== undefined)}
@@ -601,13 +620,6 @@ const Mods: React.FC = () => {
                                     onSelect={(mod) => setSelectedMod(mod)}
                                     installedMods={installedMods}
                                     onToggle={handleToggle}
-                                    onLoadMore={() => {
-                                        if (!loadingBrowse) {
-                                            const nextPage = browsePage + 1;
-                                            setBrowsePage(nextPage);
-                                            loadBrowseMods(nextPage, false);
-                                        }
-                                    }}
                                 />
                             </div>
                         </div>
@@ -648,9 +660,10 @@ const InstalledList: React.FC<{
     onToggle: (id: string) => void;
     onUpdate: (mod: Mod) => void;
     onPriorityChange: (id: string, direction: 'up' | 'down') => void;
+    onUninstall: (id: string) => void;
     updatingMods: string[];
     onSelect: (mod: Mod) => void;
-}> = ({ mods, onToggle, onUpdate, onPriorityChange, updatingMods, onSelect }) => {
+}> = ({ mods, onToggle, onUpdate, onPriorityChange, onUninstall, updatingMods, onSelect }) => {
     if (mods.length === 0) {
         return (
             <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl">
@@ -734,6 +747,13 @@ const InstalledList: React.FC<{
                             >
                                 <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${mod.isEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                             </button>
+                            <button
+                                onClick={() => onUninstall(mod.id)}
+                                className="p-2 hover:bg-red-500/20 rounded-full text-gray-500 hover:text-red-400 transition-colors"
+                                title="Uninstall Mod"
+                            >
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -748,30 +768,11 @@ const BrowseList: React.FC<{
     loading: boolean;
     onInstall: (mod: Mod) => void;
     onSelect: (mod: Mod) => void;
-    onLoadMore?: () => void;
     installedMods?: Mod[];
     onToggle?: (id: string) => void;
-}> = ({ mods, installedModIds = [], loading, onInstall, onSelect, onLoadMore, installedMods = [], onToggle }) => {
-    const listRef = React.useRef<HTMLDivElement>(null);
-
-    // Infinite scroll
-    React.useEffect(() => {
-        const container = listRef.current;
-        if (!container || !onLoadMore) return;
-
-        const handleScroll = () => {
-            const { scrollTop, scrollHeight, clientHeight } = container;
-            if (scrollHeight - scrollTop - clientHeight < 200 && !loading) {
-                onLoadMore();
-            }
-        };
-
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [loading, onLoadMore]);
-
+}> = ({ mods, installedModIds = [], loading, onInstall, onSelect, installedMods = [], onToggle }) => {
     return (
-        <div ref={listRef} className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 pb-10 overflow-auto h-full p-2">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 pb-10 p-2">
             {mods.map((mod) => {
                 const isInstalled = (mod.gameBananaId !== undefined && installedModIds.includes(mod.gameBananaId)) || (mod as any).isInstalled;
                 // Find local mod if installed to check status

@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Mod Management
   getInstalledMods: () => ipcRenderer.invoke('get-installed-mods'),
   installMod: (filePath: string) => ipcRenderer.invoke('install-mod', filePath),
+  uninstallMod: (modId: string) => ipcRenderer.invoke('uninstall-mod', modId),
   toggleMod: (modId: string, isEnabled: boolean) => ipcRenderer.invoke('toggle-mod', modId, isEnabled),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),

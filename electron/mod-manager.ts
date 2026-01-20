@@ -306,6 +306,38 @@ export class ModManager {
         }
     }
 
+    async uninstallMod(modId: string) {
+        try {
+            const modsFile = await this.getModsFilePath();
+            let mods = [];
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+
+            const modIndex = mods.findIndex((m: any) => m.id === modId);
+            if (modIndex === -1) {
+                return { success: false, message: 'Mod not found.' };
+            }
+
+            const mod = mods[modIndex];
+
+            // 1. Undeploy mod from game files
+            await this.undeployMod(mod);
+
+            // 2. Delete mod folder from Mods directory
+            if (mod.folderPath) {
+                await fs.rm(mod.folderPath, { recursive: true, force: true });
+            }
+
+            // 3. Remove mod from mods.json
+            mods.splice(modIndex, 1);
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+            return { success: true, message: 'Mod uninstalled successfully.' };
+        } catch (e) {
+            console.error(e);
+            return { success: false, message: `Uninstallation failed: ${(e as Error).message}` };
+        }
+    }
+
     async toggleMod(modId: string, isEnabled: boolean) {
         try {
             const modsFile = await this.getModsFilePath();
@@ -620,19 +652,41 @@ export class ModManager {
         }
     }
 
-    async getModChangelog(modId: string) {
-        const modsFile = await this.getModsFilePath();
-        let mods: any[] = [];
-        try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
+    async getModChangelog(id: string) {
+        try {
+            const gameBananaId = Number(id);
+            if (!isNaN(gameBananaId) && gameBananaId > 0) {
+                console.log(`[ModManager] Getting changelog for gameBananaId: ${gameBananaId}`);
+                return await import('./gamebanana.js').then(m => m.fetchModUpdates(gameBananaId));
+            }
 
-        const mod = mods.find(m => m.id === modId);
-        if (!mod || !mod.gameBananaId) return null;
+            console.log(`[ModManager] Getting changelog for modId: ${id}`);
+            const modsFile = await this.getModsFilePath();
+            let mods: any[] = [];
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
 
-        return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId));
+            const mod = mods.find(m => m.id === id);
+            if (!mod || !mod.gameBananaId) {
+                console.error(`[ModManager] Mod not found or no gameBananaId for modId: ${id}`);
+                return null;
+            }
+
+            console.log(`[ModManager] Found gameBananaId: ${mod.gameBananaId} for modId: ${id}`);
+            return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId));
+        } catch (error) {
+            console.error(`[ModManager] Error in getModChangelog for id: ${id}`, error);
+            return null;
+        }
     }
 
     async getModDetails(gameBananaId: number) {
-        return await fetchModDetails(gameBananaId);
+        try {
+            console.log(`[ModManager] Getting details for gameBananaId: ${gameBananaId}`);
+            return await fetchModDetails(gameBananaId);
+        } catch (error) {
+            console.error(`[ModManager] Error in getModDetails for gameBananaId: ${gameBananaId}`, error);
+            return null;
+        }
     }
 
     async setModPriority(modId: string, direction: 'up' | 'down') {
