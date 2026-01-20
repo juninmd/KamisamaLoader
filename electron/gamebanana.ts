@@ -29,6 +29,7 @@ export interface SearchOptions {
     sort?: 'downloads' | 'views' | 'likes' | 'date' | 'name';
     order?: 'asc' | 'desc';
     categoryId?: number;
+    search?: string;
     filters?: Record<string, any>;
 }
 
@@ -67,49 +68,11 @@ export interface ModChangelog {
     title?: string;
 }
 
-export async function searchOnlineMods(page: number = 1): Promise<Mod[]> {
-    try {
-        const response = await fetch(`https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=${page}&_nPerpage=15`);
-        if (!response.ok) {
-            return [];
-        }
-
-        const json = await response.json();
-
-        // Type guard for the expected structure
-        if (json && json._aRecords && Array.isArray(json._aRecords)) {
-            return json._aRecords.map((record: any) => {
-                const image = record._aPreviewMedia?._aImages?.[0];
-                const iconUrl = image ? `${image._sBaseUrl}/${image._sFile220}` : '';
-                const images = record._aPreviewMedia?._aImages?.map((img: any) => `${img._sBaseUrl}/${img._sFile}`) || [];
-                return {
-                    id: record._idRow.toString(),
-                    name: record._sName,
-                    author: record._aSubmitter?._sName || 'Unknown',
-                    version: record._sVersion || '1.0',
-                    description: record._sText || '', // Use text body if available, else category
-                    isEnabled: false,
-                    iconUrl: iconUrl,
-                    gameBananaId: record._idRow,
-                    latestVersion: record._sVersion || '1.0',
-                    viewCount: record._nViewCount || 0,
-                    likeCount: record._nLikeCount || 0,
-                    downloadCount: record._nDownloadCount || 0,
-                    dateAdded: record._tsDateAdded || 0,
-                    images: images,
-                    category: record._aRootCategory?._sName || 'Misc',
-                    submitter: record._aSubmitter?._sName || 'Unknown',
-                    submitterUrl: record._aSubmitter?._sProfileUrl || '',
-                    license: record._sLicense || 'Unknown',
-                    isNsfw: record._bHasNsfw || record._bIsNsfw || false
-                };
-            });
-        }
-        return [];
-    } catch (error) {
-        console.error('Error fetching online mods:', error);
-        return [];
-    }
+export async function searchOnlineMods(page: number = 1, search: string = ''): Promise<Mod[]> {
+    return searchBySection({
+        page,
+        search
+    });
 }
 
 /**
@@ -147,7 +110,9 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
 
 /**
  * Search mods with advanced filters and sorting
- * Endpoint: /Core/List/Section
+ * Hybrid approach:
+ * - If search query present: Use /Util/Search/Results
+ * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
 export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
     const cache = getAPICache();
@@ -167,14 +132,29 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             page = 1,
             perPage = 20,
             categoryId,
+            search = ''
         } = options;
 
-        // Use the simple Subfeed endpoint that works
-        let url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}`;
+        let url = '';
 
-        // Add category filter if specified
-        if (categoryId) {
-            url += `&_aModelFilter[]=Mod&_idCategoryRowFilter=${categoryId}`;
+        if (search && search.trim().length > 0) {
+            // Use Search Endpoint
+            url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search)}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
+            if (categoryId) {
+                // For Search, category filter might be Generic_Category
+                url += `&_aFilters[Generic_Category]=${categoryId}`;
+            }
+        } else {
+            // Use Subfeed Endpoint (Browsing)
+            url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}`;
+
+            // Add category filter if specified
+            if (categoryId) {
+                url += `&_aModelFilter[]=Mod&_idCategoryRowFilter=${categoryId}`;
+            } else {
+                // Default to just Mods if no category (Subfeed shows everything)
+                 url += `&_aModelFilter[]=Mod`;
+            }
         }
 
         console.log(`[API] Fetching: ${url}`);
@@ -211,7 +191,8 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                     category: record._aRootCategory?._sName || 'Misc',
                     submitter: record._aSubmitter?._sName || 'Unknown',
                     license: record._sLicense || 'Unknown',
-                    fileSize: record._aFiles?.[0]?._nFilesize || 0
+                    fileSize: record._aFiles?.[0]?._nFilesize || 0,
+                    isNsfw: record._bHasNsfw || record._bIsNsfw || false
                 };
             });
 
@@ -253,18 +234,22 @@ export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> 
     await checkRateLimit();
 
     try {
-        // GameBanana doesn't have a direct featured endpoint in v11
-        // So we fetch top rated mods as "featured"
+        // Fetch top rated mods as "featured" (using Subfeed for now as sort is unstable, or rely on client sort if small set)
+        // Since we can't reliably sort by likes via API, we'll fetch recent mods and hope for the best
+        // OR we can fetch 50 recent mods and sort them by likes in memory.
+
         const mods = await searchBySection({
             gameId,
             page: 1,
-            perPage: 10,
-            sort: 'likes',
-            order: 'desc'
+            perPage: 40, // Fetch more to find good ones
         });
 
-        await cache.set(cacheKey, mods, 15 * 60 * 1000); // 15 minutes cache
-        return mods;
+        // Client-side sort by likes for "Featured" simulation
+        mods.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+        const topMods = mods.slice(0, 10);
+
+        await cache.set(cacheKey, topMods, 15 * 60 * 1000); // 15 minutes cache
+        return topMods;
     } catch (error) {
         console.error('Error fetching featured mods:', error);
         return [];
@@ -285,13 +270,13 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
 
     try {
         const response = await apiLimit(() =>
-            fetch(`https://gamebanana.com/apiv11/Game/${gameId}?_aDataSchema=_aCategory`)
+            fetch(`https://gamebanana.com/apiv11/Game/${gameId}/ProfilePage`)
         );
 
         if (!response.ok) return [];
 
         const data = await response.json();
-        const categories = data?._aCategory || [];
+        const categories = data?._aModRootCategories || [];
 
         await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
         return categories;
@@ -330,7 +315,6 @@ export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelo
                 title: latest._sName || latest._sTitle
             };
         }
-        return null;
         return null;
     } catch (error) {
         console.error(`Error fetching updates for mod ${gameBananaId}:`, error);

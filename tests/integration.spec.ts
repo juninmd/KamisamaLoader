@@ -1,4 +1,27 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import path from 'path';
+
+// Mock Electron app module BEFORE imports that use it
+vi.mock('electron', () => {
+    return {
+        app: {
+            getPath: (name: string) => {
+                if (name === 'userData') return path.resolve('test-data');
+                if (name === 'exe') return path.resolve('test-dist/win-unpacked/KamisamaLoader.exe');
+                if (name === 'temp') return path.resolve('test-temp');
+                return '/tmp';
+            },
+            isPackaged: false
+        },
+        net: {
+            request: () => ({
+                on: (event: string, cb: Function) => {},
+                end: () => {}
+            })
+        }
+    };
+});
+
 import { searchOnlineMods, fetchModProfile } from '../electron/gamebanana';
 
 describe('Real API Integration Tests', () => {
@@ -51,5 +74,4 @@ describe('Real API Integration Tests', () => {
             console.log('Download URL found:', latestFile._sDownloadUrl);
         }
     });
-
 });
