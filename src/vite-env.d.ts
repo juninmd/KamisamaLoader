@@ -26,7 +26,8 @@ interface Window {
     fetchCategories: (gameId?: number) => Promise<any[]>;
     fetchNewMods: (page?: number) => Promise<any[]>;
     fetchFeaturedMods: () => Promise<any[]>;
-    installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string }>;
+    getModDetails: (gameBananaId: number) => Promise<any>;
+    installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string; downloadId?: string }>;
 
     // Profiles
     getProfiles: () => Promise<any[]>;

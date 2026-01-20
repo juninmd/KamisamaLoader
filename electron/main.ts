@@ -90,6 +90,10 @@ function registerIpcHandlers() {
     return await modManager.getModChangelog(modId);
   });
 
+  ipcMain.handle('get-mod-details', async (event, gameBananaId) => {
+    return await modManager.getModDetails(gameBananaId);
+  });
+
   // New API methods for categories and advanced search
   ipcMain.handle('search-by-section', async (_event, options) => {
     return await modManager.searchBySection(options);
