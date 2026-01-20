@@ -154,7 +154,7 @@ export class DownloadManager extends EventEmitter {
                 }
             });
 
-            response.on('error', (err) => {
+            response.on('error', (err: any) => {
                 stream.close();
                 if (item.state !== 'cancelled' && item.state !== 'paused') {
                     item.state = 'failed';
@@ -166,7 +166,7 @@ export class DownloadManager extends EventEmitter {
             });
         });
 
-        request.on('error', (err) => {
+        request.on('error', (err: any) => {
             if (item.state !== 'cancelled' && item.state !== 'paused') {
                 item.state = 'failed';
                 item.error = err.message;
