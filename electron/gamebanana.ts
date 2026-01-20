@@ -33,6 +33,23 @@ export interface SearchOptions {
     filters?: Record<string, any>;
 }
 
+function buildSearchSortParams(sort?: SearchOptions['sort'], order?: SearchOptions['order']) {
+    // GameBanana v11 search endpoints commonly accept these (best-effort).
+    // If an endpoint ignores them, we still keep renderer-side sorting as fallback.
+    const sortFieldMap: Record<NonNullable<SearchOptions['sort']>, string> = {
+        downloads: '_nDownloadCount',
+        views: '_nViewCount',
+        likes: '_nLikeCount',
+        date: '_tsDateAdded',
+        name: '_sName'
+    };
+
+    const s = sort ?? 'date';
+    const o = order ?? 'desc';
+    const orderBy = sortFieldMap[s] ?? sortFieldMap.date;
+    return `&_sOrderBy=${encodeURIComponent(orderBy)}&_sOrder=${encodeURIComponent(o)}`;
+}
+
 export interface Mod {
     id: string;
     name: string;
@@ -137,7 +154,9 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             page = 1,
             perPage = 20,
             categoryId,
-            search = ''
+            search = '',
+            sort,
+            order
         } = options;
 
         let url = '';
@@ -149,6 +168,7 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                 // For Search, category filter might be Generic_Category
                 url += `&_aFilters[Generic_Category]=${categoryId}`;
             }
+            url += buildSearchSortParams(sort, order);
         } else {
             // Use Subfeed Endpoint (Browsing)
             url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}`;

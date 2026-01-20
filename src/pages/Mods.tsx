@@ -263,8 +263,8 @@ const Mods: React.FC = () => {
             } else {
                 showToast('No updates found', 'info');
             }
-        } catch (e) {
-            console.error(e);
+        } catch (_e) {
+            console.error(_e);
         } finally {
             setCheckingUpdates(false);
         }
@@ -283,8 +283,8 @@ const Mods: React.FC = () => {
             const changelog = await window.electronAPI.getModChangelog(mod.id);
             setUpdateChangelog(changelog);
             setUpdateDialogMod(mod);
-        } catch (e) {
-            console.error(e);
+        } catch (_e) {
+            console.error(_e);
             // Fallback if failed, just show empty
             setUpdateChangelog(null);
             setUpdateDialogMod(mod);
@@ -310,8 +310,8 @@ const Mods: React.FC = () => {
             } else {
                 showToast('Failed to update mod', 'error');
             }
-        } catch (e) {
-            console.error(e);
+        } catch (_e) {
+            console.error(_e);
             showToast('Failed to update mod', 'error');
         } finally {
             setUpdatingMods(prev => prev.filter(mid => mid !== id));
@@ -355,7 +355,7 @@ const Mods: React.FC = () => {
             } else {
                 showToast(result.message, 'error');
             }
-        } catch (e) {
+        } catch (_e) {
             showToast('Installation request failed', 'error');
         }
     };

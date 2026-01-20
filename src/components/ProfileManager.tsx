@@ -45,7 +45,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
             } else {
                 showToast(result.message || 'Failed to save profile', 'error');
             }
-        } catch (e) {
+        } catch (_e) {
             showToast('Failed to save profile', 'error');
         }
     };
@@ -66,7 +66,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
                 } else {
                     showToast(result.message || 'Failed to load profile', 'error');
                 }
-            } catch (e) {
+            } catch (_e) {
                 showToast('Failed to load profile', 'error');
             } finally {
                 setLoadingProfileId(null);
@@ -86,7 +86,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
             } else {
                 showToast('Failed to delete profile', 'error');
             }
-        } catch (e) {
+        } catch (_e) {
             showToast('Failed to delete profile', 'error');
         }
     };
