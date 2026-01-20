@@ -21,7 +21,10 @@ interface Mod {
     submitter?: string;
     isEnabled?: boolean; // Added optional property
     submitterUrl?: string;
+    modPageUrl?: string;
+    credits?: any[];
 }
+
 
 interface ModDetailsModalProps {
     mod: Mod;
@@ -33,24 +36,47 @@ interface ModDetailsModalProps {
 const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose, onInstall }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [changelog, setChangelog] = useState<any[]>([]);
-    const images = mod.images && mod.images.length > 0 ? mod.images : [mod.iconUrl];
+    const [fullDescription, setFullDescription] = useState<string>('');
+    const [modImages, setModImages] = useState<string[]>([]);
+    const [modPageUrl, setModPageUrl] = useState<string>('');
+
+    // Derived images: prioritize fetched images, fallback to prop images
+    const displayImages = modImages.length > 0 ? modImages : (mod.images && mod.images.length > 0 ? mod.images : (mod.iconUrl ? [mod.iconUrl] : []));
 
     useEffect(() => {
-        if (isOpen && mod.id) {
-            window.electronAPI.getModChangelog(mod.id).then((logs: any) => {
-                if (Array.isArray(logs)) setChangelog(logs);
-            });
+        if (isOpen && (mod.id || (mod as any).gameBananaId)) {
+            const gbId = (mod as any).gameBananaId || Number(mod.id);
+            if (gbId) {
+                // 1. Fetch Changelog
+                window.electronAPI.getModChangelog(String(gbId)).then((logs: any) => {
+                    if (Array.isArray(logs)) setChangelog(logs);
+                });
+
+                // 2. Fetch Full Details
+                window.electronAPI.getModDetails(Number(gbId)).then((details: any) => {
+                    if (details) {
+                        if (details.description) setFullDescription(details.description);
+                        if (details.images && details.images.length > 0) setModImages(details.images);
+                        if (details.modPageUrl) setModPageUrl(details.modPageUrl);
+                    }
+                });
+            }
+        } else {
+            // Reset
+            setFullDescription('');
+            setModImages([]);
+            setModPageUrl('');
         }
     }, [mod.id, isOpen]);
 
     if (!isOpen) return null;
 
     const nextImage = () => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+        setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
     };
 
     const prevImage = () => {
-        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+        setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
     };
 
     return ReactDOM.createPortal(
@@ -69,13 +95,13 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                     {/* Hero / Carousel */}
                     <div className="relative w-full aspect-video max-h-[40vh] bg-black">
                         <img
-                            src={images[currentImageIndex]}
+                            src={displayImages[currentImageIndex]}
                             alt={mod.name}
                             className="w-full h-full object-contain"
                         />
 
                         {/* Navigation */}
-                        {images.length > 1 && (
+                        {displayImages.length > 1 && (
                             <>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
@@ -92,7 +118,7 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
 
                                 {/* Indicators */}
                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
-                                    {images.map((_, idx) => (
+                                    {displayImages.map((_, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setCurrentImageIndex(idx)}
@@ -164,9 +190,10 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                         {/* Description */}
                         <div>
                             <h3 className="text-lg font-bold text-white mb-2">Description</h3>
-                            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                                {mod.description}
-                            </p>
+                            <div
+                                className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words html-description"
+                                dangerouslySetInnerHTML={{ __html: fullDescription || mod.description || 'No description available.' }}
+                            />
                         </div>
 
                         {/* Changelog */}
@@ -206,6 +233,16 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                         <Download size={18} />
                         <span>Install Mod</span>
                     </button>
+                    {modPageUrl && (
+                        <a
+                            href={modPageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-6 py-2.5 rounded-xl font-medium text-blue-400 border border-blue-500/30 hover:bg-blue-500/10 transition-colors flex items-center space-x-2"
+                        >
+                            <span>View on GameBanana</span>
+                        </a>
+                    )}
                 </div>
             </div>
         </div>,

@@ -5,7 +5,7 @@ import { execFile } from 'child_process';
 import { app, net } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, Mod, getModChangelog } from './gamebanana.js';
+import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails } from './gamebanana.js';
 
 import { DownloadManager } from './download-manager.js';
 
@@ -517,13 +517,14 @@ export class ModManager {
     async installOnlineMod(mod: Mod) {
         try {
             console.log(`Installing mod: ${mod.gameBananaId}`);
+
             // 1. Fetch Profile to get download URL and missing details
             const profile = await fetchModProfile(mod.gameBananaId);
             if (!profile || !profile._aFiles || profile._aFiles.length === 0) {
                 return { success: false, message: 'No download files found for this mod.' };
             }
 
-            // Fallback for missing details (e.g. from Protocol Handler)
+            // Fallback for missing details
             if (!mod.name || mod.name === 'Unknown') mod.name = profile._sName;
             if (!mod.author || mod.author === 'Unknown') mod.author = profile._aSubmitter?._sName || 'Unknown';
             if (!mod.version || mod.version === '1.0') mod.version = profile._sVersion || '1.0';
@@ -536,53 +537,82 @@ export class ModManager {
             const latestFile = profile._aFiles[0];
             const downloadUrl = latestFile._sDownloadUrl;
 
-            // 2. Download
-            const tempDir = app.getPath('temp');
-            const tempFile = path.join(tempDir, `${mod.gameBananaId}.zip`);
+            // 2. Start Download Manager Flow
+            if (this.downloadManager) {
+                const tempDir = app.getPath('temp');
+                const fileName = `${mod.gameBananaId}.zip`;
 
-            await this.downloadFile(downloadUrl, tempFile);
+                // Start tracking
+                const downloadId = this.downloadManager.startDownload(downloadUrl, tempDir, fileName, {
+                    type: 'install',
+                    mod: { ...mod, latestFileId: latestFile._idRow } // Pass full mod context
+                });
 
-            // 3. Install
-            const modDestDir = path.join(this.modsDir, mod.name.replace(/[^a-z0-9]/gi, '_')); // Sanitize
-            await fs.mkdir(modDestDir, { recursive: true });
+                // Listen for completion ONE-OFF for this specific download ID (to trigger install)
+                // Note: Better design might be a global listener in ModManager ctor, but this works for now
+                // IF we don't want to leak listeners, we should be careful. 
+                // However, ModManager exists for the lifecycle of the app.
 
-            try {
-                const zip = new AdmZip(tempFile);
-                zip.extractAllTo(modDestDir, true);
-            } catch (e) {
-                await fs.unlink(tempFile);
-                return { success: false, message: 'Extraction failed.' };
+                const onComplete = async (dlId: string) => {
+                    if (dlId === downloadId) {
+                        try {
+                            const tempFile = path.join(tempDir, fileName);
+                            // 3. Install logic from temp file
+
+                            const modDestDir = path.join(this.modsDir, mod.name.replace(/[^a-z0-9]/gi, '_'));
+                            await fs.mkdir(modDestDir, { recursive: true });
+
+                            try {
+                                const zip = new AdmZip(tempFile);
+                                zip.extractAllTo(modDestDir, true);
+                            } catch (e) {
+                                console.error('Zip extraction failed', e);
+                                // could emit an error event to UI via DownloadManager?
+                            }
+
+                            await fs.unlink(tempFile);
+
+                            // 4. Update mods.json
+                            const modsFile = await this.getModsFilePath();
+                            let mods = [];
+                            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+
+                            const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
+
+                            const newModEntry = {
+                                id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
+                                name: mod.name,
+                                author: mod.author,
+                                version: mod.version, // taken from profile
+                                description: mod.description,
+                                isEnabled: true,
+                                folderPath: modDestDir,
+                                gameBananaId: mod.gameBananaId,
+                                iconUrl: mod.iconUrl,
+                                latestFileId: latestFile._idRow
+                            };
+
+                            if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newModEntry };
+                            else mods.push(newModEntry);
+
+                            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+                            // Notify UI? The download manager emits 'completed', we can rely on that or send extra event.
+                            this.downloadManager!.removeListener('download-completed', onComplete);
+
+                        } catch (err) {
+                            console.error("Install post-download failed", err);
+                            this.downloadManager!.removeListener('download-completed', onComplete);
+                        }
+                    }
+                };
+
+                this.downloadManager.on('download-completed', onComplete);
+
+                return { success: true, message: 'Download started.', downloadId };
+            } else {
+                return { success: false, message: 'Download Manager not initialized.' };
             }
-
-            await fs.unlink(tempFile);
-
-            // 4. Update mods.json
-            const modsFile = await this.getModsFilePath();
-            let mods = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
-
-            // Check if exists
-            const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
-
-            const newModEntry = {
-                id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
-                name: mod.name,
-                author: mod.author,
-                version: mod.latestVersion,
-                description: mod.description,
-                isEnabled: true,
-                folderPath: modDestDir,
-                gameBananaId: mod.gameBananaId,
-                iconUrl: mod.iconUrl,
-                latestFileId: latestFile._idRow
-            };
-
-            if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newModEntry };
-            else mods.push(newModEntry);
-
-            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-
-            return { success: true, message: 'Mod installed successfully.' };
 
         } catch (e) {
             console.error(e);
@@ -599,6 +629,10 @@ export class ModManager {
         if (!mod || !mod.gameBananaId) return null;
 
         return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId));
+    }
+
+    async getModDetails(gameBananaId: number) {
+        return await fetchModDetails(gameBananaId);
     }
 
     async setModPriority(modId: string, direction: 'up' | 'down') {

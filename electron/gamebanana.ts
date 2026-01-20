@@ -80,6 +80,7 @@ export async function searchOnlineMods(page: number = 1, search: string = ''): P
  * Endpoint: /Core/Item/Data
  */
 export async function fetchItemData(itemType: string, itemId: number, fields: string[] = []): Promise<any> {
+    console.log(`[API] Fetching Item Data: ${itemType} / ${itemId}`);
     const cache = getAPICache();
     const cacheKey = `item_${itemType}_${itemId}_${fields.join(',')}`;
 
@@ -90,10 +91,14 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
 
     try {
         const fieldsParam = fields.length > 0 ? `&_aDataSchema=${fields.join(',')}` : '';
+        const url = `https://gamebanana.com/apiv11/${itemType}/${itemId}/ProfilePage${fieldsParam}`;
+        console.log(`[API] Request Info: ${url}`);
+
         const response = await apiLimit(() =>
-            fetch(`https://gamebanana.com/apiv11/${itemType}/${itemId}/ProfilePage${fieldsParam}`)
+            fetch(url)
         );
 
+        console.log(`[API] Response Item Data status: ${response.status}`);
         if (!response.ok) {
             console.error(`[API] Failed to fetch item data: ${response.status}`);
             return null;
@@ -153,7 +158,7 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                 url += `&_aModelFilter[]=Mod&_idCategoryRowFilter=${categoryId}`;
             } else {
                 // Default to just Mods if no category (Subfeed shows everything)
-                 url += `&_aModelFilter[]=Mod`;
+                url += `&_aModelFilter[]=Mod`;
             }
         }
 
@@ -269,13 +274,17 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
     await checkRateLimit();
 
     try {
+        const url = `https://gamebanana.com/apiv11/Game/${gameId}/ProfilePage`;
+        console.log(`[API] Fetching Categories URL: ${url}`);
         const response = await apiLimit(() =>
-            fetch(`https://gamebanana.com/apiv11/Game/${gameId}/ProfilePage`)
+            fetch(url)
         );
 
+        console.log(`[API] Fetch Categories Status: ${response.status}`);
         if (!response.ok) return [];
 
         const data = await response.json();
+        console.log('[API] Fetched Categories:', JSON.stringify(data?._aModRootCategories?.[0] || {})); // Log first category to see structure
         const categories = data?._aModRootCategories || [];
 
         await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
@@ -287,8 +296,13 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
 }
 
 export async function fetchModProfile(gameBananaId: number): Promise<any> {
+    console.log(`[API] Fetching Mod Profile ID: ${gameBananaId}`);
     try {
-        const response = await fetch(`https://gamebanana.com/apiv11/Mod/${gameBananaId}/ProfilePage`);
+        const url = `https://gamebanana.com/apiv11/Mod/${gameBananaId}/ProfilePage`;
+        console.log(`[API] Profile URL: ${url}`);
+        const response = await fetch(url);
+
+        console.log(`[API] Mod Profile Status: ${response.status}`);
         if (!response.ok) {
             return null;
         }
@@ -300,8 +314,12 @@ export async function fetchModProfile(gameBananaId: number): Promise<any> {
 }
 
 export async function fetchModUpdates(gameBananaId: number): Promise<ModChangelog | null> {
+    console.log(`[API] Fetching Mod Updates ID: ${gameBananaId}`);
     try {
-        const response = await fetch(`https://gamebanana.com/apiv11/Mod/${gameBananaId}/Updates`);
+        const url = `https://gamebanana.com/apiv11/Mod/${gameBananaId}/Updates`;
+        const response = await fetch(url);
+        console.log(`[API] Update Info Status: ${response.status}`);
+
         if (!response.ok) return null;
 
         const updates = await response.json();
@@ -340,5 +358,33 @@ export async function getModChangelog(gameBananaId: number): Promise<any[]> {
     } catch (error) {
         console.error(`Error fetching changelog for mod ${gameBananaId}:`, error);
         return [];
+    }
+}
+
+export async function fetchModDetails(gameBananaId: number): Promise<any> {
+    console.log(`[API] Fetching Mod Details ID: ${gameBananaId}`);
+    try {
+        const profile = await fetchModProfile(gameBananaId);
+        if (!profile) {
+            console.warn(`[API] Mod Profile not found for ${gameBananaId}`);
+            return null;
+        }
+
+        // Use _sBaseUrl + _sFile for high res image. _sFile220 is thumbnail.
+        const images = profile._aPreviewMedia?._aImages?.map((img: any) => `${img._sBaseUrl}/${img._sFile}`) || [];
+        console.log(`[API] Found ${images.length} images for ${gameBananaId}`);
+
+        return {
+            description: profile._sText || '', // HTML Description
+            images: images,
+            modPageUrl: profile._sProfileUrl || `https://gamebanana.com/mods/${gameBananaId}`,
+            submitterUrl: profile._aSubmitter?._sProfileUrl,
+            category: profile._aRootCategory?._sName || 'Misc',
+            license: profile._sLicense || 'Unknown',
+            credits: profile._aCredits || []
+        };
+    } catch (error) {
+        console.error(`Error fetching details for mod ${gameBananaId}:`, error);
+        return null;
     }
 }
