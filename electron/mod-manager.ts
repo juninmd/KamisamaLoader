@@ -66,7 +66,9 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            return JSON.parse(data);
+            const mods = JSON.parse(data);
+            // Sort by priority Descending (Highest Priority First)
+            return mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
         } catch (error) {
             return [];
         }
@@ -695,33 +697,27 @@ export class ModManager {
             const data = await fs.readFile(modsFile, 'utf-8');
             let mods = JSON.parse(data);
 
-            // Sort by priority first to ensure index matches logical order
-            mods.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
+            // Sort Descending (High Priority First) to match UI
+            mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
 
             const index = mods.findIndex((m: any) => m.id === modId);
             if (index === -1) return false;
 
-            const targetIndex = direction === 'up' ? index + 1 : index - 1; // Higher priority = executed later = "Up" visually? 
-            // Usually "Top" of list = High Priority (Overwrites others).
-            // But in file system, Z_Mod overwrites A_Mod.
-            // If "Up" means "Higher in list" which means "Higher Priority" -> It should have a HIGHER alphanumeric name?
-            // Wait. Alphabetical: A loads first, Z loads last (Z wins).
-            // So Higher Priority = Higher Number (999).
-            // Visual List: usually High Priority is at the TOP.
-            // If I move a mod UP the list, I want it to WIN over the one below it.
-            // So "Up" = Increase Priority Number.
+            // Up = Move towards index 0 (Highest Priority)
+            // Down = Move towards index N (Lowest Priority)
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
             if (targetIndex < 0 || targetIndex >= mods.length) return false;
 
             const currentMod = mods[index];
             const targetMod = mods[targetIndex];
 
-            // Swap priorities
+            // Swap priorities to swap positions
             const temp = currentMod.priority || 0;
             currentMod.priority = targetMod.priority || 0;
             targetMod.priority = temp;
 
-            // Redeploy both if enabled
+            // Redeploy both if enabled to reflect new filenames (priority prefix)
             if (currentMod.isEnabled) {
                 await this.undeployMod(currentMod);
                 await this.deployMod(currentMod);
@@ -731,7 +727,8 @@ export class ModManager {
                 await this.deployMod(targetMod);
             }
 
-            // Save
+            // Save (Order in JSON doesn't strictly matter as we sort on read, but keeping it sorted is nice)
+            mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
             return true;
         } catch (e) {
