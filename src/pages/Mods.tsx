@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Check, XCircle, ChevronUp, Trash2 } from 'lucide-react';
+import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Check, XCircle, ChevronUp, Trash2, LayoutGrid, List } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../components/ToastContext';
 import Skeleton from '../components/Skeleton';
@@ -11,6 +11,15 @@ import FilterBar from '../components/FilterBar';
 import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
+
+function formatBytes(bytes: number, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 interface Mod {
     id: string;
@@ -52,6 +61,7 @@ const Mods: React.FC = () => {
 
     const [checkingUpdates, setCheckingUpdates] = useState(false);
     const [updatingMods, setUpdatingMods] = useState<string[]>([]); // List of IDs currently updating
+    const [viewMode, setViewMode] = useState<'list' | 'card'>('list'); // New: View Mode State
 
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
@@ -107,7 +117,7 @@ const Mods: React.FC = () => {
                 setCategories(cats.map((cat: any, idx: number) => ({
                     id: cat._idRow || idx,
                     name: cat._sName || cat.name || 'Unknown',
-                    count: cat._nModCount || 0
+                    count: cat._nItemCount || cat._nModCount || 0
                 })));
             }
         } catch (error) {
@@ -141,7 +151,8 @@ const Mods: React.FC = () => {
                 perPage: 20,
                 search: searchQuery,
                 sort: filters.sortBy,
-                order: filters.order
+                order: filters.order,
+                dateRange: filters.dateRange
             };
 
             // Map Category Name to ID
@@ -497,7 +508,26 @@ const Mods: React.FC = () => {
                 <div className="flex items-center space-x-3 w-full xl:w-auto">
                     {/* Profile Manager */}
                     {activeTab === 'installed' && (
-                        <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
+                        <div className="flex items-center space-x-2">
+                            <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
+                            {/* View Mode Toggle */}
+                            <div className="bg-black/40 p-1 rounded-lg border border-white/10 flex items-center space-x-1">
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                                    title="List View"
+                                >
+                                    <List size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('card')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'card' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                                    title="Card View"
+                                >
+                                    <LayoutGrid size={16} />
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {/* Search */}
@@ -549,6 +579,17 @@ const Mods: React.FC = () => {
                                     <span>Update All</span>
                                 </button>
                             )}
+                            {/* Stats */}
+                            <div className="flex items-center space-x-3 text-xs text-gray-400 border-l border-white/10 pl-3 ml-2">
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-white">{filteredInstalledMods.length}</span>
+                                    <span>Mods</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-white">{formatBytes(filteredInstalledMods.reduce((acc: number, mod: any) => acc + (mod.fileSize || 0), 0))}</span>
+                                    <span>Size</span>
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>
@@ -576,6 +617,7 @@ const Mods: React.FC = () => {
                             onUninstall={handleUninstall}
                             updatingMods={updatingMods}
                             onSelect={(mod) => setSelectedMod(mod)}
+                            viewMode={viewMode}
                         />
                     )
                 ) : activeTab === 'downloads' ? (
@@ -663,13 +705,68 @@ const InstalledList: React.FC<{
     onUninstall: (id: string) => void;
     updatingMods: string[];
     onSelect: (mod: Mod) => void;
-}> = ({ mods, onToggle, onUpdate, onPriorityChange, onUninstall, updatingMods, onSelect }) => {
+    viewMode: 'list' | 'card';
+}> = ({ mods, onToggle, onUpdate, onPriorityChange, onUninstall, updatingMods, onSelect, viewMode }) => {
     if (mods.length === 0) {
         return (
             <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl">
                 <Folder size={48} className="mb-4 opacity-50" />
                 <p className="text-lg font-medium">No mods installed.</p>
                 <p className="text-sm">Browse online or drag files to install.</p>
+            </div>
+        );
+    }
+
+
+    if (viewMode === 'card') {
+        return (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 p-2">
+                {mods.map(mod => (
+                    <div
+                        key={mod.id}
+                        className={`glass-panel p-3 flex flex-col h-full transition-all hover:scale-[1.02] hover:bg-white/5 border ${mod.isEnabled ? 'border-white/10' : 'border-red-500/10 bg-red-500/5'} cursor-pointer`}
+                        onClick={() => onSelect(mod)}
+                    >
+                        {/* Image/Icon */}
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-gray-800 mb-3 group">
+                            {mod.images && mod.images.length > 0 ? (
+                                <img src={mod.images[0]} alt={mod.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                            ) : mod.iconUrl ? (
+                                <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-600">
+                                    <Folder size={32} />
+                                </div>
+                            )}
+
+                            <div className="absolute top-2 right-2 flex space-x-1">
+                                {mod.hasUpdate && (
+                                    <span className="bg-green-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow">UPDATE</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Title & Author */}
+                        <div className="flex-1 min-w-0 mb-2">
+                            <h3 className={`font-bold text-sm truncate ${mod.isEnabled ? 'text-gray-100' : 'text-gray-500'}`} title={mod.name}>{mod.name}</h3>
+                            <p className="text-xs text-gray-500 truncate">by {mod.author}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggle(mod.id); }}
+                                className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${mod.isEnabled ? 'bg-blue-600/20 text-blue-300 hover:bg-blue-600/40' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600'}`}
+                            >
+                                {mod.isEnabled ? 'Enabled' : 'Disabled'}
+                            </button>
+                            <div className="flex items-center space-x-1">
+                                <button onClick={(e) => { e.stopPropagation(); onPriorityChange(mod.id, 'up'); }} className="p-1 hover:bg-white/10 rounded text-gray-400" title="Priority Up"><ChevronUp size={12} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); onPriorityChange(mod.id, 'down'); }} className="p-1 hover:bg-white/10 rounded text-gray-400" title="Priority Down"><ChevronDown size={12} /></button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }

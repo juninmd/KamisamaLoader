@@ -30,6 +30,7 @@ export interface SearchOptions {
     order?: 'asc' | 'desc';
     categoryId?: number;
     search?: string;
+    dateRange?: '24h' | 'week' | 'month' | 'year' | 'all';
     filters?: Record<string, any>;
 }
 
@@ -101,8 +102,8 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
     const cache = getAPICache();
     const cacheKey = `item_${itemType}_${itemId}_${fields.join(',')}`;
 
-    const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    // const cached = await cache.get(cacheKey);
+    // if (cached) return cached;
 
     await checkRateLimit();
 
@@ -122,7 +123,7 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
         }
 
         const data = await response.json();
-        await cache.set(cacheKey, data, 10 * 60 * 1000); // 10 minutes cache
+        // await cache.set(cacheKey, data, 10 * 60 * 1000); // 10 minutes cache
         return data;
     } catch (error) {
         console.error('Error fetching item data:', error);
@@ -134,6 +135,7 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
  * Search mods with advanced filters and sorting
  * Hybrid approach:
  * - If search query present: Use /Util/Search/Results
+ * - If date range present: Use /Util/Search/Results (Subfeed doesn't support complex range filtering easily)
  * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
 export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
@@ -156,30 +158,54 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             categoryId,
             search = '',
             sort,
-            order
+            order,
+            dateRange
         } = options;
 
         let url = '';
 
-        if (search && search.trim().length > 0) {
+        let minDate = 0;
+        if (dateRange && dateRange !== 'all') {
+            const now = Math.floor(Date.now() / 1000);
+            switch (dateRange) {
+                case '24h': minDate = now - 86400; break;
+                case 'week': minDate = now - 604800; break;
+                case 'month': minDate = now - 2592000; break;
+                case 'year': minDate = now - 31536000; break;
+            }
+        }
+
+        if (false) { // Disable Search Endpoint, prefer Subfeed for Game-specific correctness
             // Use Search Endpoint
-            url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search)}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
+            url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search || "")}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
+
             if (categoryId) {
-                // For Search, category filter might be Generic_Category
                 url += `&_aFilters[Generic_Category]=${categoryId}`;
+            }
+            if (minDate > 0) {
+                url += `&_aFilters[Generic_DateAdded_Min]=${minDate}`;
             }
             url += buildSearchSortParams(sort, order);
         } else {
-            // Use Subfeed Endpoint (Browsing)
-            url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}`;
+            // Use Subfeed (Game-specific)
+            url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}&_aModelFilter[]=Mod`;
 
-            // Add category filter if specified
-            if (categoryId) {
-                url += `&_aModelFilter[]=Mod&_idCategoryRowFilter=${categoryId}`;
-            } else {
-                // Default to just Mods if no category (Subfeed shows everything)
-                url += `&_aModelFilter[]=Mod`;
+            if (search) {
+                url += `&_sName=${encodeURIComponent(search)}`;
             }
+            if (categoryId) {
+                url += `&_aFilters[Generic_Category]=${categoryId}`;
+            }
+
+            // Map sort options to Subfeed params
+            if (sort === 'downloads') url += '&_sSort=downloads';
+            else if (sort === 'likes') url += '&_sSort=likes';
+            else if (sort === 'views') url += '&_sSort=views';
+            else if (sort === 'date') url += '&_sSort=new'; // 'new' is usually default
+            else if (sort === 'name') url += '&_sSort=name'; // check if valid
+
+            // Subfeed often implies descending order for metrics, but check api
+            if (order === 'asc' && sort === 'name') url += '&_sOrder=asc';
         }
 
         console.log(`[API] Fetching: ${url}`);
@@ -272,7 +298,7 @@ export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> 
         mods.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
         const topMods = mods.slice(0, 10);
 
-        await cache.set(cacheKey, topMods, 15 * 60 * 1000); // 15 minutes cache
+        // await cache.set(cacheKey, topMods, 15 * 60 * 1000); // 15 minutes cache
         return topMods;
     } catch (error) {
         console.error('Error fetching featured mods:', error);
@@ -287,8 +313,8 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
     const cache = getAPICache();
     const cacheKey = `categories_${gameId}`;
 
-    const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    // const cached = await cache.get(cacheKey);
+    // if (cached) return cached;
 
     await checkRateLimit();
 
@@ -306,7 +332,7 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
         console.log('[API] Fetched Categories:', JSON.stringify(data?._aModRootCategories?.[0] || {})); // Log first category to see structure
         const categories = data?._aModRootCategories || [];
 
-        await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
+        // await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
         return categories;
     } catch (error) {
         console.error('Error fetching categories:', error);
