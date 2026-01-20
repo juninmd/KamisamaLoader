@@ -94,4 +94,71 @@ describe('ModManager', () => {
         (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '' }));
         await expect(modManager.launchGame()).rejects.toThrow('configured');
     });
+
+    it('getInstalledMods should return mods sorted by priority descending', async () => {
+        const mockMods = [
+            { id: '1', name: 'Low Priority', priority: 1 },
+            { id: '2', name: 'High Priority', priority: 100 },
+            { id: '3', name: 'Mid Priority', priority: 50 }
+        ];
+
+        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+        const result = await modManager.getInstalledMods();
+
+        expect(result).toHaveLength(3);
+        expect(result[0].id).toBe('2'); // 100
+        expect(result[1].id).toBe('3'); // 50
+        expect(result[2].id).toBe('1'); // 1
+    });
+
+    it('setModPriority "up" should increase priority (swap with higher item)', async () => {
+        const mockMods = [
+            { id: '2', name: 'High Priority', priority: 100, isEnabled: false },
+            { id: '3', name: 'Mid Priority', priority: 50, isEnabled: false },
+            { id: '1', name: 'Low Priority', priority: 1, isEnabled: false }
+        ];
+
+        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+        // Move '3' (Mid) UP -> Should swap with '2' (High)
+        // Mid gets 100, High gets 50.
+        // Array becomes: Mid(100), High(50), Low(1)
+
+        await modManager.setModPriority('3', 'up');
+
+        const calls = (fs.writeFile as any).mock.calls;
+        const writtenData = JSON.parse(calls[calls.length - 1][1]);
+
+        const newMid = writtenData.find((m: any) => m.id === '3');
+        const newHigh = writtenData.find((m: any) => m.id === '2');
+
+        expect(newMid.priority).toBe(100);
+        expect(newHigh.priority).toBe(50);
+        expect(writtenData[0].id).toBe('3');
+    });
+
+    it('setModPriority "down" should decrease priority (swap with lower item)', async () => {
+        const mockMods = [
+            { id: '2', name: 'High Priority', priority: 100, isEnabled: false },
+            { id: '3', name: 'Mid Priority', priority: 50, isEnabled: false },
+            { id: '1', name: 'Low Priority', priority: 1, isEnabled: false }
+        ];
+
+        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+        // Move '2' (High) DOWN -> Should swap with '3' (Mid)
+        // High gets 50, Mid gets 100.
+
+        await modManager.setModPriority('2', 'down');
+
+        const calls = (fs.writeFile as any).mock.calls;
+        const writtenData = JSON.parse(calls[calls.length - 1][1]);
+
+        expect(writtenData[0].id).toBe('3');
+        expect(writtenData[1].id).toBe('2');
+
+        const newHigh = writtenData.find((m: any) => m.id === '2');
+        expect(newHigh.priority).toBe(50);
+    });
 });
