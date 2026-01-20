@@ -102,6 +102,13 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             src={displayImages[currentImageIndex]}
                             alt={mod.name}
                             className="w-full h-full object-contain"
+                            onError={(e) => {
+                                console.error('Error loading image:', e.currentTarget.src);
+                                e.currentTarget.src = mod.iconUrl || ''; // Fallback to iconUrl if main image fails
+                                if (!e.currentTarget.src) {
+                                    e.currentTarget.style.display = 'none'; // Hide if no fallback
+                                }
+                            }}
                         />
 
                         {/* Navigation */}
@@ -194,10 +201,10 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                         {/* Description */}
                         <div>
                             <h3 className="text-lg font-bold text-white mb-2">Description</h3>
-                            <div
-                                className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words html-description"
-                                dangerouslySetInnerHTML={{ __html: fullDescription || mod.description || 'No description available.' }}
-                            />
+                            {/* Temporarily display as plain text to rule out dangerouslySetInnerHTML issues */}
+                            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+                                {fullDescription || mod.description || 'No description available.'}
+                            </div>
                         </div>
 
                         {/* Changelog */}
