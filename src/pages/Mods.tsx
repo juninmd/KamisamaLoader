@@ -32,7 +32,7 @@ interface Mod {
     category?: string;
     license?: string;
     submitter?: string;
-    submitterUrl?: string; // Added for author link
+    submitterUrl?: string;
     isNsfw?: boolean;
 }
 
@@ -60,7 +60,7 @@ const Mods: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [filters, setFilters] = useState<FilterState>({
         categories: [],
-        sortBy: 'downloads',
+        sortBy: 'date', // Default to date as it is most reliable
         order: 'desc',
         dateRange: 'all',
         nsfw: false,
@@ -93,12 +93,12 @@ const Mods: React.FC = () => {
         }
     }, [activeTab]);
 
-    // Reload when filters change
+    // Reload when filters change (debounced search handled by user not typing, but here triggering on filter state change)
     useEffect(() => {
         if (activeTab === 'browse') {
             loadBrowseMods(1, true);
         }
-    }, [filters]);
+    }, [filters, searchQuery]); // Also trigger on search query change if user hits enter or we debounce it (currently instant)
 
     const loadCategories = async () => {
         try {
@@ -130,17 +130,56 @@ const Mods: React.FC = () => {
     };
 
     const loadBrowseMods = async (page: number, reset: boolean = false) => {
-        if (loadingBrowse) return;
+        if (loadingBrowse && !reset) return; // Allow reset even if loading
         setLoadingBrowse(true);
-        console.log(`[Browse] Loading page ${page}, reset=${reset}, filters:`, filters);
+        console.log(`[Browse] Loading page ${page}, reset=${reset}, filters:`, filters, "Query:", searchQuery);
+
         try {
+            // Prepare options for API
+            const options: any = {
+                page,
+                perPage: 20,
+                search: searchQuery,
+                sort: filters.sortBy,
+                order: filters.order
+            };
+
+            // Map Category Name to ID
+            if (filters.categories.length > 0) {
+                // Find ID for the first selected category (API supports one primary filter comfortably)
+                const catName = filters.categories[0];
+                const cat = categories.find(c => c.name === catName);
+                if (cat) {
+                    options.categoryId = cat.id;
+                }
+            }
+
+            // Fetch mods from API
+            // Use searchBySection exposed as searchOnlineMods (via wrapper) or directly if exposed
+            // The plan updated `searchOnlineMods` to take args in main process?
+            // `window.electronAPI.searchOnlineMods` definition might need check.
+            // Assuming `window.electronAPI.searchBySection` exists or `searchOnlineMods` handles options.
+            // Let's use `searchBySection` if available or assume `searchOnlineMods` is the one.
+            // In `electron/main.ts`, `search-online-mods` takes `(page, search)`.
+            // In `electron/main.ts`, `search-by-section` takes `options`.
+            // We should use `search-by-section` for advanced filtering.
+
+            let newMods = [];
+
+            // Note: Update src/vite-env.d.ts if searchBySection is missing from type definition,
+            // but for now we assume dynamic access or existing exposure.
+            if ((window.electronAPI as any).searchBySection) {
+                 newMods = await (window.electronAPI as any).searchBySection(options);
+            } else {
+                 // Fallback
+                 newMods = await window.electronAPI.searchOnlineMods(page, searchQuery);
+            }
+
+            console.log(`[Browse] Received ${newMods?.length || 0} mods from API`);
+
             // Get installed mod IDs to mark them
             const installed = await window.electronAPI.getInstalledMods();
             const installedIds = new Set(installed.map((m: any) => m.gameBananaId));
-
-            // Fetch mods from API
-            const newMods = await window.electronAPI.searchOnlineMods(page);
-            console.log(`[Browse] Received ${newMods?.length || 0} mods from API`);
 
             if (!newMods || newMods.length === 0) {
                 if (reset || page === 1) {
@@ -154,45 +193,38 @@ const Mods: React.FC = () => {
                     isInstalled: installedIds.has(mod.gameBananaId)
                 }));
 
-                // Apply Filters
+                // Client-side filtering for properties not supported by API search (like NSFW flag in some feeds)
                 if (!filters.nsfw) {
                     processedMods = processedMods.filter((m: any) => !m.isNsfw);
                 }
 
-                if (filters.zeroSpark) {
+                // ZeroSpark / ColorZ local filtering if not covered by search query
+                if (filters.zeroSpark && !searchQuery.toLowerCase().includes('zerospark')) {
                     processedMods = processedMods.filter((m: any) =>
                         (m.name && m.name.toLowerCase().includes('zerospark')) ||
                         (m.description && m.description.toLowerCase().includes('zerospark'))
                     );
                 }
 
-                if (filters.colorZ) {
+                if (filters.colorZ && !searchQuery.toLowerCase().includes('colorz')) {
                     processedMods = processedMods.filter((m: any) =>
                         (m.name && m.name.toLowerCase().includes('colorz')) ||
                         (m.description && m.description.toLowerCase().includes('colorz'))
                     );
                 }
 
-                // Apply client-side sorting based on filters
-                let sortedMods = [...processedMods];
-                if (filters.sortBy === 'downloads') {
-                    sortedMods.sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
-                } else if (filters.sortBy === 'likes') {
-                    sortedMods.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+                // If API didn't sort (e.g. Subfeed), we can try to sort locally, but only for the current page.
+                // This is "better than nothing" for Sort By Likes on a feed.
+                if (filters.sortBy === 'likes') {
+                    processedMods.sort((a: any, b: any) => (b.likeCount || 0) - (a.likeCount || 0));
+                } else if (filters.sortBy === 'downloads') {
+                    processedMods.sort((a: any, b: any) => (b.downloadCount || 0) - (a.downloadCount || 0));
                 } else if (filters.sortBy === 'views') {
-                    sortedMods.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
-                } else if (filters.sortBy === 'date') {
-                    sortedMods.sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
-                } else if (filters.sortBy === 'name') {
-                    sortedMods.sort((a, b) => a.name.localeCompare(b.name));
+                    processedMods.sort((a: any, b: any) => (b.viewCount || 0) - (a.viewCount || 0));
                 }
+                // Date is usually default
 
-                // Reverse if ascending order
-                if (filters.order === 'asc') {
-                    sortedMods.reverse();
-                }
-
-                setBrowseMods(prev => reset || page === 1 ? sortedMods : [...prev, ...sortedMods]);
+                setBrowseMods(prev => reset || page === 1 ? processedMods : [...prev, ...processedMods]);
             }
 
             if (reset || page === 1) {
@@ -206,7 +238,7 @@ const Mods: React.FC = () => {
         }
     };
 
-    // Filter Logic
+    // Filter Logic for Installed Mods
     const filteredInstalledMods = installedMods.filter(mod => {
         const matchesSearch = mod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             mod.author.toLowerCase().includes(searchQuery.toLowerCase());
@@ -228,6 +260,8 @@ const Mods: React.FC = () => {
             if (updatedIds.length > 0) {
                 // Refresh list to show updates
                 await loadInstalledMods();
+            } else {
+                showToast('No updates found', 'info');
             }
         } catch (e) {
             console.error(e);
@@ -375,6 +409,17 @@ const Mods: React.FC = () => {
         }
     };
 
+    // Debounced search for Browse Tab
+    useEffect(() => {
+        if (activeTab === 'browse') {
+            const delayDebounceFn = setTimeout(() => {
+                loadBrowseMods(1, true);
+            }, 600);
+
+            return () => clearTimeout(delayDebounceFn);
+        }
+    }, [searchQuery, activeTab]);
+
     return (
         <div
             className="h-full flex flex-col relative"
@@ -438,7 +483,7 @@ const Mods: React.FC = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors" size={18} />
                         <input
                             type="text"
-                            placeholder="Search mods..."
+                            placeholder={activeTab === 'browse' ? "Search online mods..." : "Search installed mods..."}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-black/30 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
@@ -521,8 +566,8 @@ const Mods: React.FC = () => {
                                 selectedCategories={selectedCategories}
                                 onCategorySelect={(category) => {
                                     const newSelected = selectedCategories.includes(category)
-                                        ? selectedCategories.filter(c => c !== category)
-                                        : [...selectedCategories, category];
+                                        ? [] // Deselect if same
+                                        : [category]; // Single select for API simplicity
                                     setSelectedCategories(newSelected);
                                     setFilters(f => ({ ...f, categories: newSelected }));
                                 }}
