@@ -415,7 +415,7 @@ export class ModManager {
                     fileStream.end();
                     resolve();
                 });
-                response.on('error', (err) => {
+                response.on('error', (err: any) => {
                     fileStream.close();
                     fs.unlink(destPath).catch(() => { });
                     reject(err);
@@ -490,7 +490,8 @@ export class ModManager {
     }
 
     async searchOnlineMods(page: number, search: string = '') {
-        return await searchOnlineMods(page);
+        const { searchBySection } = await import('./gamebanana.js');
+        return await searchBySection({ page, search });
     }
 
     async searchBySection(options: any) {
@@ -797,7 +798,7 @@ export class ModManager {
 
         // Get enabled mods to potentially pass as parameters
         const mods = await this.getInstalledMods();
-        const enabledMods = mods.filter((m: any) => m.isEnabled);
+        const enabledMods = Array.isArray(mods) ? mods.filter((m: any) => m.isEnabled) : [];
         console.log(`Launching game with ${enabledMods.length} mods enabled`);
 
         console.log(`Launching game at: ${exePath}`);
@@ -813,10 +814,5 @@ export class ModManager {
             }
         });
         return true;
-    }
-    async getModChangelog(modId: string) {
-        const id = parseInt(modId);
-        if (!id) return [];
-        return await getModChangelog(id);
     }
 }
