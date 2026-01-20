@@ -50,6 +50,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                 // 1. Fetch Changelog
                 window.electronAPI.getModChangelog(String(gbId)).then((logs: any) => {
                     if (Array.isArray(logs)) setChangelog(logs);
+                }).catch(error => {
+                    console.error('Failed to get mod changelog:', error);
                 });
 
                 // 2. Fetch Full Details
@@ -59,6 +61,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                         if (details.images && details.images.length > 0) setModImages(details.images);
                         if (details.modPageUrl) setModPageUrl(details.modPageUrl);
                     }
+                }).catch(error => {
+                    console.error('Failed to get mod details:', error);
                 });
             }
         } else {

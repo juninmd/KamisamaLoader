@@ -9,6 +9,7 @@ interface Window {
     // Mod Management
     getInstalledMods: () => Promise<any[]>;
     installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
+    uninstallMod: (modId: string) => Promise<{ success: boolean; message: string }>;
     toggleMod: (modId: string, isEnabled: boolean) => Promise<{ success: boolean; conflict?: string }>;
     getSettings: () => Promise<{ gamePath: string; backgroundImage?: string }>;
     saveSettings: (settings: any) => Promise<boolean>;

@@ -32,6 +32,10 @@ function registerIpcHandlers() {
     return await modManager.installMod(filePath);
   });
 
+  ipcMain.handle('uninstall-mod', async (_event, modId) => {
+    return await modManager.uninstallMod(modId);
+  });
+
   ipcMain.handle('toggle-mod', async (_event, modId, isEnabled) => {
     return await modManager.toggleMod(modId, isEnabled);
   });
