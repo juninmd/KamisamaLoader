@@ -138,6 +138,9 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  // Open DevTools for debugging (remove in final release if desired, but good for beta)
+  // mainWindow.webContents.openDevTools(); // Disabled for tests
+
   // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);

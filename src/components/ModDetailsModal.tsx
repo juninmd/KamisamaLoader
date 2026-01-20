@@ -46,7 +46,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
     useEffect(() => {
         if (isOpen && (mod.id || (mod as any).gameBananaId)) {
             const gbId = (mod as any).gameBananaId || Number(mod.id);
-            if (gbId) {
+            // Validate that we have a valid GameBanana ID (positive number)
+            if (gbId && !isNaN(gbId) && gbId > 0) {
                 // 1. Fetch Changelog
                 window.electronAPI.getModChangelog(String(gbId)).then((logs: any) => {
                     if (Array.isArray(logs)) setChangelog(logs);
@@ -64,6 +65,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                 }).catch(error => {
                     console.error('Failed to get mod details:', error);
                 });
+            } else {
+                console.log('Skipping API calls for invalid or local mod ID:', gbId);
             }
         } else {
             // Reset

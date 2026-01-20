@@ -41,7 +41,7 @@ export class ModManager {
         return path.join(this.modsDir, 'mods.json');
     }
 
-    async getSettings(): Promise<{ gamePath: string; backgroundImage?: string }> {
+    async getSettings(): Promise<{ gamePath: string; backgroundImage?: string; activeProfileId?: string }> {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
@@ -51,7 +51,7 @@ export class ModManager {
         }
     }
 
-    async saveSettings(settings: { gamePath: string; backgroundImage?: string }) {
+    async saveSettings(settings: { gamePath: string; backgroundImage?: string; activeProfileId?: string }) {
         try {
             await this.ensureModsDir();
             await fs.writeFile(this.settingsFile, JSON.stringify(settings, null, 2));
@@ -72,6 +72,25 @@ export class ModManager {
         } catch (error) {
             return [];
         }
+    }
+
+    async calculateFolderSize(dirPath: string): Promise<number> {
+        let size = 0;
+        try {
+            const files = await fs.readdir(dirPath);
+            for (const file of files) {
+                const filePath = path.join(dirPath, file);
+                const stats = await fs.stat(filePath);
+                if (stats.isDirectory()) {
+                    size += await this.calculateFolderSize(filePath);
+                } else {
+                    size += stats.size;
+                }
+            }
+        } catch (e) {
+            // console.error('Error calculating size', e); 
+        }
+        return size;
     }
 
     private resolveGamePaths(gamePath: string) {
@@ -286,6 +305,8 @@ export class ModManager {
 
             // Check if exists
             const existingIdx = mods.findIndex((m: any) => m.name === modName);
+            const size = await this.calculateFolderSize(modDestDir);
+
             const newMod = {
                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
                 name: modName,
@@ -294,7 +315,8 @@ export class ModManager {
                 description: 'Locally installed mod',
                 isEnabled: true,
                 folderPath: modDestDir,
-                priority: newPriority
+                priority: newPriority,
+                fileSize: size
             };
 
             if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newMod };
@@ -612,6 +634,7 @@ export class ModManager {
                             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
                             const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
+                            const size = await this.calculateFolderSize(modDestDir);
 
                             const newModEntry = {
                                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
@@ -623,7 +646,8 @@ export class ModManager {
                                 folderPath: modDestDir,
                                 gameBananaId: mod.gameBananaId,
                                 iconUrl: mod.iconUrl,
-                                latestFileId: latestFile._idRow
+                                latestFileId: latestFile._idRow,
+                                fileSize: size
                             };
 
                             if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newModEntry };
@@ -841,6 +865,10 @@ export class ModManager {
 
             // Save mods.json
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+            // Persist active profile ID
+            const settings = await this.getSettings();
+            await this.saveSettings({ ...settings, activeProfileId: profileId });
 
             return { success: true };
 

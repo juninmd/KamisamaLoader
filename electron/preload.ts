@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchBySection: (options: any) => ipcRenderer.invoke('search-by-section', options),
   fetchCategories: (gameId?: number) => ipcRenderer.invoke('fetch-categories', gameId),
   fetchNewMods: (page?: number) => ipcRenderer.invoke('fetch-new-mods', page),
+  getModDetails: (gameBananaId: number) => ipcRenderer.invoke('get-mod-details', gameBananaId),
   fetchFeaturedMods: () => ipcRenderer.invoke('fetch-featured-mods'),
 
   // Profiles

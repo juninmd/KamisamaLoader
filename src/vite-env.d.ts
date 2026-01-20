@@ -11,7 +11,7 @@ interface Window {
     installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
     uninstallMod: (modId: string) => Promise<{ success: boolean; message: string }>;
     toggleMod: (modId: string, isEnabled: boolean) => Promise<{ success: boolean; conflict?: string }>;
-    getSettings: () => Promise<{ gamePath: string; backgroundImage?: string }>;
+    getSettings: () => Promise<{ gamePath: string; backgroundImage?: string; activeProfileId?: string }>;
     saveSettings: (settings: any) => Promise<boolean>;
     selectGameDirectory: () => Promise<string | null>;
     setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;

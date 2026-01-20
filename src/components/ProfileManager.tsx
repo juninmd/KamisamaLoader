@@ -19,6 +19,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [newProfileName, setNewProfileName] = useState('');
     const [loadingProfileId, setLoadingProfileId] = useState<string | null>(null);
+    const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 
     useEffect(() => {
         loadProfiles();
@@ -26,8 +27,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
 
     const loadProfiles = async () => {
         try {
-            const data = await window.electronAPI.getProfiles();
-            setProfiles(data);
+            const [profilesData, settingsData] = await Promise.all([
+                window.electronAPI.getProfiles(),
+                window.electronAPI.getSettings()
+            ]);
+            setProfiles(profilesData);
+            if (settingsData && settingsData.activeProfileId) {
+                setActiveProfileId(settingsData.activeProfileId);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -62,6 +69,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
                 if (result.success) {
                     showToast(`Profile "${profile.name}" loaded`, 'success');
                     onProfileLoaded(); // Trigger refresh of mod list
+                    setActiveProfileId(profile.id);
                     setIsOpen(false);
                 } else {
                     showToast(result.message || 'Failed to load profile', 'error');
@@ -105,8 +113,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-[#1a1b26] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-[#1a1b26] border border-white/10 rounded-xl shadow-2xl z-[9999] p-2 animate-in fade-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="flex items-center justify-between px-2 py-2 mb-2 border-b border-white/5">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saved Loadouts</span>
@@ -126,33 +134,40 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
                                     No profiles saved.
                                 </div>
                             ) : (
-                                profiles.map(profile => (
-                                    <div
-                                        key={profile.id}
-                                        onClick={() => handleLoad(profile)}
-                                        className={`group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${loadingProfileId === profile.id ? 'bg-blue-600/20 text-blue-200' : 'hover:bg-white/5 text-gray-300'}`}
-                                    >
-                                        <div className="flex items-center space-x-3 truncate">
-                                            {loadingProfileId === profile.id ? (
-                                                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                                            ) : (
-                                                <div className="w-4 h-4 flex items-center justify-center">
-                                                    <div className="w-1.5 h-1.5 bg-gray-500 rounded-full group-hover:bg-blue-400 transition-colors"></div>
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col truncate">
-                                                <span className="font-medium text-sm truncate">{profile.name}</span>
-                                                <span className="text-[10px] text-gray-500">{profile.modIds.length} mods</span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={(e) => handleDelete(e, profile.id)}
-                                            className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                profiles.map(profile => {
+                                    const isActive = activeProfileId === profile.id;
+                                    return (
+                                        <div
+                                            key={profile.id}
+                                            onClick={() => handleLoad(profile)}
+                                            className={`group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${loadingProfileId === profile.id ? 'bg-blue-600/20 text-blue-200' : (isActive ? 'bg-green-500/10 text-green-300 border border-green-500/20' : 'hover:bg-white/5 text-gray-300')}`}
                                         >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))
+                                            <div className="flex items-center space-x-3 truncate">
+                                                {loadingProfileId === profile.id ? (
+                                                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                                ) : isActive ? (
+                                                    <div className="w-4 h-4 flex items-center justify-center text-green-400">
+                                                        <div className="w-2 h-2 bg-green-400 rounded-full shadow-[0_0_5px_#4ade80]"></div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-4 h-4 flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 bg-gray-500 rounded-full group-hover:bg-blue-400 transition-colors"></div>
+                                                    </div>
+                                                )}
+                                                <div className="flex flex-col truncate">
+                                                    <span className={`font-medium text-sm truncate ${isActive ? 'text-green-300' : ''}`}>{profile.name}</span>
+                                                    <span className="text-[10px] text-gray-500">{profile.modIds.length} mods</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={(e) => handleDelete(e, profile.id)}
+                                                className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
 
