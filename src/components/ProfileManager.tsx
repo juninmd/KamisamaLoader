@@ -113,8 +113,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-[#1a1b26] border border-white/10 rounded-xl shadow-2xl z-[9999] p-2 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-[#1a1b26] border border-white/10 rounded-xl shadow-2xl z-[101] p-2 animate-in fade-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="flex items-center justify-between px-2 py-2 mb-2 border-b border-white/5">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saved Loadouts</span>

@@ -23,6 +23,8 @@ function registerIpcHandlers() {
   ipcMain.handle('pause-download', (_, id) => downloadManager.pauseDownload(id));
   ipcMain.handle('resume-download', (_, id) => downloadManager.resumeDownload(id));
   ipcMain.handle('cancel-download', (_, id) => downloadManager.cancelDownload(id));
+  ipcMain.handle('open-download-folder', (_, id) => downloadManager.openDownloadFolder(id));
+  ipcMain.handle('clear-completed-downloads', () => downloadManager.clearCompleted());
 
   // Window Controls
   ipcMain.on('minimize-window', () => mainWindow?.minimize());
@@ -134,6 +136,10 @@ function registerIpcHandlers() {
 
   ipcMain.handle('fetch-featured-mods', async () => {
     return await modManager.fetchFeaturedMods();
+  });
+
+  ipcMain.handle('get-all-online-mods', async (_, forceRefresh) => {
+    return await modManager.getAllOnlineMods(forceRefresh);
   });
 }
 
