@@ -5,7 +5,8 @@ import { execFile } from 'child_process';
 import { app, net } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails } from './gamebanana.js';
+import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails, fetchGameProfile } from './gamebanana.js';
+import { fetchUE4SSRelease, fetchAppUpdates } from './github.js';
 
 import { DownloadManager } from './download-manager.js';
 
@@ -630,6 +631,10 @@ export class ModManager {
         return await fetchFeaturedMods();
     }
 
+    async fetchGameProfile(gameId: number) {
+        return await fetchGameProfile(gameId);
+    }
+
     async installOnlineMod(mod: Mod) {
         try {
             console.log(`Installing mod: ${mod.gameBananaId}`);
@@ -987,5 +992,78 @@ export class ModManager {
             }
         });
         return true;
+    }
+
+    async checkForAppUpdates() {
+        return await fetchAppUpdates();
+    }
+
+    async getUE4SSLatestRelease() {
+        return await fetchUE4SSRelease();
+    }
+
+    async installUE4SS() {
+        const release = await fetchUE4SSRelease();
+        if (!release) return { success: false, message: 'Could not fetch UE4SS release' };
+
+        // Find the zip asset (usually has "z" or "zip" in name)
+        const asset = release.assets.find(a => a.name.endsWith('.zip'));
+        if (!asset) return { success: false, message: 'No zip asset found in UE4SS release' };
+
+        if (this.downloadManager) {
+             const tempDir = app.getPath('temp');
+             const fileName = `ue4ss_latest.zip`;
+
+             const downloadId = this.downloadManager.startDownload(asset.browser_download_url, tempDir, fileName, { type: 'ue4ss' });
+
+             return new Promise((resolve) => {
+                 const onComplete = async (dlId: string) => {
+                     if (dlId === downloadId) {
+                         try {
+                             const tempFile = path.join(tempDir, fileName);
+                             const settings = await this.getSettings();
+                             if (!settings.gamePath) throw new Error('Game path not set');
+
+                             const { binariesDir } = this.resolveGamePaths(settings.gamePath);
+
+                             // Extract to Binaries/Win64
+                             // UE4SS zip usually contains "ue4ss" dll and folders.
+                             // We should extract it directly there.
+                             const zip = new AdmZip(tempFile);
+                             zip.extractAllTo(binariesDir, true);
+
+                             await fs.unlink(tempFile);
+                             this.downloadManager!.removeListener('download-completed', onComplete);
+                             this.downloadManager!.removeListener('download-failed', onFail);
+                             resolve({ success: true, message: `UE4SS ${release.tag_name} installed.` });
+                         } catch (e) {
+                             console.error(e);
+                             this.downloadManager!.removeListener('download-completed', onComplete);
+                             this.downloadManager!.removeListener('download-failed', onFail);
+                             resolve({ success: false, message: (e as Error).message });
+                         }
+                     }
+                 };
+
+                 const onFail = (dlId: string, error: string) => {
+                     if (dlId === downloadId) {
+                         this.downloadManager!.removeListener('download-completed', onComplete);
+                         this.downloadManager!.removeListener('download-failed', onFail);
+                         resolve({ success: false, message: `Download failed: ${error}` });
+                     }
+                 };
+
+                 this.downloadManager!.on('download-completed', onComplete);
+                 this.downloadManager!.on('download-failed', onFail);
+
+                 // Timeout safety
+                 setTimeout(() => {
+                    this.downloadManager!.removeListener('download-completed', onComplete);
+                    this.downloadManager!.removeListener('download-failed', onFail);
+                    resolve({ success: false, message: 'Download timed out' });
+                 }, 300000); // 5 minutes
+             });
+        }
+        return { success: false, message: 'Download Manager missing' };
     }
 }

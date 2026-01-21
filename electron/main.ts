@@ -135,6 +135,19 @@ function registerIpcHandlers() {
   ipcMain.handle('fetch-featured-mods', async () => {
     return await modManager.fetchFeaturedMods();
   });
+
+  ipcMain.handle('fetch-game-profile', async (_event, gameId) => {
+    return await modManager.fetchGameProfile(gameId);
+  });
+
+  // GitHub / Updates IPC
+  ipcMain.handle('check-app-update', async () => {
+    return await modManager.checkForAppUpdates();
+  });
+
+  ipcMain.handle('install-ue4ss', async () => {
+    return await modManager.installUE4SS();
+  });
 }
 
 function createWindow() {

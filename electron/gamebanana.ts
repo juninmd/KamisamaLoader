@@ -421,6 +421,33 @@ export async function getModChangelog(gameBananaId: number): Promise<any[]> {
     }
 }
 
+export async function fetchGameProfile(gameId: number = 21179): Promise<any> {
+    const cache = getAPICache();
+    const cacheKey = `game_profile_${gameId}`;
+
+    // const cached = await cache.get(cacheKey);
+    // if (cached) return cached;
+
+    await checkRateLimit();
+
+    try {
+        const url = `https://gamebanana.com/apiv11/Game/${gameId}/ProfilePage`;
+        console.log(`[API] Fetching Game Profile: ${url}`);
+        const response = await apiLimit(() => fetch(url));
+
+        if (!response.ok) {
+            console.error(`[API] Failed to fetch game profile: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching game profile:', error);
+        return null;
+    }
+}
+
 export async function fetchModDetails(gameBananaId: number): Promise<any> {
     console.log(`[API] Fetching Mod Details ID: ${gameBananaId}`);
     try {
