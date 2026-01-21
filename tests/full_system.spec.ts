@@ -220,14 +220,16 @@ test('07. Settings Page Navigation', async () => {
     try {
         // First go to Dashboard to reset UI state (close any modals)
         console.log('[07] Step 1: Clicking Dashboard...');
-        const dashboardBtn = window.locator('nav button:has-text("Dashboard")');
+        const dashboardBtn = window.locator('nav button').filter({ hasText: 'Dashboard' });
+        await dashboardBtn.waitFor({ state: 'visible', timeout: 5000 });
         await dashboardBtn.click({ force: true });
         await window.waitForTimeout(1000);
         console.log('[07] Step 1: Dashboard clicked');
 
         // Navigate to Settings
         console.log('[07] Step 2: Clicking Settings...');
-        const settingsBtn = window.locator('nav button:has-text("Settings")');
+        const settingsBtn = window.locator('nav button').filter({ hasText: 'Settings' });
+        await settingsBtn.waitFor({ state: 'visible', timeout: 5000 });
         await settingsBtn.click();
         await window.waitForTimeout(1000);
         console.log('[07] Step 2: Settings button clicked');
@@ -235,18 +237,24 @@ test('07. Settings Page Navigation', async () => {
         // Take debug screenshot
         await window.screenshot({ path: 'tests/evidence/07-debug-settings.png' });
 
-        // Verify Settings page loaded (use h1 to avoid matching nav button)
-        console.log('[07] Step 3: Checking h1 Settings...');
-        await expect(window.locator('h1:has-text("Settings")')).toBeVisible({ timeout: 5000 });
-        console.log('[07] Step 3: h1 visible');
+        // Verify Settings page loaded - look for the specific h1 that is NOT in the nav
+        console.log('[07] Step 3: Checking Settings heading...');
+        const settingsHeader = window.locator('main h1, .space-y-6 h1').filter({ hasText: 'Settings' });
+        await expect(settingsHeader).toBeVisible({ timeout: 10000 });
+        console.log('[07] Step 3: Settings heading visible');
 
         console.log('[07] Step 4: Checking Game Directory...');
-        await expect(window.locator('text=Game Directory')).toBeVisible();
+        await expect(window.getByText('Game Directory')).toBeVisible({ timeout: 5000 });
         console.log('[07] Step 4: Game Directory visible');
 
         console.log('[07] Step 5: Checking Background Image...');
-        await expect(window.locator('text=Background Image')).toBeVisible();
+        await window.screenshot({ path: 'tests/evidence/07-debug-before-background.png' });
+        await expect(window.getByText('Background Image', { exact: true })).toBeVisible({ timeout: 10000 });
         console.log('[07] Step 5: Background Image visible');
+
+        console.log('[07] Step 6: Checking Appearance...');
+        await expect(window.getByText('Appearance', { exact: true })).toBeVisible({ timeout: 10000 });
+        console.log('[07] Step 6: Appearance visible');
 
         await window.screenshot({ path: 'tests/evidence/08-settings-page.png' });
         console.log('[07] Test completed successfully');
