@@ -76,8 +76,6 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
         }
     }, [mod.id, isOpen]);
 
-    if (!isOpen) return null;
-
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
     };
@@ -96,6 +94,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
         }
         return () => document.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
 
     return ReactDOM.createPortal(
         <div

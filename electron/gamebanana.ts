@@ -108,8 +108,9 @@ export async function searchOnlineMods(page: number = 1, search: string = ''): P
  */
 export async function fetchItemData(itemType: string, itemId: number, fields: string[] = []): Promise<any> {
     console.log(`[API] Fetching Item Data: ${itemType} / ${itemId}`);
-    const cache = getAPICache();
-    const cacheKey = `item_${itemType}_${itemId}_${fields.join(',')}`;
+
+    // const cache = getAPICache();
+    // const cacheKey = `item_${itemType}_${itemId}_${fields.join(',')}`;
 
     // const cached = await cache.get(cacheKey);
     // if (cached) return cached;
@@ -148,15 +149,6 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
  * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
 export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
-    // const cache = getAPICache();
-    // const cacheKey = `search_${JSON.stringify(options)}`;
-
-    // const cached = await cache.get(cacheKey);
-    // if (cached) {
-    //     console.log(`[API] Cache hit for search`);
-    //     return cached;
-    // }
-
     await checkRateLimit();
 
     try {
@@ -277,12 +269,6 @@ export async function fetchNewMods(page: number = 1, gameId: number = 21179): Pr
  * Endpoint: /Rss/Featured (adapted)
  */
 export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> {
-    const cache = getAPICache();
-    const cacheKey = `featured_${gameId}`;
-
-    const cached = await cache.get(cacheKey);
-    if (cached) return cached;
-
     await checkRateLimit();
 
     try {
@@ -312,12 +298,6 @@ export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> 
  * Get available categories for a game
  */
 export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
-    const cache = getAPICache();
-    const cacheKey = `categories_${gameId}`;
-
-    // const cached = await cache.get(cacheKey);
-    // if (cached) return cached;
-
     await checkRateLimit();
 
     try {
@@ -422,12 +402,6 @@ export async function getModChangelog(gameBananaId: number): Promise<any[]> {
 }
 
 export async function fetchGameProfile(gameId: number = 21179): Promise<any> {
-    const cache = getAPICache();
-    const cacheKey = `game_profile_${gameId}`;
-
-    // const cached = await cache.get(cacheKey);
-    // if (cached) return cached;
-
     await checkRateLimit();
 
     try {
