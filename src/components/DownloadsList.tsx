@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pause, Play, X, Download, FileDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { Pause, Play, X, Download, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
 
 interface DownloadItem {
     id: string;
@@ -59,6 +59,32 @@ export const DownloadsList: React.FC = () => {
 
     return (
         <div className="space-y-4 p-4">
+            {/* Header Actions */}
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Active & Recent</h3>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={async () => {
+                            await window.electronAPI.openModsDirectory();
+                        }}
+                    >
+                        <div className="flex items-center gap-1 cursor-pointer">
+                            <Folder size={12} />
+                            <span>Open Folder</span>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => window.electronAPI.clearCompletedDownloads()}
+                        className="text-xs flex items-center gap-1 text-gray-500 hover:text-white transition-colors"
+                        title="Clear Finished"
+                    >
+                        <Trash2 size={12} />
+                        <span>Clear History</span>
+                    </button>
+                </div>
+            </div>
+
             {downloads.map((dl) => (
                 <div key={dl.id} className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
                     {/* Icon based on state */}
@@ -80,9 +106,9 @@ export const DownloadsList: React.FC = () => {
                         <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-1">
                             <div
                                 className={`h-full transition-all duration-300 ${dl.state === 'failed' ? 'bg-red-500' :
-                                        dl.state === 'completed' ? 'bg-green-500' :
-                                            dl.state === 'paused' ? 'bg-yellow-500' :
-                                                'bg-blue-500'
+                                    dl.state === 'completed' ? 'bg-green-500' :
+                                        dl.state === 'paused' ? 'bg-yellow-500' :
+                                            'bg-blue-500'
                                     }`}
                                 style={{ width: `${dl.progress}%` }}
                             />
@@ -107,8 +133,15 @@ export const DownloadsList: React.FC = () => {
                                 <Play className="w-4 h-4 text-white" />
                             </button>
                         )}
-                        <button onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
+                        <button onClick={() => updateDownload(dl.id, 'cancel')} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
                             <X className="w-4 h-4 text-white/50 group-hover:text-red-400" />
+                        </button>
+                        <button
+                            onClick={() => window.electronAPI.openDownloadFolder(dl.id)}
+                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            title="Show in Folder"
+                        >
+                            <Folder size={16} className="text-white/50 hover:text-white" />
                         </button>
                     </div>
                 </div>

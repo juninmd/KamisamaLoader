@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream } from 'fs';
 import { execFile } from 'child_process';
-import { app, net } from 'electron';
+import { app, net, shell } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
 import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails } from './gamebanana.js';
@@ -15,6 +15,8 @@ export class ModManager {
     private modsDir: string;
     private settingsFile: string;
     private downloadManager: DownloadManager | null = null;
+    private gameId = 21640; // Dragon Ball Sparking Zero
+
 
     constructor(downloadManager?: DownloadManager) {
         if (downloadManager) this.downloadManager = downloadManager;
@@ -23,6 +25,138 @@ export class ModManager {
         if (!app.isPackaged) {
             this.modsDir = path.join(__dirname, '../../Mods');
             this.settingsFile = path.join(this.modsDir, 'settings.json');
+        }
+    }
+
+    private async getProfilesFilePath() {
+        await this.ensureModsDir();
+        return path.join(this.modsDir, 'profiles.json');
+    }
+
+    private async getOnlineModsCachePath() {
+        await this.ensureModsDir();
+        return path.join(this.modsDir, 'online-mods-cache.json');
+    }
+
+    async getProfiles() {
+        try {
+            const file = await this.getProfilesFilePath();
+            const data = await fs.readFile(file, 'utf-8');
+            return JSON.parse(data);
+        } catch {
+            return [];
+        }
+    }
+
+    async createProfile(name: string) {
+        try {
+            const mods = await this.getInstalledMods();
+            const enabledModIds = mods.filter((m: any) => m.isEnabled).map((m: any) => m.id);
+
+            const profiles = await this.getProfiles();
+            const newProfile = {
+                id: Date.now().toString(),
+                name,
+                modIds: enabledModIds
+            };
+
+            profiles.push(newProfile);
+
+            const file = await this.getProfilesFilePath();
+            await fs.writeFile(file, JSON.stringify(profiles, null, 2));
+            return { success: true, profile: newProfile };
+        } catch (e: any) {
+            console.error('Failed to create profile:', e);
+            return { success: false, message: e.message || 'Unknown error' };
+        }
+    }
+
+    async deleteProfile(id: string) {
+        try {
+            let profiles = await this.getProfiles();
+            profiles = profiles.filter((p: any) => p.id !== id);
+            const file = await this.getProfilesFilePath();
+            await fs.writeFile(file, JSON.stringify(profiles, null, 2));
+            return true;
+        } catch { return false; }
+    }
+
+    async loadProfile(id: string) {
+        try {
+            const profiles = await this.getProfiles();
+            const profile = profiles.find((p: any) => p.id === id);
+            if (!profile) return { success: false, message: 'Profile not found' };
+
+            const modsFile = await this.getModsFilePath();
+            let mods = [];
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+
+            const targetEnabledIds = new Set(profile.modIds);
+            const toDisable: any[] = [];
+            const toEnable: any[] = [];
+
+            for (const mod of mods) {
+                const shouldBeEnabled = targetEnabledIds.has(mod.id);
+                if (mod.isEnabled && !shouldBeEnabled) {
+                    toDisable.push(mod);
+                } else if (!mod.isEnabled && shouldBeEnabled) {
+                    toEnable.push(mod);
+                }
+                mod.isEnabled = shouldBeEnabled;
+            }
+
+            console.log(`Loading Profile: Disabling ${toDisable.length}, Enabling ${toEnable.length}`);
+
+            for (const mod of toDisable) await this.undeployMod(mod);
+            for (const mod of toEnable) await this.deployMod(mod);
+
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+            const settings = await this.getSettings();
+            await this.saveSettings({ ...settings, activeProfileId: id });
+
+            return { success: true };
+
+        } catch (e) {
+            console.error('Failed to load profile', e);
+            return { success: false, message: (e as Error).message };
+        }
+    }
+
+    private async syncActiveProfile(modId: string, isEnabled: boolean) {
+        try {
+            const settings = await this.getSettings();
+            if (!settings.activeProfileId) return;
+
+            const profiles = await this.getProfiles();
+            const profileIndex = profiles.findIndex((p: any) => p.id === settings.activeProfileId);
+
+            if (profileIndex !== -1) {
+                const profile = profiles[profileIndex];
+                if (isEnabled) {
+                    if (!profile.modIds.includes(modId)) profile.modIds.push(modId);
+                } else {
+                    profile.modIds = profile.modIds.filter((id: string) => id !== modId);
+                }
+
+                const file = await this.getProfilesFilePath();
+                await fs.writeFile(file, JSON.stringify(profiles, null, 2));
+            }
+        } catch (e) {
+            console.error('Failed to sync active profile', e);
+        }
+    }
+
+
+
+    async openModsDirectory() {
+        try {
+            await this.ensureModsDir();
+            await shell.openPath(this.modsDir);
+            return true;
+        } catch (e) {
+            console.error('Failed to open mods directory', e);
+            return false;
         }
     }
 
@@ -86,6 +220,21 @@ export class ModManager {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
             const mods = JSON.parse(data);
+
+            // Check for 0 bytes size and fix aggressively
+            let needsSave = false;
+            for (const mod of mods) {
+                if (!mod.fileSize || mod.fileSize === 0) {
+                    if (mod.folderPath) {
+                        mod.fileSize = await this.calculateFolderSize(mod.folderPath);
+                        if (mod.fileSize > 0) needsSave = true;
+                    }
+                }
+            }
+            if (needsSave) {
+                await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+            }
+
             // Sort by priority Descending (Highest Priority First)
             return mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
         } catch (error) {
@@ -460,6 +609,10 @@ export class ModManager {
                 }
 
                 await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+                // Sync with active profile
+                await this.syncActiveProfile(modId, isEnabled);
+
                 return { success: true, conflict: conflictMessage };
             }
         } catch (e) {
@@ -628,6 +781,43 @@ export class ModManager {
     async fetchFeaturedMods() {
         const { fetchFeaturedMods } = await import('./gamebanana.js');
         return await fetchFeaturedMods();
+    }
+
+    async getAllOnlineMods(forceRefresh = false) {
+        const cacheFile = await this.getOnlineModsCachePath();
+        const CACHE_DURATION = 60 * 60 * 1000; // 1 Hour
+
+        // Try reading cache first
+        if (!forceRefresh) {
+            try {
+                const data = await fs.readFile(cacheFile, 'utf-8');
+                const cache = JSON.parse(data);
+                if (Date.now() - cache.timestamp < CACHE_DURATION) {
+                    console.log('[Cache] Returning cached online mods');
+                    return cache.mods;
+                }
+            } catch (e) {
+                // Cache miss or invalid, ignore
+            }
+        }
+
+        console.log('[API] Fetching all online mods from GameBanana...');
+        const { fetchAllMods } = await import('./gamebanana.js');
+        const mods = await fetchAllMods(this.gameId);
+
+        if (mods && mods.length > 0) {
+            try {
+                await fs.writeFile(cacheFile, JSON.stringify({
+                    timestamp: Date.now(),
+                    mods
+                }));
+                console.log('[Cache] Saved online mods cache');
+            } catch (e) {
+                console.error('[Cache] Failed to save cache:', e);
+            }
+        }
+
+        return mods;
     }
 
     async installOnlineMod(mod: Mod) {
@@ -821,122 +1011,7 @@ export class ModManager {
         }
     }
 
-    private async getProfilesPath() {
-        await this.ensureModsDir();
-        return path.join(this.modsDir, 'profiles.json');
-    }
 
-    async getProfiles() {
-        try {
-            const profilesFile = await this.getProfilesPath();
-            const data = await fs.readFile(profilesFile, 'utf-8');
-            try {
-                return JSON.parse(data);
-            } catch (jsonErr) {
-                console.error('Profiles file corrupted:', jsonErr);
-                return []; // Return empty if corrupted
-            }
-        } catch (error: any) {
-            // File not found is fine, return empty
-            if (error.code !== 'ENOENT') {
-                console.error('Failed to read profiles:', error);
-            }
-            return [];
-        }
-    }
-
-    async createProfile(name: string) {
-        try {
-            const mods = await this.getInstalledMods();
-            const enabledModIds = mods.filter((m: any) => m.isEnabled).map((m: any) => m.id);
-
-            const profiles = await this.getProfiles();
-            const newProfile = {
-                id: Date.now().toString(),
-                name,
-                modIds: enabledModIds
-            };
-
-            profiles.push(newProfile);
-
-            const profilesFile = await this.getProfilesPath();
-            await fs.writeFile(profilesFile, JSON.stringify(profiles, null, 2));
-            console.log(`Profile created: ${name} (${newProfile.id})`);
-            return { success: true, profile: newProfile };
-        } catch (e: any) {
-            console.error('Failed to create profile:', e);
-            return { success: false, message: e.message || 'Unknown error' };
-        }
-    }
-
-    async deleteProfile(profileId: string) {
-        try {
-            let profiles = await this.getProfiles();
-            profiles = profiles.filter((p: any) => p.id !== profileId);
-
-            const profilesFile = await this.getProfilesPath();
-            await fs.writeFile(profilesFile, JSON.stringify(profiles, null, 2));
-            return true;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
-    }
-
-    async loadProfile(profileId: string) {
-        try {
-            const profiles = await this.getProfiles();
-            const profile = profiles.find((p: any) => p.id === profileId);
-            if (!profile) return { success: false, message: 'Profile not found' };
-
-            const modsFile = await this.getModsFilePath();
-            const data = await fs.readFile(modsFile, 'utf-8');
-            const mods = JSON.parse(data);
-
-            const targetEnabledIds = new Set(profile.modIds);
-
-            // Calculate diff
-            const toDisable: any[] = [];
-            const toEnable: any[] = [];
-
-            for (const mod of mods) {
-                const shouldBeEnabled = targetEnabledIds.has(mod.id);
-                if (mod.isEnabled && !shouldBeEnabled) {
-                    toDisable.push(mod);
-                } else if (!mod.isEnabled && shouldBeEnabled) {
-                    toEnable.push(mod);
-                }
-                // Update state in memory
-                mod.isEnabled = shouldBeEnabled;
-            }
-
-            console.log(`Loading Profile: Disabling ${toDisable.length}, Enabling ${toEnable.length}`);
-
-            // Apply Changes
-            // 1. Disable first to clear conflicts/space
-            for (const mod of toDisable) {
-                await this.undeployMod(mod);
-            }
-
-            // 2. Enable new ones
-            for (const mod of toEnable) {
-                await this.deployMod(mod);
-            }
-
-            // Save mods.json
-            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-
-            // Persist active profile ID
-            const settings = await this.getSettings();
-            await this.saveSettings({ ...settings, activeProfileId: profileId });
-
-            return { success: true };
-
-        } catch (e) {
-            console.error('Failed to load profile', e);
-            return { success: false, message: (e as Error).message };
-        }
-    }
 
     async launchGame() {
         const settings = await this.getSettings();

@@ -218,10 +218,10 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                         {/* Description */}
                         <div>
                             <h3 className="text-lg font-bold text-white mb-2">Description</h3>
-                            {/* Temporarily display as plain text to rule out dangerouslySetInnerHTML issues */}
-                            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                                {fullDescription || mod.description || 'No description available.'}
-                            </div>
+                            <div
+                                className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words prose prose-invert max-w-none [&>img]:rounded-lg [&>img]:max-w-full"
+                                dangerouslySetInnerHTML={{ __html: fullDescription || mod.description || 'No description available.' }}
+                            />
                         </div>
 
                         {/* Changelog */}

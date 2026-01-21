@@ -14,10 +14,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
   selectGameDirectory: () => ipcRenderer.invoke('select-game-directory'),
   selectModDirectory: () => ipcRenderer.invoke('select-mod-directory'),
+  openModsDirectory: () => ipcRenderer.invoke('open-mods-directory'),
 
   // Updates
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   cancelDownload: (id: string) => ipcRenderer.invoke('cancel-download', id),
+  openDownloadFolder: (id: string) => ipcRenderer.invoke('open-download-folder', id),
+  clearCompletedDownloads: () => ipcRenderer.invoke('clear-completed-downloads'),
   onDownloadUpdate: (callback: (downloads: any[]) => void) => {
     // Clean up previous listeners to avoid duplicates if necessary, or just add
     ipcRenderer.removeAllListeners('downloads-update');
@@ -31,6 +34,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchCategories: (gameId?: number) => ipcRenderer.invoke('fetch-categories', gameId),
   fetchNewMods: (page?: number) => ipcRenderer.invoke('fetch-new-mods', page),
   getModDetails: (gameBananaId: number) => ipcRenderer.invoke('get-mod-details', gameBananaId),
+  getAllOnlineMods: (forceRefresh?: boolean) => ipcRenderer.invoke('get-all-online-mods', forceRefresh),
   fetchFeaturedMods: () => ipcRenderer.invoke('fetch-featured-mods'),
 
   // Profiles

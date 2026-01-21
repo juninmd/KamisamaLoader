@@ -15,6 +15,7 @@ interface Window {
     saveSettings: (settings: any) => Promise<boolean>;
     selectGameDirectory: () => Promise<string | null>;
     selectModDirectory: () => Promise<string | null>;
+    openModsDirectory: () => Promise<boolean>;
     setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
 
     // Updates
@@ -27,6 +28,7 @@ interface Window {
     searchBySection: (options: any) => Promise<any[]>;
     fetchCategories: (gameId?: number) => Promise<any[]>;
     fetchNewMods: (page?: number) => Promise<any[]>;
+    getAllOnlineMods: (forceRefresh?: boolean) => Promise<any[]>;
     fetchFeaturedMods: () => Promise<any[]>;
     getModDetails: (gameBananaId: number) => Promise<any>;
     installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string; downloadId?: string }>;
@@ -42,6 +44,8 @@ interface Window {
     pauseDownload: (id: string) => Promise<void>;
     resumeDownload: (id: string) => Promise<void>;
     cancelDownload: (id: string) => Promise<void>;
+    openDownloadFolder: (id: string) => Promise<void>;
+    clearCompletedDownloads: () => Promise<void>;
     onDownloadUpdate: (callback: (downloads: any[]) => void) => void;
     onDownloadScanFinished: (callback: () => void) => void;
 

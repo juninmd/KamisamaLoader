@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Folder, RefreshCw, UploadCloud, ChevronDown, Eye, Heart, Check, XCircle, ChevronUp, Trash2, LayoutGrid, List } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Search, Download, RefreshCw, UploadCloud, ChevronDown, List, LayoutGrid } from 'lucide-react';
 import { useToast } from '../components/ToastContext';
-import Skeleton from '../components/Skeleton';
 import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
 import { DownloadsList } from '../components/DownloadsList';
@@ -11,6 +9,8 @@ import FilterBar from '../components/FilterBar';
 import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
+import { InstalledModList } from '../components/InstalledModList';
+import { BrowseModList } from '../components/BrowseModList';
 
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';
@@ -51,9 +51,13 @@ const Mods: React.FC = () => {
     const [installedMods, setInstalledMods] = useState<Mod[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'enabled' | 'disabled' | 'updates'>('all');
-    const [browseMods, setBrowseMods] = useState<Mod[]>([]);
+
+    // New: Client-Side Mod Handling Support
+    const [allOnlineMods, setAllOnlineMods] = useState<Mod[]>([]); // New: Full Local Dataset
+    const [browseMods, setBrowseMods] = useState<Mod[]>([]); // Displayed Page
     const [loadingBrowse, setLoadingBrowse] = useState(false);
     const [browsePage, setBrowsePage] = useState(1);
+
     const [installedLoading, setInstalledLoading] = useState(true);
     const [selectedMod, setSelectedMod] = useState<Mod | null>(null);
     const [updateDialogMod, setUpdateDialogMod] = useState<Mod | null>(null);
@@ -97,18 +101,18 @@ const Mods: React.FC = () => {
 
     // Load Browse Mods on tab change if empty
     useEffect(() => {
-        if (activeTab === 'browse' && browseMods.length === 0) {
+        if (activeTab === 'browse' && browseMods.length === 0 && allOnlineMods.length === 0) {
             loadCategories();
-            loadBrowseMods(1, true);
+            loadBrowseMods(1, false);
         }
     }, [activeTab]);
 
-    // Reload when filters change (debounced search handled by user not typing, but here triggering on filter state change)
+    // Reset page when filters change
     useEffect(() => {
         if (activeTab === 'browse') {
-            loadBrowseMods(1, true);
+            setBrowsePage(1);
         }
-    }, [filters, searchQuery]); // Also trigger on search query change if user hits enter or we debounce it (currently instant)
+    }, [filters, searchQuery]);
 
     const loadCategories = async () => {
         try {
@@ -132,122 +136,122 @@ const Mods: React.FC = () => {
             const mods = await window.electronAPI.getInstalledMods();
             setInstalledMods(mods);
         } catch (error) {
-            console.error('Failed to load installed mods', error);
+            console.error('Failed to load installed mods', 'error');
             showToast('Failed to load installed mods', 'error');
         } finally {
             setInstalledLoading(false);
         }
     };
 
-    const loadBrowseMods = async (page: number, reset: boolean = false) => {
-        if (loadingBrowse && !reset) return; // Allow reset even if loading
-        setLoadingBrowse(true);
-        console.log(`[Browse] Loading page ${page}, reset=${reset}, filters:`, filters, "Query:", searchQuery);
+    const loadBrowseMods = async (page: number, reset: boolean = false, forceRefresh: boolean = false) => {
+        if (loadingBrowse && !reset && !forceRefresh) return;
 
-        try {
-            // Prepare options for API
-            const options: any = {
-                page,
-                perPage: 20,
-                search: searchQuery,
-                sort: filters.sortBy,
-                order: filters.order,
-                dateRange: filters.dateRange
-            };
-
-            // Map Category Name to ID
-            if (filters.categories.length > 0) {
-                // Find ID for the first selected category (API supports one primary filter comfortably)
-                const catName = filters.categories[0];
-                const cat = categories.find(c => c.name === catName);
-                if (cat) {
-                    options.categoryId = cat.id;
-                }
+        // Trigger fetch if we don't have data OR forced refresh
+        if (allOnlineMods.length === 0 || forceRefresh) {
+            setLoadingBrowse(true);
+            try {
+                console.log('[Browse] Fetching full online mod list...');
+                const fullList = await window.electronAPI.getAllOnlineMods(forceRefresh);
+                console.log(`[Browse] Fetched ${fullList.length} total mods.`);
+                setAllOnlineMods(fullList);
+                if (forceRefresh) showToast("Online mod list updated", "success");
+            } catch (error) {
+                console.error('Failed to fetch all online mods:', error);
+                showToast('Failed to load online mods', 'error');
+            } finally {
+                setLoadingBrowse(false);
             }
+        }
 
-            // Fetch mods from API
-            // Use searchBySection exposed as searchOnlineMods (via wrapper) or directly if exposed
-            // The plan updated `searchOnlineMods` to take args in main process?
-            // `window.electronAPI.searchOnlineMods` definition might need check.
-            // Assuming `window.electronAPI.searchBySection` exists or `searchOnlineMods` handles options.
-            // Let's use `searchBySection` if available or assume `searchOnlineMods` is the one.
-            // In `electron/main.ts`, `search-online-mods` takes `(page, search)`.
-            // In `electron/main.ts`, `search-by-section` takes `options`.
-            // We should use `search-by-section` for advanced filtering.
-
-            let newMods = [];
-
-            // Note: Update src/vite-env.d.ts if searchBySection is missing from type definition,
-            // but for now we assume dynamic access or existing exposure.
-            if (window.electronAPI.searchBySection) {
-                newMods = await window.electronAPI.searchBySection(options);
-            } else {
-                // Fallback
-                newMods = await window.electronAPI.searchOnlineMods(page, searchQuery);
-            }
-
-            console.log(`[Browse] Received ${newMods?.length || 0} mods from API`);
-
-            // Get installed mod IDs to mark them
-            const installed = await window.electronAPI.getInstalledMods();
-            const installedIds = new Set(installed.map((m: any) => m.gameBananaId));
-
-            if (!newMods || newMods.length === 0) {
-                if (reset || page === 1) {
-                    setBrowseMods([]);
-                }
-                console.log('[Browse] No mods returned from API');
-            } else {
-                // Mark mods that are already installed
-                let processedMods = newMods.map((mod: any) => ({
-                    ...mod,
-                    isInstalled: installedIds.has(mod.gameBananaId)
-                }));
-
-                // Client-side filtering for properties not supported by API search (like NSFW flag in some feeds)
-                if (!filters.nsfw) {
-                    processedMods = processedMods.filter((m: any) => !m.isNsfw);
-                }
-
-                // ZeroSpark / ColorZ local filtering if not covered by search query
-                if (filters.zeroSpark && !searchQuery.toLowerCase().includes('zerospark')) {
-                    processedMods = processedMods.filter((m: any) =>
-                        (m.name && m.name.toLowerCase().includes('zerospark')) ||
-                        (m.description && m.description.toLowerCase().includes('zerospark'))
-                    );
-                }
-
-                if (filters.colorZ && !searchQuery.toLowerCase().includes('colorz')) {
-                    processedMods = processedMods.filter((m: any) =>
-                        (m.name && m.name.toLowerCase().includes('colorz')) ||
-                        (m.description && m.description.toLowerCase().includes('colorz'))
-                    );
-                }
-
-                // If API didn't sort (e.g. Subfeed), we can try to sort locally, but only for the current page.
-                // This is "better than nothing" for Sort By Likes on a feed.
-                if (filters.sortBy === 'likes') {
-                    processedMods.sort((a: any, b: any) => (b.likeCount || 0) - (a.likeCount || 0));
-                } else if (filters.sortBy === 'downloads') {
-                    processedMods.sort((a: any, b: any) => (b.downloadCount || 0) - (a.downloadCount || 0));
-                } else if (filters.sortBy === 'views') {
-                    processedMods.sort((a: any, b: any) => (b.viewCount || 0) - (a.viewCount || 0));
-                }
-                // Date is usually default
-
-                setBrowseMods(prev => reset || page === 1 ? processedMods : [...prev, ...processedMods]);
-            }
-
-            if (reset || page === 1) {
-                setBrowsePage(1);
-            }
-        } catch (error) {
-            console.error('[Browse] Failed to load online mods:', error);
-            showToast('Failed to load online mods', 'error');
-        } finally {
-            setLoadingBrowse(false);
+        // Ensure page is set correctly
+        if (reset || page === 1) {
+            setBrowsePage(1);
+        } else {
+            setBrowsePage(page);
         }
     };
+
+    // Master Effect for Client-Side Filtering, Sorting, and Pagination
+    useEffect(() => {
+        if (activeTab !== 'browse') return;
+        if (allOnlineMods.length === 0) return;
+
+        console.log('[Browse] Applying local filters...', { filters, searchQuery, page: browsePage });
+
+        let result = [...allOnlineMods];
+
+        // 1. Search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(m =>
+                m.name.toLowerCase().includes(query) ||
+                (m.description && m.description.toLowerCase().includes(query)) ||
+                m.author.toLowerCase().includes(query)
+            );
+        }
+
+        // 2. Categories
+        if (filters.categories.length > 0) {
+            const selectedCat = filters.categories[0];
+            result = result.filter(m => m.category === selectedCat);
+        }
+
+        // 3. NSFW
+        if (!filters.nsfw) {
+            result = result.filter(m => !m.isNsfw);
+        }
+
+        // 4. ZeroSpark / ColorZ
+        if (filters.zeroSpark && !searchQuery.toLowerCase().includes('zerospark')) {
+            result = result.filter(m =>
+                (m.name && m.name.toLowerCase().includes('zerospark')) ||
+                (m.description && m.description.toLowerCase().includes('zerospark'))
+            );
+        }
+
+        if (filters.colorZ && !searchQuery.toLowerCase().includes('colorz')) {
+            result = result.filter(m =>
+                (m.name && m.name.toLowerCase().includes('colorz')) ||
+                (m.description && m.description.toLowerCase().includes('colorz'))
+            );
+        }
+
+        // 5. Sort
+        result.sort((a: any, b: any) => {
+            let valA, valB;
+            switch (filters.sortBy) {
+                case 'downloads':
+                    valA = a.downloadCount || 0; valB = b.downloadCount || 0;
+                    break;
+                case 'views':
+                    valA = a.viewCount || 0; valB = b.viewCount || 0;
+                    break;
+                case 'likes':
+                    valA = a.likeCount || 0; valB = b.likeCount || 0;
+                    break;
+                case 'date':
+                default:
+                    valA = a.dateAdded || 0; valB = b.dateAdded || 0;
+                    break;
+            }
+            return filters.order === 'asc' ? valA - valB : valB - valA;
+        });
+
+        // 6. Pagination
+        const start = (browsePage - 1) * 20; // 20 items per page
+        const end = start + 20;
+        const sliced = result.slice(start, end);
+
+        // Mark installed
+        const installedIds = new Set(installedMods.map(m => m.gameBananaId));
+        const finalMods = sliced.map(m => ({
+            ...m,
+            isInstalled: installedIds.has(m.gameBananaId)
+        }));
+
+        setBrowseMods(finalMods);
+
+    }, [allOnlineMods, filters, searchQuery, browsePage, installedMods, activeTab]);
 
     // Filter Logic for Installed Mods
     const filteredInstalledMods = installedMods.filter(mod => {
@@ -432,27 +436,6 @@ const Mods: React.FC = () => {
         }
     };
 
-    // Infinite Scroll
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
-        if (scrollHeight - scrollTop <= clientHeight + 100 && !loadingBrowse && activeTab === 'browse') {
-            const nextPage = browsePage + 1;
-            setBrowsePage(nextPage);
-            loadBrowseMods(nextPage);
-        }
-    };
-
-    // Debounced search for Browse Tab
-    useEffect(() => {
-        if (activeTab === 'browse') {
-            const delayDebounceFn = setTimeout(() => {
-                loadBrowseMods(1, true);
-            }, 600);
-
-            return () => clearTimeout(delayDebounceFn);
-        }
-    }, [searchQuery, activeTab]);
-
     return (
         <div
             className="h-full flex flex-col relative"
@@ -470,8 +453,8 @@ const Mods: React.FC = () => {
                 </div>
             )}
 
-            {/* Top Bar */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 space-y-4 xl:space-y-0 flex-shrink-0">
+            {/* Top Bar - High Z-Index for Dropdowns */}
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 space-y-4 xl:space-y-0 flex-shrink-0 relative z-40">
 
                 {/* Tabs */}
                 <div className="flex bg-black/40 p-1 rounded-xl backdrop-blur-sm border border-white/10">
@@ -551,10 +534,10 @@ const Mods: React.FC = () => {
                                     onChange={(e) => setFilterStatus(e.target.value as any)}
                                     className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
                                 >
-                                    <option value="all">All Mods</option>
-                                    <option value="enabled">Enabled Only</option>
-                                    <option value="disabled">Disabled Only</option>
-                                    <option value="updates">Updates Available</option>
+                                    <option value="all" className="bg-[#1a1b26] text-white">All Mods</option>
+                                    <option value="enabled" className="bg-[#1a1b26] text-white">Enabled Only</option>
+                                    <option value="disabled" className="bg-[#1a1b26] text-white">Disabled Only</option>
+                                    <option value="updates" className="bg-[#1a1b26] text-white">Updates Available</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                             </div>
@@ -592,13 +575,30 @@ const Mods: React.FC = () => {
                             </div>
                         </>
                     )}
+                    {activeTab === 'browse' && (
+                        <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-3 text-xs text-gray-400 border-r border-white/10 pr-3 mr-2">
+                                <div className="flex flex-col items-end">
+                                    <span className="font-bold text-white">{allOnlineMods.length}</span>
+                                    <span>Total Mods</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => loadBrowseMods(1, true, true)} // Force refresh
+                                disabled={loadingBrowse}
+                                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors text-white"
+                                title="Refresh Online Mods"
+                            >
+                                <RefreshCw size={18} className={loadingBrowse ? "animate-spin" : ""} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Content Area */}
             <div
                 className="flex-1 overflow-y-auto pr-2 pb-4 scroll-smooth"
-                onScroll={handleScroll}
             >
                 {activeTab === 'installed' ? (
                     installedLoading ? (
@@ -606,7 +606,7 @@ const Mods: React.FC = () => {
                             <RefreshCw size={24} className="animate-spin mb-2" />
                         </div>
                     ) : (
-                        <InstalledList
+                        <InstalledModList
                             mods={filteredInstalledMods}
                             onToggle={handleToggle}
                             onUpdate={(mod) => handleUpdateClick(mod)}
@@ -654,10 +654,10 @@ const Mods: React.FC = () => {
 
                             {/* Browse List */}
                             <div className="flex-1">
-                                <BrowseList
+                                <BrowseModList
                                     mods={browseMods}
                                     installedModIds={installedMods.map(m => m.gameBananaId).filter((id): id is number => id !== undefined)}
-                                    loading={loadingBrowse}
+                                    loading={loadingBrowse || (allOnlineMods.length === 0 && loadingBrowse)}
                                     onInstall={handleInstall}
                                     onSelect={(mod) => setSelectedMod(mod)}
                                     installedMods={installedMods}
@@ -665,6 +665,36 @@ const Mods: React.FC = () => {
                                 />
                             </div>
                         </div>
+                    </div>
+                )}
+                {/* Pagination Controls for Browse Tab */}
+                {activeTab === 'browse' && !loadingBrowse && browseMods.length > 0 && (
+                    <div className="flex justify-center items-center space-x-4 py-4 mt-auto shrink-0">
+                        <button
+                            onClick={() => {
+                                if (browsePage > 1) {
+                                    setBrowsePage(browsePage - 1);
+                                }
+                            }}
+                            disabled={browsePage === 1}
+                            className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm text-gray-400">Page {browsePage}</span>
+                        <button
+                            onClick={() => {
+                                // Check if we have more pages (approximate check since we filter locally)
+                                // If current slice is full, assume there is a next page
+                                if (browseMods.length === 20) {
+                                    setBrowsePage(browsePage + 1);
+                                }
+                            }}
+                            disabled={browseMods.length < 20}
+                            className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+                        >
+                            Next
+                        </button>
                     </div>
                 )}
             </div>
@@ -694,313 +724,6 @@ const Mods: React.FC = () => {
                 )
             }
         </div >
-    );
-};
-
-const InstalledList: React.FC<{
-    mods: Mod[];
-    onToggle: (id: string) => void;
-    onUpdate: (mod: Mod) => void;
-    onPriorityChange: (id: string, direction: 'up' | 'down') => void;
-    onUninstall: (id: string) => void;
-    updatingMods: string[];
-    onSelect: (mod: Mod) => void;
-    viewMode: 'list' | 'card';
-}> = ({ mods, onToggle, onUpdate, onPriorityChange, onUninstall, updatingMods, onSelect, viewMode }) => {
-    if (mods.length === 0) {
-        return (
-            <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl">
-                <Folder size={48} className="mb-4 opacity-50" />
-                <p className="text-lg font-medium">No mods installed.</p>
-                <p className="text-sm">Browse online or drag files to install.</p>
-            </div>
-        );
-    }
-
-
-    if (viewMode === 'card') {
-        return (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 p-2">
-                {mods.map(mod => (
-                    <div
-                        key={mod.id}
-                        className={`glass-panel p-3 flex flex-col h-full transition-all hover:scale-[1.02] hover:bg-white/5 border ${mod.isEnabled ? 'border-white/10' : 'border-red-500/10 bg-red-500/5'} cursor-pointer`}
-                        onClick={() => onSelect(mod)}
-                    >
-                        {/* Image/Icon */}
-                        <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-gray-800 mb-3 group">
-                            {mod.images && mod.images.length > 0 ? (
-                                <img src={mod.images[0]} alt={mod.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                            ) : mod.iconUrl ? (
-                                <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-600">
-                                    <Folder size={32} />
-                                </div>
-                            )}
-
-                            <div className="absolute top-2 right-2 flex space-x-1">
-                                {mod.hasUpdate && (
-                                    <span className="bg-green-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow">UPDATE</span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Title & Author */}
-                        <div className="flex-1 min-w-0 mb-2">
-                            <h3 className={`font-bold text-sm truncate ${mod.isEnabled ? 'text-gray-100' : 'text-gray-500'}`} title={mod.name}>{mod.name}</h3>
-                            <p className="text-xs text-gray-500 truncate">by {mod.author}</p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onToggle(mod.id); }}
-                                className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${mod.isEnabled ? 'bg-blue-600/20 text-blue-300 hover:bg-blue-600/40' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600'}`}
-                            >
-                                {mod.isEnabled ? 'Enabled' : 'Disabled'}
-                            </button>
-                            <div className="flex items-center space-x-1">
-                                <button onClick={(e) => { e.stopPropagation(); onPriorityChange(mod.id, 'up'); }} className="p-1 hover:bg-white/10 rounded text-gray-400" title="Priority Up"><ChevronUp size={12} /></button>
-                                <button onClick={(e) => { e.stopPropagation(); onPriorityChange(mod.id, 'down'); }} className="p-1 hover:bg-white/10 rounded text-gray-400" title="Priority Down"><ChevronDown size={12} /></button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-3">
-            {mods.map((mod) => (
-                <div key={mod.id} className={`glass-panel p-4 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-4 transition-all hover:bg-white/5 group border ${mod.isEnabled ? 'border-white/10' : 'border-red-500/10 bg-red-500/5'}`}>
-
-                    {/* Icon */}
-                    <div
-                        className="w-16 h-16 flex-shrink-0 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center text-gray-500 shadow-inner relative overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => onSelect(mod)}
-                    >
-                        {mod.iconUrl ? (
-                            <img src={mod.iconUrl} alt="icon" className="w-full h-full object-cover" />
-                        ) : (
-                            <Folder size={24} className="group-hover:text-blue-200" />
-                        )}
-                        {mod.hasUpdate && (
-                            <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-black shadow-[0_0_10px_#22c55e]"></div>
-                        )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                            <h3 className={`font-bold text-lg truncate ${mod.isEnabled ? 'text-gray-200' : 'text-gray-500'} cursor-pointer hover:text-blue-400 transition-colors`} onClick={() => onSelect(mod)}>{mod.name}</h3>
-                            {mod.hasUpdate && (
-                                <span className="px-2 py-0.5 bg-green-500/20 text-green-300 text-[10px] font-bold uppercase rounded border border-green-500/30">Update Available</span>
-                            )}
-                        </div>
-                        <p className="text-sm text-gray-400 truncate cursor-pointer" onClick={() => onSelect(mod)}>{mod.description}</p>
-                        <div className="flex items-center space-x-3 mt-1 text-xs text-gray-500">
-                            <span className="bg-white/5 px-2 py-0.5 rounded">v{mod.version}</span>
-                            <span>by <span className="text-gray-400">{mod.author}</span></span>
-                            {mod.viewCount !== undefined && (
-                                <span className="flex items-center space-x-1" title="Views">
-                                    <Eye size={10} /> <span>{mod.viewCount.toLocaleString()}</span>
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center space-x-4 self-end md:self-auto">
-
-                        {/* Priority Controls */}
-                        <div className="flex flex-col items-center space-y-1 mr-2">
-                            <button onClick={() => onPriorityChange(mod.id, 'up')} className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="Increase Priority (Overwrite others)">
-                                <ChevronUp size={14} />
-                            </button>
-                            <button onClick={() => onPriorityChange(mod.id, 'down')} className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="Decrease Priority">
-                                <ChevronDown size={14} />
-                            </button>
-                        </div>
-                        {mod.hasUpdate && (
-                            <button
-                                onClick={() => onUpdate(mod)}
-                                disabled={updatingMods.includes(mod.id)}
-                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-colors border text-xs font-bold ${updatingMods.includes(mod.id) ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-green-600/20 text-green-300 hover:bg-green-600 hover:text-white border-green-600/30'}`}
-                            >
-                                <Download size={14} className={updatingMods.includes(mod.id) ? "animate-bounce" : ""} />
-                                <span>{updatingMods.includes(mod.id) ? 'Updating...' : `Update to v${mod.latestVersion}`}</span>
-                            </button>
-                        )}
-
-                        <div className="flex items-center space-x-2">
-                            <span className={`text-xs font-medium uppercase ${mod.isEnabled ? 'text-blue-400' : 'text-gray-600'}`}>
-                                {mod.isEnabled ? 'Active' : 'Disabled'}
-                            </span>
-                            <button
-                                onClick={() => onToggle(mod.id)}
-                                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ${mod.isEnabled ? 'bg-blue-600' : 'bg-gray-700'}`}
-                            >
-                                <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${mod.isEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                            </button>
-                            <button
-                                onClick={() => onUninstall(mod.id)}
-                                className="p-2 hover:bg-red-500/20 rounded-full text-gray-500 hover:text-red-400 transition-colors"
-                                title="Uninstall Mod"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-const BrowseList: React.FC<{
-    mods: Mod[];
-    installedModIds?: number[];
-    loading: boolean;
-    onInstall: (mod: Mod) => void;
-    onSelect: (mod: Mod) => void;
-    installedMods?: Mod[];
-    onToggle?: (id: string) => void;
-}> = ({ mods, installedModIds = [], loading, onInstall, onSelect, installedMods = [], onToggle }) => {
-    return (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 pb-10 p-2">
-            {mods.map((mod) => {
-                const isInstalled = (mod.gameBananaId !== undefined && installedModIds.includes(mod.gameBananaId)) || (mod as any).isInstalled;
-                // Find local mod if installed to check status
-                const localMod = isInstalled && installedMods ? installedMods.find(m => m.gameBananaId === mod.gameBananaId) : null;
-
-                return (
-                    <div
-                        key={mod.id}
-                        className={`bg-gray-900 border ${isInstalled ? 'border-green-500/30' : 'border-white/10 hover:border-blue-500/50'} rounded-lg overflow-hidden flex flex-col transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-xl group ring-1 ring-white/5 relative`}
-                    >
-                        {/* Image Header */}
-                        <div
-                            className="relative aspect-video w-full bg-black cursor-pointer overflow-hidden group-hover:brightness-110 transition-all"
-                            onClick={() => onSelect(mod)}
-                        >
-                            {mod.images && mod.images.length > 0 ? (
-                                <img src={mod.images[0]} alt={mod.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                            ) : mod.iconUrl ? (
-                                <img src={mod.iconUrl} alt={mod.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                                    <Folder size={32} className="text-gray-600" />
-                                </div>
-                            )}
-
-                            {/* Overlay Gradient */}
-                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
-
-                            {/* Installed Badge */}
-                            {isInstalled && (
-                                <div className={`absolute top-1 right-1 ${localMod && !localMod.isEnabled ? 'bg-yellow-600' : 'bg-green-600'} text-white text-[9px] uppercase font-bold px-1.5 py-0.5 rounded backdrop-blur-md flex items-center gap-1 shadow-sm`}>
-                                    <Check size={8} strokeWidth={4} /> <span>{localMod && !localMod.isEnabled ? 'Disabled' : 'Installed'}</span>
-                                </div>
-                            )}
-
-                            {/* Category Badge */}
-                            <div className="absolute bottom-1 left-2 text-white/90 text-[10px] font-bold flex items-center gap-1 shadow-sm drop-shadow-md">
-                                {mod.category || 'Mod'}
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-2 flex flex-col flex-1 gap-1.5 bg-[#0f1115]">
-                            <div className="flex-1 min-w-0">
-                                <h3
-                                    className="font-bold text-sm text-gray-100 line-clamp-1 hover:text-blue-400 cursor-pointer"
-                                    onClick={() => onSelect(mod)}
-                                    title={mod.name}
-                                >
-                                    {mod.name}
-                                </h3>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    {mod.iconUrl ? (
-                                        <img src={mod.iconUrl} className="w-4 h-4 rounded-full object-cover bg-gray-800" alt="avatar" />
-                                    ) : (
-                                        <div className="w-4 h-4 rounded-full bg-gray-700"></div>
-                                    )}
-                                    <span className="text-[10px] text-gray-400 truncate">by <span className="text-gray-300 font-medium hover:text-white transition-colors">{mod.author}</span></span>
-                                </div>
-                            </div>
-
-                            {/* Stats Grid */}
-                            <div className="flex items-center justify-between text-[10px] text-gray-400 bg-black/20 rounded px-1.5 py-1">
-                                <div className="flex items-center gap-1" title="Downloads">
-                                    <Download size={10} />
-                                    <span className="font-bold text-gray-300">{mod.downloadCount !== undefined ? (mod.downloadCount >= 1000 ? (mod.downloadCount / 1000).toFixed(1) + 'k' : mod.downloadCount) : 0}</span>
-                                </div>
-                                <div className="flex items-center gap-1" title="Likes">
-                                    <Heart size={10} />
-                                    <span className="font-bold text-gray-300">{mod.likeCount?.toLocaleString() || 0}</span>
-                                </div>
-                                <div className="flex items-center gap-1" title="Views">
-                                    <Eye size={10} />
-                                    <span className="font-bold text-gray-300">{mod.viewCount !== undefined ? (mod.viewCount >= 1000 ? (mod.viewCount / 1000).toFixed(1) + 'k' : mod.viewCount) : 0}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[9px] text-gray-500 px-0.5">
-                                <span>{mod.dateAdded ? formatDistanceToNow(new Date(mod.dateAdded * 1000)) + ' ago' : ''}</span>
-                                {mod.isNsfw && <span className="text-red-500 font-bold border border-red-500/20 px-1 rounded bg-red-500/5">NSFW</span>}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="grid grid-cols-2 gap-2 mt-auto pt-1">
-                                <button
-                                    onClick={() => onSelect(mod)}
-                                    className="flex items-center justify-center px-2 py-1.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-semibold transition-colors border border-white/5"
-                                >
-                                    More Info
-                                </button>
-                                {isInstalled && localMod && onToggle ? (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); onToggle(localMod.id); }}
-                                        className={`flex items-center justify-center px-2 py-1.5 rounded text-white text-[10px] font-bold shadow-lg transition-all active:scale-95 ${localMod.isEnabled ? 'bg-red-600/80 hover:bg-red-500 border border-red-500/30' : 'bg-green-600 hover:bg-green-500 border border-green-500/30'}`}
-                                        title={localMod.isEnabled ? "Disable Mod" : "Enable Mod"}
-                                    >
-                                        {localMod.isEnabled ? (
-                                            <>
-                                                <XCircle size={12} className="mr-1" />
-                                                Disable
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check size={12} className="mr-1" />
-                                                Enable
-                                            </>
-                                        )}
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); onInstall(mod); }}
-                                        className="flex items-center justify-center px-2 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold shadow-lg shadow-blue-900/20 transition-all active:scale-95 group-hover:shadow-blue-600/40"
-                                    >
-                                        <Download size={12} className="mr-1" />
-                                        Download
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-            {loading && (
-                <>
-                    <Skeleton />
-                    <Skeleton />
-                    <Skeleton />
-                    <Skeleton />
-                </>
-            )}
-        </div>
     );
 };
 

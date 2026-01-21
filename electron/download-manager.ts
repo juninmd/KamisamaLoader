@@ -212,8 +212,25 @@ export class DownloadManager extends EventEmitter {
             }
             // Delete file
             fs.unlink(item.savePath, (err) => { });
-            this.downloads.delete(id);
+            // Keep in list so user sees it was cancelled, use clear to remove
             this.emitUpdate();
+        }
+    }
+
+    clearCompleted() {
+        for (const [id, item] of this.downloads.entries()) {
+            if (item.state === 'completed' || item.state === 'cancelled' || item.state === 'failed') {
+                this.downloads.delete(id);
+            }
+        }
+        this.emitUpdate();
+    }
+
+    openDownloadFolder(id: string) {
+        const item = this.downloads.get(id);
+        if (item && item.savePath && this.mainWindow) {
+            const { shell } = require('electron');
+            shell.showItemInFolder(item.savePath);
         }
     }
 }

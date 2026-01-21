@@ -71,19 +71,7 @@ const Settings: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="space-y-2">
-                    <h3 className="text-lg font-medium text-gray-200">Appearance</h3>
-                    <div className="flex items-center space-x-4">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" className="form-checkbox h-5 w-5 text-blue-500 rounded bg-black/30 border-glass-border" defaultChecked />
-                            <span className="text-gray-300">Glass Effect</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" className="form-checkbox h-5 w-5 text-blue-500 rounded bg-black/30 border-glass-border" defaultChecked />
-                            <span className="text-gray-300">Dark Theme</span>
-                        </label>
-                    </div>
-                </div>
+
             </div>
         </div>
     );

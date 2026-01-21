@@ -259,6 +259,109 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
 }
 
 /**
+ * Fetch ALL mods from the Subfeed (up to a limit)
+ * This is for client-side filtering/sorting
+ */
+export async function fetchAllMods(gameId: number = 21179, maxPages: number = 50): Promise<Mod[]> {
+    console.log(`[API] Starting Fetch All Mods (Limit: ${maxPages} pages)`);
+    const allMods: Mod[] = [];
+    const limit = pLimit(5); // Concurrency for pages
+
+    // Create array of page numbers
+    const pages = Array.from({ length: maxPages }, (_, i) => i + 1);
+
+    // Helper to fetch a single page
+    const fetchPage = async (page: number) => {
+        try {
+            await checkRateLimit();
+            // User requested strict Subfeed usage
+            const url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=40&_aModelFilter[]=Mod`;
+            console.log(`[API] Fetching: ${url}`);
+
+            const response = await apiLimit(() => fetch(url));
+            if (!response.ok) return false;
+
+            const json = await response.json();
+            if (json && json._aRecords && Array.isArray(json._aRecords)) {
+                return json._aRecords.map((record: any) => {
+                    const image = record._aPreviewMedia?._aImages?.[0];
+                    const iconUrl = image ? `${image._sBaseUrl}/${image._sFile220}` : '';
+                    const images = record._aPreviewMedia?._aImages?.map((img: any) => `${img._sBaseUrl}/${img._sFile}`) || [];
+                    return {
+                        id: record._idRow.toString(),
+                        name: record._sName,
+                        author: record._aSubmitter?._sName || 'Unknown',
+                        version: record._sVersion || '1.0',
+                        description: record._sText || '',
+                        isEnabled: false,
+                        iconUrl: iconUrl,
+                        gameBananaId: record._idRow,
+                        latestVersion: record._sVersion || '1.0',
+                        viewCount: record._nViewCount || 0,
+                        likeCount: record._nLikeCount || 0,
+                        downloadCount: record._nDownloadCount || 0,
+                        dateAdded: record._tsDateAdded || 0,
+                        images: images,
+                        category: record._aRootCategory?._sName || 'Misc',
+                        submitter: record._aSubmitter?._sName || 'Unknown',
+                        license: record._sLicense || 'Unknown',
+                        fileSize: record._aFiles?.[0]?._nFilesize || 0,
+                        isNsfw: record._bHasNsfw || record._bIsNsfw || false
+                    };
+                });
+            }
+            return [];
+        } catch (e) {
+            console.error(`[API] Failed to fetch page ${page}`, e);
+            return [];
+        }
+    };
+
+    // We can run batches to avoid hitting rate limit too hard too fast
+    // But p-limit handles concurrency.
+    // However, if we just fire 50 promises, we might stop early if we find an empty page.
+    // Iterative approach might be safer to stop on empty, but parallel is faster.
+    // Let's do batches of 10.
+
+    for (let i = 0; i < maxPages; i += 10) {
+        const batch = pages.slice(i, i + 10);
+        console.log(`[API] Fetching batch ${i / 10 + 1}: Pages ${batch[0]} - ${batch[batch.length - 1]}`);
+
+        const promises = batch.map(p => limit(() => fetchPage(p)));
+        const results = await Promise.all(promises);
+
+        let gotEmpty = false;
+        for (const res of results) {
+            if (res === false || (Array.isArray(res) && res.length === 0)) {
+                gotEmpty = true;
+                continue;
+            }
+            if (Array.isArray(res)) {
+                allMods.push(...res);
+            }
+        }
+
+        if (gotEmpty) {
+            console.log('[API] Found empty page, stopping fetch.');
+            break;
+        }
+
+        // Small breathing room
+        await new Promise(r => setTimeout(r, 500));
+    }
+
+    console.log(`[API] Fetched total ${allMods.length} mods.`);
+
+    // Deduplicate just in case
+    const seen = new Set();
+    return allMods.filter(m => {
+        const duplicate = seen.has(m.id);
+        seen.add(m.id);
+        return !duplicate;
+    });
+}
+
+/**
  * Fetch newest mods
  * Endpoint: /Core/List/New
  */
