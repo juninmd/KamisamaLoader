@@ -1,5 +1,13 @@
 import { getAPICache } from './api-cache.js';
 import pLimit from 'p-limit';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+const logFile = path.join(os.tmpdir(), 'api_debug.log');
+function logDebug(msg: string) {
+    fs.appendFileSync(logFile, msg + '\n');
+}
 
 // Rate limiting - max 60 requests per minute
 const apiLimit = pLimit(10);
@@ -34,21 +42,18 @@ export interface SearchOptions {
     filters?: Record<string, any>;
 }
 
-function buildSearchSortParams(sort?: SearchOptions['sort'], order?: SearchOptions['order']) {
-    // GameBanana v11 search endpoints commonly accept these (best-effort).
-    // If an endpoint ignores them, we still keep renderer-side sorting as fallback.
-    const sortFieldMap: Record<NonNullable<SearchOptions['sort']>, string> = {
-        downloads: '_nDownloadCount',
-        views: '_nViewCount',
-        likes: '_nLikeCount',
-        date: '_tsDateAdded',
-        name: '_sName'
-    };
+function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchOptions['order']): string {
+    let newUrl = url;
+    if (sort === 'downloads') newUrl += '&_sSort=downloads';
+    else if (sort === 'likes') newUrl += '&_sSort=likes';
+    else if (sort === 'views') newUrl += '&_sSort=views';
+    else if (sort === 'date') newUrl += '&_sSort=new';
+    else if (sort === 'name') newUrl += '&_sSort=alphabetical';
 
-    const s = sort ?? 'date';
-    const o = order ?? 'desc';
-    const orderBy = sortFieldMap[s] ?? sortFieldMap.date;
-    return `&_sOrderBy=${encodeURIComponent(orderBy)}&_sOrder=${encodeURIComponent(o)}`;
+    if (order === 'asc' && (sort === 'name' || !sort)) {
+        newUrl += '&_sOrder=asc';
+    }
+    return newUrl;
 }
 
 export interface Mod {
@@ -175,8 +180,8 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             }
         }
 
-        if (false) { // Disable Search Endpoint, prefer Subfeed for Game-specific correctness
-            // Use Search Endpoint
+        if (search || (dateRange && dateRange !== 'all')) {
+            // Use Search Results for better filtering (Search string or Date Range)
             url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search || "")}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
 
             if (categoryId) {
@@ -185,27 +190,16 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             if (minDate > 0) {
                 url += `&_aFilters[Generic_DateAdded_Min]=${minDate}`;
             }
-            url += buildSearchSortParams(sort, order);
+            url = applySorting(url, sort, order);
         } else {
-            // Use Subfeed (Game-specific)
+            // Use Subfeed for general browsing
             url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}&_aModelFilter[]=Mod`;
 
-            if (search) {
-                url += `&_sName=${encodeURIComponent(search)}`;
-            }
             if (categoryId) {
                 url += `&_aFilters[Generic_Category]=${categoryId}`;
             }
 
-            // Map sort options to Subfeed params
-            if (sort === 'downloads') url += '&_sSort=downloads';
-            else if (sort === 'likes') url += '&_sSort=likes';
-            else if (sort === 'views') url += '&_sSort=views';
-            else if (sort === 'date') url += '&_sSort=new'; // 'new' is usually default
-            else if (sort === 'name') url += '&_sSort=name'; // check if valid
-
-            // Subfeed often implies descending order for metrics, but check api
-            if (order === 'asc' && sort === 'name') url += '&_sOrder=asc';
+            url = applySorting(url, sort, order);
         }
 
         console.log(`[API] Fetching: ${url}`);
@@ -219,6 +213,15 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
         }
 
         const json = await response.json();
+        logDebug(`[API] URL: ${url}`);
+        logDebug(`[API] Status: ${response.status}`);
+        logDebug(`[API] Records: ${json?._aRecords?.length || 0}`);
+        if (json?._aRecords?.length > 0) {
+            logDebug(`[API] First record keys: ${Object.keys(json._aRecords[0]).join(', ')}`);
+        } else {
+            logDebug(`[API] Full response: ${JSON.stringify(json)}`);
+        }
+
         if (json && json._aRecords && Array.isArray(json._aRecords)) {
             const mods = json._aRecords.map((record: any) => {
                 const image = record._aPreviewMedia?._aImages?.[0];
