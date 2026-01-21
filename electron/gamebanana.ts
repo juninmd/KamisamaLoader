@@ -36,11 +36,23 @@ export interface SearchOptions {
 
 function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchOptions['order']): string {
     let newUrl = url;
-    if (sort === 'downloads') newUrl += '&_sSort=downloads';
-    else if (sort === 'likes') newUrl += '&_sSort=likes';
-    else if (sort === 'views') newUrl += '&_sSort=views';
-    else if (sort === 'date') newUrl += '&_sSort=new';
-    else if (sort === 'name') newUrl += '&_sSort=alphabetical';
+    const isSearch = url.includes('Util/Search/Results');
+
+    if (isSearch) {
+        if (sort === 'downloads' || sort === 'likes' || sort === 'views') {
+            newUrl += '&_sOrder=popularity';
+        } else if (sort === 'date') {
+            newUrl += '&_sOrder=newest';
+        } else if (sort === 'name') {
+            newUrl += '&_sOrder=alphabetical';
+        }
+    } else {
+        if (sort === 'downloads') newUrl += '&_sSort=Generic_MostDownloaded';
+        else if (sort === 'likes') newUrl += '&_sSort=Generic_MostLiked';
+        else if (sort === 'views') newUrl += '&_sSort=Generic_MostViewed';
+        else if (sort === 'date') newUrl += '&_sSort=new';
+        else if (sort === 'name') newUrl += '&_sSort=alphabetical';
+    }
 
     if (order === 'asc' && (sort === 'name' || !sort)) {
         newUrl += '&_sOrder=asc';
