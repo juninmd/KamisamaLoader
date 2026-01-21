@@ -8,6 +8,15 @@ let mainWindow: BrowserWindow | null;
 const downloadManager = new DownloadManager();
 const modManager = new ModManager(downloadManager); // Pass dependency
 
+// Handle unhandled exceptions/rejections to prevent crashes
+process.on('uncaughtException', (error) => {
+  console.error('CRITICAL: Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Unhandled Rejection:', reason);
+});
+
 function registerIpcHandlers() {
   // Downloads IPC
   ipcMain.handle('get-downloads', () => downloadManager.getDownloads());
