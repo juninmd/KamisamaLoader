@@ -201,7 +201,7 @@ export class ModManager {
             return false;
         }
 
-        const { paksDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
+        const { paksDir, logicModsDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
         const deployedFiles: string[] = [];
         let ue4ssModName: string | null = null;
 
@@ -213,6 +213,10 @@ export class ModManager {
             const ue4ssDir = path.join(mod.folderPath, 'ue4ss');
             let isUe4ss = false;
             try { isUe4ss = (await fs.stat(ue4ssDir)).isDirectory(); } catch { }
+
+            const logicModsSrcDir = path.join(mod.folderPath, 'LogicMods');
+            let isLogicMod = false;
+            try { isLogicMod = (await fs.stat(logicModsSrcDir)).isDirectory(); } catch { }
 
             for (const src of files) {
                 // If it is inside ue4ss dir
@@ -226,6 +230,17 @@ export class ModManager {
                     if (parts[0] === 'Mods' && parts.length >= 2) {
                         ue4ssModName = parts[1];
                     }
+
+                    await fs.mkdir(path.dirname(dest), { recursive: true });
+                    await fs.copyFile(src, dest);
+                    deployedFiles.push(dest);
+                    continue;
+                }
+
+                // If it is inside LogicMods dir
+                if (isLogicMod && src.startsWith(logicModsSrcDir)) {
+                    const relativePath = path.relative(logicModsSrcDir, src);
+                    const dest = path.join(logicModsDir, relativePath);
 
                     await fs.mkdir(path.dirname(dest), { recursive: true });
                     await fs.copyFile(src, dest);
