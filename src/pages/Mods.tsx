@@ -179,8 +179,8 @@ const Mods: React.FC = () => {
 
             // Note: Update src/vite-env.d.ts if searchBySection is missing from type definition,
             // but for now we assume dynamic access or existing exposure.
-            if ((window.electronAPI as any).searchBySection) {
-                newMods = await (window.electronAPI as any).searchBySection(options);
+            if (window.electronAPI.searchBySection) {
+                newMods = await window.electronAPI.searchBySection(options);
             } else {
                 // Fallback
                 newMods = await window.electronAPI.searchOnlineMods(page, searchQuery);
