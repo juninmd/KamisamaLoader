@@ -140,6 +140,32 @@ export class ModManager {
         return { paksDir, logicModsDir, binariesDir };
     }
 
+    private async deployFile(src: string, dest: string): Promise<boolean> {
+        try {
+            await fs.mkdir(path.dirname(dest), { recursive: true });
+
+            // Remove destination if it exists (to avoid error when relinking)
+            try { await fs.unlink(dest); } catch { }
+
+            // Try hardlink first (fast, saves space)
+            await fs.link(src, dest);
+            return true;
+        } catch (error: any) {
+            // If cross-device (EXDEV) or operation not permitted (EPERM), fall back to copy
+            if (error.code === 'EXDEV' || error.code === 'EPERM') {
+                try {
+                    await fs.copyFile(src, dest);
+                    return true;
+                } catch (copyError) {
+                    console.error(`Failed to copy file ${src} to ${dest}`, copyError);
+                    return false;
+                }
+            }
+            console.error(`Failed to link file ${src} to ${dest}`, error);
+            return false;
+        }
+    }
+
     private async updateUE4SSModsTxt(binariesDir: string, modName: string, enabled: boolean) {
         const modsTxtPath = path.join(binariesDir, 'Mods', 'mods.txt');
         try {
@@ -231,9 +257,9 @@ export class ModManager {
                         ue4ssModName = parts[1];
                     }
 
-                    await fs.mkdir(path.dirname(dest), { recursive: true });
-                    await fs.copyFile(src, dest);
-                    deployedFiles.push(dest);
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
                     continue;
                 }
 
@@ -241,10 +267,9 @@ export class ModManager {
                 if (isLogicMod && src.startsWith(logicModsSrcDir)) {
                     const relativePath = path.relative(logicModsSrcDir, src);
                     const dest = path.join(logicModsDir, relativePath);
-
-                    await fs.mkdir(path.dirname(dest), { recursive: true });
-                    await fs.copyFile(src, dest);
-                    deployedFiles.push(dest);
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
                     continue;
                 }
 
@@ -258,8 +283,9 @@ export class ModManager {
                     const destFilename = `${priority}_${filename}`;
                     const dest = path.join(paksDir, destFilename);
 
-                    await fs.copyFile(src, dest);
-                    deployedFiles.push(dest);
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
                 }
             }
 
