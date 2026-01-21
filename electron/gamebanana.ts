@@ -1,13 +1,5 @@
 import { getAPICache } from './api-cache.js';
 import pLimit from 'p-limit';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-
-const logFile = path.join(os.tmpdir(), 'api_debug.log');
-function logDebug(msg: string) {
-    fs.appendFileSync(logFile, msg + '\n');
-}
 
 // Rate limiting - max 60 requests per minute
 const apiLimit = pLimit(10);
@@ -213,14 +205,6 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
         }
 
         const json = await response.json();
-        logDebug(`[API] URL: ${url}`);
-        logDebug(`[API] Status: ${response.status}`);
-        logDebug(`[API] Records: ${json?._aRecords?.length || 0}`);
-        if (json?._aRecords?.length > 0) {
-            logDebug(`[API] First record keys: ${Object.keys(json._aRecords[0]).join(', ')}`);
-        } else {
-            logDebug(`[API] Full response: ${JSON.stringify(json)}`);
-        }
 
         if (json && json._aRecords && Array.isArray(json._aRecords)) {
             const mods = json._aRecords.map((record: any) => {
