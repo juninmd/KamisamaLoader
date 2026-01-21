@@ -69,6 +69,18 @@ function registerIpcHandlers() {
     return null;
   });
 
+  ipcMain.handle('select-mod-directory', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: 'Select Mod Download Directory'
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
+  });
+
   ipcMain.handle('check-for-updates', async () => {
     return await modManager.checkForUpdates();
   });

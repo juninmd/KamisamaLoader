@@ -41,20 +41,39 @@ export class ModManager {
         return path.join(this.modsDir, 'mods.json');
     }
 
-    async getSettings(): Promise<{ gamePath: string; backgroundImage?: string; activeProfileId?: string }> {
+    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string }> {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
-            return JSON.parse(data);
+            const settings = JSON.parse(data);
+            if (settings.modDownloadPath) {
+                this.modsDir = settings.modDownloadPath;
+                this.settingsFile = path.join(this.modsDir, 'settings.json');
+            }
+            return settings;
         } catch (error) {
             return { gamePath: '' };
         }
     }
 
-    async saveSettings(settings: { gamePath: string; backgroundImage?: string; activeProfileId?: string }) {
+    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string }) {
         try {
-            await this.ensureModsDir();
-            await fs.writeFile(this.settingsFile, JSON.stringify(settings, null, 2));
+            if (settings.modDownloadPath && settings.modDownloadPath !== this.modsDir) {
+                // Changing mod directory
+                const oldDir = this.modsDir;
+                const newDir = settings.modDownloadPath;
+                await fs.mkdir(newDir, { recursive: true });
+
+                // Copy settings file to new dir so it persists
+                const newSettingsFile = path.join(newDir, 'settings.json');
+                await fs.writeFile(newSettingsFile, JSON.stringify(settings, null, 2));
+
+                this.modsDir = newDir;
+                this.settingsFile = newSettingsFile;
+            } else {
+                await this.ensureModsDir();
+                await fs.writeFile(this.settingsFile, JSON.stringify(settings, null, 2));
+            }
             return true;
         } catch (error) {
             console.error('Failed to save settings:', error);

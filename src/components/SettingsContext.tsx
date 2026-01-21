@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface Settings {
     gamePath: string;
+    modDownloadPath?: string;
     backgroundImage?: string;
 }
 
@@ -9,6 +10,7 @@ interface SettingsContextType {
     settings: Settings;
     updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
     selectGameDirectory: () => Promise<void>;
+    selectModDirectory: () => Promise<void>;
     loading: boolean;
 }
 
@@ -46,12 +48,23 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 await updateSettings({ gamePath: path });
             }
         } catch (error) {
+            console.error('Failed to select game directory:', error);
+        }
+    };
+
+    const selectModDirectory = async () => {
+        try {
+            const path = await window.electronAPI.selectModDirectory();
+            if (path) {
+                await updateSettings({ modDownloadPath: path });
+            }
+        } catch (error) {
             console.error(error);
         }
     };
 
     return (
-        <SettingsContext.Provider value={{ settings, updateSettings, selectGameDirectory, loading }}>
+        <SettingsContext.Provider value={{ settings, updateSettings, selectGameDirectory, selectModDirectory, loading }}>
             {children}
         </SettingsContext.Provider>
     );

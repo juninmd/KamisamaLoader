@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
   selectGameDirectory: () => ipcRenderer.invoke('select-game-directory'),
+  selectModDirectory: () => ipcRenderer.invoke('select-mod-directory'),
 
   // Updates
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
