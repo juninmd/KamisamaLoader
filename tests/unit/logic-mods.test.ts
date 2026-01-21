@@ -59,6 +59,8 @@ describe('ModManager - LogicMods', () => {
         // Mock mkdir and copyFile
         (fs.mkdir as any).mockResolvedValue(undefined);
         (fs.copyFile as any).mockResolvedValue(undefined);
+        (fs.link as any).mockResolvedValue(undefined); // Mock link success
+        (fs.unlink as any).mockResolvedValue(undefined); // Mock unlink success
 
         const success = await modManager.deployMod(mod);
 
@@ -68,18 +70,18 @@ describe('ModManager - LogicMods', () => {
         // Expected LogicMods dir: /mock/game/SparkingZERO/Content/Paks/LogicMods
         const expectedLogicDest = path.join(path.normalize('/mock/game/SparkingZERO/Content/Paks/LogicMods'), 'MyLogic.pak');
 
-        // We need to check if one of the calls matches
-        // fs.copyFile(src, dest)
-
+        // We check if it was linked (preferred) or copied
+        const linkCalls = (fs.link as any).mock.calls;
         const copyCalls = (fs.copyFile as any).mock.calls;
+        const allCalls = [...linkCalls, ...copyCalls];
 
-        const logicCall = copyCalls.find((call: any[]) => call[0] === logicModFile);
+        const logicCall = allCalls.find((call: any[]) => call[0] === logicModFile);
         expect(logicCall).toBeDefined();
         expect(logicCall[1]).toBe(expectedLogicDest);
 
         // Check if Normal file went to ~mods dir
         const expectedNormalDest = path.join(path.normalize('/mock/game/SparkingZERO/Content/Paks/~mods'), '010_Normal.pak');
-        const normalCall = copyCalls.find((call: any[]) => call[0] === normalModFile);
+        const normalCall = allCalls.find((call: any[]) => call[0] === normalModFile);
         expect(normalCall).toBeDefined();
         expect(normalCall[1]).toBe(expectedNormalDest);
     });

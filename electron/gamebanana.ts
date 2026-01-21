@@ -184,9 +184,9 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             }
         }
 
-        if (search || (dateRange && dateRange !== 'all')) {
-            // Use Search Results for better filtering (Search string or Date Range)
-            url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search || "")}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
+        if (search) {
+            // Use Search Results ONLY if we have a search term (API requires > 2 chars)
+            url = `https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=${encodeURIComponent(search)}&_nPage=${page}&_nPerpage=${perPage}&_aFilters[Generic_Game]=${gameId}`;
 
             if (categoryId) {
                 url += `&_aFilters[Generic_Category]=${categoryId}`;
@@ -196,11 +196,14 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
             }
             url = applySorting(url, sort, order);
         } else {
-            // Use Subfeed for general browsing
+            // Use Subfeed for general browsing AND strict filtering (when no search term)
             url = `https://gamebanana.com/apiv11/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}&_aModelFilter[]=Mod`;
 
             if (categoryId) {
                 url += `&_aFilters[Generic_Category]=${categoryId}`;
+            }
+            if (minDate > 0) {
+                url += `&_aFilters[Generic_DateAdded_Min]=${minDate}`;
             }
 
             url = applySorting(url, sort, order);
