@@ -2,6 +2,7 @@ import React from 'react';
 import { LayoutDashboard, Package, Settings as SettingsIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Button';
+import { useSettings } from '../components/SettingsContext';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -34,10 +35,24 @@ const SidebarItem = ({
 );
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, activePage, onNavigate }) => {
+    const { settings } = useSettings();
+
     return (
-        <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+        <div
+            className="flex h-screen w-full bg-background text-foreground overflow-hidden relative transition-all duration-500"
+            style={settings.backgroundImage ? {
+                backgroundImage: `url(${settings.backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+            } : {}}
+        >
+            {/* Background Overlay for readability if image is set */}
+            {settings.backgroundImage && (
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
+            )}
+
             {/* Glass Sidebar */}
-            <aside className="w-64 h-full flex flex-col p-4 gap-6 bg-black/20 backdrop-blur-xl border-r border-white/5 relative z-50">
+            <aside className="w-64 h-full flex flex-col p-4 gap-6 bg-black/40 backdrop-blur-xl border-r border-white/10 relative z-50">
 
                 {/* Logo Area */}
                 <div className="flex items-center gap-3 px-2 py-2">
