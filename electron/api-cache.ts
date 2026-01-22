@@ -207,6 +207,10 @@ export class APICache {
                 }
             }
 
+            // Ensure directory exists
+            const dir = path.dirname(this.persistentCachePath);
+            await fs.mkdir(dir, { recursive: true });
+
             await fs.writeFile(this.persistentCachePath, JSON.stringify(cache, null, 2));
         } catch (err) {
             console.error('[Cache] Failed to write persistent cache:', err);

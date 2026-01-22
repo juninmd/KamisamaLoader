@@ -111,8 +111,8 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
     const cache = getAPICache();
     const cacheKey = `item_${itemType}_${itemId}_${fields.join(',')}`;
 
-    // const cached = await cache.get(cacheKey);
-    // if (cached) return cached;
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
 
     await checkRateLimit();
 
@@ -132,7 +132,7 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
         }
 
         const data = await response.json();
-        // await cache.set(cacheKey, data, 10 * 60 * 1000); // 10 minutes cache
+        await cache.set(cacheKey, data, 10 * 60 * 1000); // 10 minutes cache
         return data;
     } catch (error) {
         console.error('Error fetching item data:', error);
@@ -148,14 +148,14 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
  * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
 export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
-    // const cache = getAPICache();
-    // const cacheKey = `search_${JSON.stringify(options)}`;
+    const cache = getAPICache();
+    const cacheKey = `search_${JSON.stringify(options)}`;
 
-    // const cached = await cache.get(cacheKey);
-    // if (cached) {
-    //     console.log(`[API] Cache hit for search`);
-    //     return cached;
-    // }
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+        console.log(`[API] Cache hit for search`);
+        return cached;
+    }
 
     await checkRateLimit();
 
@@ -206,7 +206,12 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                 url += `&_aFilters[Generic_DateAdded_Min]=${minDate}`;
             }
 
-            url = applySorting(url, sort, order);
+            // NOTE: Subfeed endpoint does NOT support sorting by downloads/likes/views via _sSort.
+            // We only apply sorting if it is 'date' (new) or 'name' (alphabetical).
+            // Attempting to sort by popularity will result in API 400 error.
+            if (sort === 'date' || sort === 'name') {
+                 url = applySorting(url, sort, order);
+            }
         }
 
         console.log(`[API] Fetching: ${url}`);
@@ -249,6 +254,7 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
                 };
             });
 
+            await cache.set(cacheKey, mods, 5 * 60 * 1000); // 5 minutes cache for search results
             return mods;
         }
         return [];
@@ -403,7 +409,7 @@ export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> 
         mods.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
         const topMods = mods.slice(0, 10);
 
-        // await cache.set(cacheKey, topMods, 15 * 60 * 1000); // 15 minutes cache
+        await cache.set(cacheKey, topMods, 15 * 60 * 1000); // 15 minutes cache
         return topMods;
     } catch (error) {
         console.error('Error fetching featured mods:', error);
@@ -418,8 +424,8 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
     const cache = getAPICache();
     const cacheKey = `categories_${gameId}`;
 
-    // const cached = await cache.get(cacheKey);
-    // if (cached) return cached;
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
 
     await checkRateLimit();
 
@@ -437,7 +443,7 @@ export async function fetchCategories(gameId: number = 21179): Promise<any[]> {
         console.log('[API] Fetched Categories:', JSON.stringify(data?._aModRootCategories?.[0] || {})); // Log first category to see structure
         const categories = data?._aModRootCategories || [];
 
-        // await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
+        await cache.set(cacheKey, categories, 60 * 60 * 1000); // 1 hour cache
         return categories;
     } catch (error) {
         console.error('Error fetching categories:', error);

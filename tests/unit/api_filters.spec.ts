@@ -39,11 +39,12 @@ describe('GameBanana API Filters', () => {
         }
     });
 
-    it('should return results for sort by downloads (Subfeed)', async () => {
+    it('should return results for sort by downloads (Subfeed - Ignored)', async () => {
+        // Subfeed ignores downloads sort to prevent 400 error, so this should just return default results
         const results = await searchBySection({ sort: 'downloads' });
         expect(Array.isArray(results)).toBe(true);
         if (results.length > 0) {
-            console.log('Sort Downloads Sample:', results[0].name);
+            console.log('Sort Downloads (Ignored) Sample:', results[0].name);
         }
     });
 
