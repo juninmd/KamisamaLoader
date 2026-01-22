@@ -15,7 +15,7 @@ export class ModManager {
     private modsDir: string;
     private settingsFile: string;
     private downloadManager: DownloadManager | null = null;
-    private gameId = 21640; // Dragon Ball Sparking Zero
+    private gameId = 21179; // Dragon Ball Sparking Zero
 
 
     constructor(downloadManager?: DownloadManager) {

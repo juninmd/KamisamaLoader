@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Layout from './components/Layout';
+import MainLayout from './layouts/MainLayout';
 import Mods from './pages/Mods';
 import Settings from './pages/Settings';
 import Dashboard from './pages/Dashboard';
@@ -12,7 +12,7 @@ function App() {
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
-      case 'home': // Handle legacy state if needed
+      case 'home':
         return <Dashboard onNavigate={setActivePage} />;
       case 'mods':
         return <Mods />;
@@ -26,9 +26,9 @@ function App() {
   return (
     <SettingsProvider>
       <ToastProvider>
-          <Layout activePage={activePage} onNavigate={setActivePage}>
+        <MainLayout activePage={activePage} onNavigate={setActivePage}>
           {renderContent()}
-          </Layout>
+        </MainLayout>
       </ToastProvider>
     </SettingsProvider>
   );

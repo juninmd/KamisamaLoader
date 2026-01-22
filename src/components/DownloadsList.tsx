@@ -133,7 +133,7 @@ export const DownloadsList: React.FC = () => {
                                 <Play className="w-4 h-4 text-white" />
                             </button>
                         )}
-                        <button onClick={() => updateDownload(dl.id, 'cancel')} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
+                        <button onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
                             <X className="w-4 h-4 text-white/50 group-hover:text-red-400" />
                         </button>
                         <button

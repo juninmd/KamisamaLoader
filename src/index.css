@@ -3,114 +3,79 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Base HSL Values */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 90% 65%;
+    /* Vibrant Purple */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 263 90% 45%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 263 90% 65%;
+
+    --radius: 0.75rem;
+  }
+
   body {
-    @apply bg-dark-bg text-white overflow-hidden;
-    /* Optional: Global font settings */
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-white;
+    /* Optional: Subtle background gradient/noise if desired, sticking to colors for now */
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(120, 50, 255, 0.08), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(50, 100, 255, 0.08), transparent 25%);
+    background-attachment: fixed;
   }
 }
 
-.glass-panel {
-  @apply bg-glass-bg backdrop-blur-md border border-glass-border rounded-xl shadow-lg;
-}
+@layer utilities {
 
-.draggable {
-  -webkit-app-region: drag;
-}
-
-.no-drag {
-  -webkit-app-region: no-drag;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-600 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
-}
-
-/* Ki Charge Animation */
-@keyframes aura-pulse {
-  0% {
-    box-shadow: 0 0 10px #facc15, 0 0 20px #facc15 inset;
-    transform: scale(1);
+  /* 
+   * Glassmorphism Utilities 
+   * varying intensities of glass
+   */
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
   }
-  50% {
-    box-shadow: 0 0 40px #facc15, 0 0 30px #eab308 inset;
-    transform: scale(1.05);
+
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-sm border border-white/5 shadow-lg transition-all duration-300;
   }
-  100% {
-    box-shadow: 0 0 10px #facc15, 0 0 20px #facc15 inset;
-    transform: scale(1);
+
+  .glass-button {
+    @apply bg-white/10 hover:bg-white/20 active:bg-white/5 border border-white/10 backdrop-blur-sm transition-all;
   }
-}
 
-.ki-charge {
-  animation: aura-pulse 2s infinite ease-in-out;
-}
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-.ki-charge:hover {
-  animation-duration: 0.8s;
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
 
-/* Lightning effect overlay (optional, requires additional DOM elements or pseudo-elements) */
-@keyframes lightning {
-  0%, 100% { opacity: 0; }
-  10%, 90% { opacity: 0; }
-  50% { opacity: 1; }
-}
-
-/* Floating animation for decorative elements */
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-}
-
-.animate-float {
-    animation: float 6s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-    animation: float 7s ease-in-out infinite;
-    animation-delay: 1s;
-}
-
-/* Shine effect for glass panels */
-@keyframes shine {
-    from { transform: translateX(-100%) rotate(45deg); }
-    to { transform: translateX(200%) rotate(45deg); }
-}
-
-.group:hover .group-hover\:animate-shine {
-    animation: shine 1.5s ease-in-out infinite;
-}
-
-/* Custom Scrollbar for nicer look */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  }
 }
