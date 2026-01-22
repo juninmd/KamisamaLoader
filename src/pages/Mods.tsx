@@ -33,6 +33,7 @@ const Mods: React.FC = () => {
     const [browseMods, setBrowseMods] = useState<Mod[]>([]); // Displayed Page
     const [loadingBrowse, setLoadingBrowse] = useState(false);
     const [browsePage, setBrowsePage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
     const [installedLoading, setInstalledLoading] = useState(true);
     const [selectedMod, setSelectedMod] = useState<Mod | null>(null);
@@ -212,10 +213,12 @@ const Mods: React.FC = () => {
             return filters.order === 'asc' ? valA - valB : valB - valA;
         });
 
-        // 6. Pagination
-        const start = (browsePage - 1) * 20; // 20 items per page
-        const end = start + 20;
-        const sliced = result.slice(start, end);
+        // 6. Pagination (Infinite Scroll)
+        const itemsPerPage = 20;
+        const end = browsePage * itemsPerPage;
+        const sliced = result.slice(0, end);
+
+        setHasMore(end < result.length);
 
         // Mark installed
         const installedIds = new Set(installedMods.map(m => m.gameBananaId));
@@ -227,6 +230,27 @@ const Mods: React.FC = () => {
         setBrowseMods(finalMods);
 
     }, [allOnlineMods, filters, searchQuery, browsePage, installedMods, activeTab]);
+
+    // Infinite Scroll Observer
+    const observerTarget = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (loadingBrowse || !hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setBrowsePage(prev => prev + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [loadingBrowse, hasMore, browseMods]);
 
     // Filter Logic for Installed Mods
     const filteredInstalledMods = installedMods.filter(mod => {
@@ -613,34 +637,10 @@ const Mods: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Pagination Controls for Browse Tab */}
-                            {!loadingBrowse && browseMods.length > 0 && (
-                                <div className="flex justify-center items-center space-x-4 py-8 shrink-0">
-                                    <button
-                                        onClick={() => {
-                                            if (browsePage > 1) {
-                                                setBrowsePage(browsePage - 1);
-                                            }
-                                        }}
-                                        disabled={browsePage === 1}
-                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        Previous
-                                    </button>
-                                    <span className="text-sm text-gray-400">Page {browsePage}</span>
-                                    <button
-                                        onClick={() => {
-                                            // Check if we have more pages (approximate check since we filter locally)
-                                            // If current slice is full, assume there is a next page
-                                            if (browseMods.length === 20) {
-                                                setBrowsePage(browsePage + 1);
-                                            }
-                                        }}
-                                        disabled={browseMods.length < 20}
-                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        Next
-                                    </button>
+                            {/* Infinite Scroll Sentinel */}
+                            {!loadingBrowse && browseMods.length > 0 && hasMore && (
+                                <div ref={observerTarget} className="flex justify-center items-center py-8 shrink-0 w-full">
+                                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                             )}
                         </div>
