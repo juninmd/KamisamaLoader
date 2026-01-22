@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, RefreshCw, UploadCloud, ChevronDown, List, LayoutGrid } from 'lucide-react';
+import { Search, Download, RefreshCw, UploadCloud, ChevronDown } from 'lucide-react';
 import { useToast } from '../components/ToastContext';
 import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
@@ -9,8 +9,8 @@ import FilterBar from '../components/FilterBar';
 import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
-import { InstalledModList } from '../components/InstalledModList';
-import { BrowseModList } from '../components/BrowseModList';
+import { ModGrid } from '../components/mods/ModGrid';
+import type { Mod } from '../types';
 
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';
@@ -19,30 +19,6 @@ function formatBytes(bytes: number, decimals = 2) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-}
-
-interface Mod {
-    id: string;
-    name: string;
-    author: string;
-    version: string;
-    isEnabled: boolean;
-    hasUpdate?: boolean;
-    latestVersion?: string;
-    iconUrl?: string;
-    description?: string;
-    gameBananaId?: number;
-    folderPath?: string;
-    viewCount?: number;
-    likeCount?: number;
-    downloadCount?: number;
-    dateAdded?: number;
-    images?: string[];
-    category?: string;
-    license?: string;
-    submitter?: string;
-    submitterUrl?: string;
-    isNsfw?: boolean;
 }
 
 const Mods: React.FC = () => {
@@ -65,7 +41,6 @@ const Mods: React.FC = () => {
 
     const [checkingUpdates, setCheckingUpdates] = useState(false);
     const [updatingMods, setUpdatingMods] = useState<string[]>([]); // List of IDs currently updating
-    const [viewMode, setViewMode] = useState<'list' | 'card'>('list'); // New: View Mode State
 
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
@@ -493,23 +468,6 @@ const Mods: React.FC = () => {
                     {activeTab === 'installed' && (
                         <div className="flex items-center space-x-2">
                             <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
-                            {/* View Mode Toggle */}
-                            <div className="bg-black/40 p-1 rounded-lg border border-white/10 flex items-center space-x-1">
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
-                                    title="List View"
-                                >
-                                    <List size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('card')}
-                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'card' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
-                                    title="Card View"
-                                >
-                                    <LayoutGrid size={16} />
-                                </button>
-                            </div>
                         </div>
                     )}
 
@@ -598,28 +556,19 @@ const Mods: React.FC = () => {
 
             {/* Content Area */}
             <div
-                className="flex-1 overflow-y-auto pr-2 pb-4 scroll-smooth"
+                className="flex-1 overflow-auto pr-2 pb-4 scroll-smooth"
             >
                 {activeTab === 'installed' ? (
-                    installedLoading ? (
-                        <div className="h-64 flex items-center justify-center text-gray-500">
-                            <RefreshCw size={24} className="animate-spin mb-2" />
-                        </div>
-                    ) : (
-                        <InstalledModList
-                            mods={filteredInstalledMods}
-                            onToggle={handleToggle}
-                            onUpdate={(mod) => handleUpdateClick(mod)}
-                            onPriorityChange={async (id, dir) => {
-                                await window.electronAPI.setModPriority(id, dir);
-                                loadInstalledMods();
-                            }}
-                            onUninstall={handleUninstall}
-                            updatingMods={updatingMods}
-                            onSelect={(mod) => setSelectedMod(mod)}
-                            viewMode={viewMode}
-                        />
-                    )
+                    <ModGrid
+                        mods={filteredInstalledMods}
+                        installedMods={installedMods}
+                        loading={installedLoading}
+                        onToggle={handleToggle}
+                        onUpdate={(mod) => handleUpdateClick(mod)}
+                        onUninstall={handleUninstall}
+                        updatingMods={updatingMods}
+                        onSelect={(mod) => setSelectedMod(mod)}
+                    />
                 ) : activeTab === 'downloads' ? (
                     <DownloadsList />
                 ) : (
@@ -654,47 +603,47 @@ const Mods: React.FC = () => {
 
                             {/* Browse List */}
                             <div className="flex-1">
-                                <BrowseModList
+                                <ModGrid
                                     mods={browseMods}
-                                    installedModIds={installedMods.map(m => m.gameBananaId).filter((id): id is number => id !== undefined)}
+                                    installedMods={installedMods}
                                     loading={loadingBrowse || (allOnlineMods.length === 0 && loadingBrowse)}
                                     onInstall={handleInstall}
                                     onSelect={(mod) => setSelectedMod(mod)}
-                                    installedMods={installedMods}
                                     onToggle={handleToggle}
                                 />
                             </div>
+
+                            {/* Pagination Controls for Browse Tab */}
+                            {!loadingBrowse && browseMods.length > 0 && (
+                                <div className="flex justify-center items-center space-x-4 py-8 shrink-0">
+                                    <button
+                                        onClick={() => {
+                                            if (browsePage > 1) {
+                                                setBrowsePage(browsePage - 1);
+                                            }
+                                        }}
+                                        disabled={browsePage === 1}
+                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span className="text-sm text-gray-400">Page {browsePage}</span>
+                                    <button
+                                        onClick={() => {
+                                            // Check if we have more pages (approximate check since we filter locally)
+                                            // If current slice is full, assume there is a next page
+                                            if (browseMods.length === 20) {
+                                                setBrowsePage(browsePage + 1);
+                                            }
+                                        }}
+                                        disabled={browseMods.length < 20}
+                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                )}
-                {/* Pagination Controls for Browse Tab */}
-                {activeTab === 'browse' && !loadingBrowse && browseMods.length > 0 && (
-                    <div className="flex justify-center items-center space-x-4 py-4 mt-auto shrink-0">
-                        <button
-                            onClick={() => {
-                                if (browsePage > 1) {
-                                    setBrowsePage(browsePage - 1);
-                                }
-                            }}
-                            disabled={browsePage === 1}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-sm text-gray-400">Page {browsePage}</span>
-                        <button
-                            onClick={() => {
-                                // Check if we have more pages (approximate check since we filter locally)
-                                // If current slice is full, assume there is a next page
-                                if (browseMods.length === 20) {
-                                    setBrowsePage(browsePage + 1);
-                                }
-                            }}
-                            disabled={browseMods.length < 20}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
-                        >
-                            Next
-                        </button>
                     </div>
                 )}
             </div>

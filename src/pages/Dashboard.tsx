@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Sparkles, Activity, Globe, Download, Zap, RefreshCw, Star } from 'lucide-react';
+import { Play, Activity, Globe, Download, Zap, RefreshCw, Star } from 'lucide-react';
 
 interface DashboardProps {
     onNavigate: (page: string) => void;
