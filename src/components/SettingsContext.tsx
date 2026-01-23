@@ -4,6 +4,7 @@ interface Settings {
     gamePath: string;
     modDownloadPath?: string;
     backgroundImage?: string;
+    launchArgs?: string;
 }
 
 interface SettingsContextType {

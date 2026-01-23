@@ -6,6 +6,7 @@ import { app, net, shell } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
 import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails } from './gamebanana.js';
+import { fetchLatestRelease } from './github.js';
 
 import { DownloadManager } from './download-manager.js';
 
@@ -175,7 +176,7 @@ export class ModManager {
         return path.join(this.modsDir, 'mods.json');
     }
 
-    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string }> {
+    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string }> {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
@@ -190,7 +191,7 @@ export class ModManager {
         }
     }
 
-    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string }) {
+    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string }) {
         try {
             if (settings.modDownloadPath && settings.modDownloadPath !== this.modsDir) {
                 // Changing mod directory
@@ -1011,7 +1012,81 @@ export class ModManager {
         }
     }
 
+    async installUE4SS() {
+        try {
+            console.log('Installing UE4SS...');
+            const settings = await this.getSettings();
+            if (!settings.gamePath) return { success: false, message: 'Game path not set.' };
 
+            const { binariesDir } = this.resolveGamePaths(settings.gamePath);
+            await fs.mkdir(binariesDir, { recursive: true });
+
+            const downloadUrl = await fetchLatestRelease('UE4SS-RE', 'RE-UE4SS');
+            if (!downloadUrl) return { success: false, message: 'Failed to fetch UE4SS release.' };
+
+            const tempDir = app.getPath('temp');
+            const fileName = 'ue4ss_latest.zip';
+            const tempFile = path.join(tempDir, fileName);
+
+            // Use Download Manager if available
+            if (this.downloadManager) {
+                return new Promise((resolve) => {
+                    const dlId = this.downloadManager!.startDownload(downloadUrl, tempDir, fileName, {
+                        type: 'tool',
+                        name: 'UE4SS'
+                    });
+
+                    const onComplete = async (completedId: string) => {
+                        if (completedId === dlId) {
+                            this.downloadManager!.removeListener('download-completed', onComplete);
+                            const result = await this.finalizeUE4SSInstall(tempFile, binariesDir);
+                            resolve(result);
+                        }
+                    };
+                    this.downloadManager!.on('download-completed', onComplete);
+                });
+            } else {
+                // Fallback
+                await this.downloadFile(downloadUrl, tempFile);
+                return await this.finalizeUE4SSInstall(tempFile, binariesDir);
+            }
+
+        } catch (e) {
+            console.error('UE4SS Install failed', e);
+            return { success: false, message: (e as Error).message };
+        }
+    }
+
+    private async finalizeUE4SSInstall(zipPath: string, destDir: string) {
+        try {
+            const zip = new AdmZip(zipPath);
+            // Extract to temp folder first to check structure
+            const extractTemp = path.join(path.dirname(zipPath), 'ue4ss_extract');
+            // Clean previous extract
+            try { await fs.rm(extractTemp, { recursive: true, force: true }); } catch { }
+
+            zip.extractAllTo(extractTemp, true);
+
+            // Check if it has a root folder
+            const files = await fs.readdir(extractTemp);
+            let rootDir = extractTemp;
+            if (files.length === 1 && (await fs.stat(path.join(extractTemp, files[0]))).isDirectory()) {
+                rootDir = path.join(extractTemp, files[0]);
+            }
+
+            // Move contents to binariesDir
+            await fs.cp(rootDir, destDir, { recursive: true, force: true });
+
+            // Clean up
+            await fs.unlink(zipPath);
+            await fs.rm(extractTemp, { recursive: true, force: true });
+
+            return { success: true, message: 'UE4SS installed successfully.' };
+        } catch (e) {
+            console.error(e);
+            return { success: false, message: 'Failed to extract/install UE4SS.' };
+        }
+    }
 
     async launchGame() {
         const settings = await this.getSettings();
@@ -1055,6 +1130,11 @@ export class ModManager {
         // -fileopenlog helps with mod loading diagnostics
         // The ~mods folder should be in the game's content directory
         const launchArgs = ['-fileopenlog'];
+
+        if (settings.launchArgs) {
+            const extraArgs = settings.launchArgs.split(' ').filter((a: string) => a.trim().length > 0);
+            launchArgs.push(...extraArgs);
+        }
 
         execFile(exePath, launchArgs, { cwd: path.dirname(exePath) }, (error) => {
             if (error) {

@@ -103,6 +103,10 @@ function registerIpcHandlers() {
     return await modManager.launchGame();
   });
 
+  ipcMain.handle('install-ue4ss', async () => {
+    return await modManager.installUE4SS();
+  });
+
   ipcMain.handle('set-mod-priority', async (event, modId, direction) => {
     return await modManager.setModPriority(modId, direction);
   });
