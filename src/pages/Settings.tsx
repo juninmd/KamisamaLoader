@@ -1,8 +1,24 @@
 import React from 'react';
 import { useSettings } from '../components/SettingsContext';
+import { useToast } from '../components/ToastContext';
 
 const Settings: React.FC = () => {
     const { settings, updateSettings, selectGameDirectory, selectModDirectory } = useSettings();
+    const { showToast } = useToast();
+
+    const handleInstallUE4SS = async () => {
+        showToast('Installing UE4SS...', 'info');
+        try {
+            const result = await window.electronAPI.installUE4SS();
+            if (result.success) {
+                showToast(result.message, 'success');
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (e) {
+            showToast('Failed to install UE4SS', 'error');
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -71,6 +87,36 @@ const Settings: React.FC = () => {
                     </p>
                 </div>
 
+                <div className="space-y-2">
+                    <h3 className="text-lg font-medium text-gray-200">Launch Arguments</h3>
+                    <div className="flex space-x-2">
+                        <input
+                            type="text"
+                            value={settings.launchArgs || ''}
+                            onChange={(e) => updateSettings({ launchArgs: e.target.value })}
+                            placeholder="-dx11 -windowed"
+                            className="flex-1 bg-black/30 border border-glass-border rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500/50"
+                        />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        Custom arguments passed to the game executable on launch.
+                    </p>
+                </div>
+
+                <div className="space-y-2 border-t border-white/10 pt-6">
+                    <h3 className="text-lg font-medium text-gray-200">Tools & Mod Loaders</h3>
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={handleInstallUE4SS}
+                            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors text-white shadow-lg shadow-blue-600/20"
+                        >
+                            Install / Update UE4SS
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        UE4SS is required for many script-based mods. This will download and install the latest version to Binaries/Win64.
+                    </p>
+                </div>
 
             </div>
         </div>
