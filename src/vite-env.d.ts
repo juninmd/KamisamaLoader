@@ -51,5 +51,6 @@ interface Window {
 
     // Game
     launchGame: () => Promise<boolean>;
+    installUE4SS: () => Promise<{ success: boolean; message: string }>;
   }
 }
