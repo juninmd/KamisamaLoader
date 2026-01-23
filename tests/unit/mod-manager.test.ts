@@ -161,4 +161,25 @@ describe('ModManager', () => {
         const newHigh = writtenData.find((m: any) => m.id === '2');
         expect(newHigh.priority).toBe(50);
     });
+
+    it('launchGame should use launch args', async () => {
+        // Mock settings with launchArgs
+        (fs.readFile as any).mockResolvedValue(JSON.stringify({
+            gamePath: '/mock/game/path',
+            launchArgs: '-dx11 -windowed'
+        }));
+        (fs.stat as any).mockResolvedValue({ isDirectory: () => true });
+        (fs.access as any).mockResolvedValue(undefined);
+
+        const result = await modManager.launchGame();
+
+        expect(result).toBe(true);
+        expect(execFile).toHaveBeenCalled();
+        const callArgs = (execFile as any).mock.calls[0];
+        // Default args
+        expect(callArgs[1]).toContain('-fileopenlog');
+        // Custom args
+        expect(callArgs[1]).toContain('-dx11');
+        expect(callArgs[1]).toContain('-windowed');
+    });
 });

@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Additional helpers
   launchGame: () => ipcRenderer.invoke('launch-game'),
+  installUE4SS: () => ipcRenderer.invoke('install-ue4ss'),
   setModPriority: (modId: string, direction: 'up' | 'down') => ipcRenderer.invoke('set-mod-priority', modId, direction),
   getModChangelog: (modId: string) => ipcRenderer.invoke('get-mod-changelog', modId),
   getDownloads: () => ipcRenderer.invoke('get-downloads'),
