@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { ModManager } from './mod-manager.js';
 import { DownloadManager } from './download-manager.js';
 
@@ -79,6 +80,19 @@ function registerIpcHandlers() {
     });
     if (!result.canceled && result.filePaths.length > 0) {
       return result.filePaths[0];
+    }
+    return null;
+  });
+
+  ipcMain.handle('select-background-image', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }],
+      title: 'Select Background Image'
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return pathToFileURL(result.filePaths[0]).toString();
     }
     return null;
   });
