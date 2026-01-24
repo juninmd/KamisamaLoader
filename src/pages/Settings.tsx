@@ -3,7 +3,7 @@ import { useSettings } from '../components/SettingsContext';
 import { useToast } from '../components/ToastContext';
 
 const Settings: React.FC = () => {
-    const { settings, updateSettings, selectGameDirectory, selectModDirectory } = useSettings();
+    const { settings, updateSettings, selectGameDirectory, selectModDirectory, selectBackgroundImage } = useSettings();
     const { showToast } = useToast();
 
     const handleInstallUE4SS = async () => {
@@ -15,7 +15,7 @@ const Settings: React.FC = () => {
             } else {
                 showToast(result.message, 'error');
             }
-        } catch (e) {
+        } catch (_e) {
             showToast('Failed to install UE4SS', 'error');
         }
     };
@@ -78,12 +78,18 @@ const Settings: React.FC = () => {
                             type="text"
                             value={settings.backgroundImage || ''}
                             onChange={(e) => updateSettings({ backgroundImage: e.target.value })}
-                            placeholder="URL to background image"
+                            placeholder="URL or Path to background image"
                             className="flex-1 bg-black/30 border border-glass-border rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500/50"
                         />
+                        <button
+                            onClick={selectBackgroundImage}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                        >
+                            Browse
+                        </button>
                     </div>
                     <p className="text-xs text-gray-500">
-                        Paste a URL for your custom background image.
+                        Paste a URL or browse for a local image.
                     </p>
                 </div>
 

@@ -12,6 +12,7 @@ interface SettingsContextType {
     updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
     selectGameDirectory: () => Promise<void>;
     selectModDirectory: () => Promise<void>;
+    selectBackgroundImage: () => Promise<void>;
     loading: boolean;
 }
 
@@ -64,8 +65,19 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     };
 
+    const selectBackgroundImage = async () => {
+        try {
+            const path = await window.electronAPI.selectBackgroundImage();
+            if (path) {
+                await updateSettings({ backgroundImage: path });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
-        <SettingsContext.Provider value={{ settings, updateSettings, selectGameDirectory, selectModDirectory, loading }}>
+        <SettingsContext.Provider value={{ settings, updateSettings, selectGameDirectory, selectModDirectory, selectBackgroundImage, loading }}>
             {children}
         </SettingsContext.Provider>
     );

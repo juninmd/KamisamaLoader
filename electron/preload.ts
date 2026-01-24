@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
   selectGameDirectory: () => ipcRenderer.invoke('select-game-directory'),
   selectModDirectory: () => ipcRenderer.invoke('select-mod-directory'),
+  selectBackgroundImage: () => ipcRenderer.invoke('select-background-image'),
   openModsDirectory: () => ipcRenderer.invoke('open-mods-directory'),
 
   // Updates
