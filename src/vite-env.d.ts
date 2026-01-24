@@ -15,6 +15,7 @@ interface Window {
     saveSettings: (settings: any) => Promise<boolean>;
     selectGameDirectory: () => Promise<string | null>;
     selectModDirectory: () => Promise<string | null>;
+    selectBackgroundImage: () => Promise<string | null>;
     openModsDirectory: () => Promise<boolean>;
     setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
 
