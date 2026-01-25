@@ -54,11 +54,11 @@
    * varying intensities of glass
    */
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl rounded-xl;
   }
 
   .glass-card {
-    @apply bg-card/60 backdrop-blur-sm border border-white/5 shadow-lg transition-all duration-300;
+    @apply bg-card/60 backdrop-blur-sm border border-white/10 shadow-lg transition-all duration-300 rounded-lg;
   }
 
   .glass-button {

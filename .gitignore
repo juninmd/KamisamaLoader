@@ -390,3 +390,10 @@ dist-ssr
 
 verification/
 test-results/
+
+# User Data
+Mods/
+
+# Test Data
+temp-test-data/
+test-data/
