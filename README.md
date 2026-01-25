@@ -1,42 +1,51 @@
 # KamisamaLoader — Dragon Ball: Sparking! ZERO Mod Manager
 
-App desktop para **baixar, instalar, ativar/desativar e organizar mods** do **Dragon Ball: Sparking! ZERO**.
+A modern, high-performance Mod Manager for **Dragon Ball: Sparking! ZERO**, inspired by Unverum but built with a modern stack (Electron, React, TypeScript).
 
-## Stack
-- **Electron** (main + IPC)
-- **React + TypeScript + Vite** (renderer)
-- **Tailwind CSS**
+## ✨ Key Features
 
-## Features
-- **Installed Mods**: ativar/desativar, prioridade, desinstalar
-- **Browse Online (GameBanana)**: grid com **infinite scroll**, filtros e detalhes do mod
-- **Downloads**: fila com progresso, pause/resume/cancel
-- **Profiles**: salvar e carregar “loadouts”
+### Unverum Parity & Enhancements
+- **Non-Destructive Installation**: Unlike some managers that wipe the `~mods` folder, KamisamaLoader uses smart linking/copying. Your mods are safe.
+- **Sparking! ZERO Specific**: Native support for `.pak`, `.sig`, `.utoc`, `.ucas` and `LogicMods`.
+- **UE4SS Support**: One-click install/update for UE4SS, required for advanced script mods.
+- **Priority Management**: Drag-and-drop load order (Higher priority overrides lower).
+- **Launch Arguments**: Configure custom flags like `-dx11` directly in Settings.
+- **1-Click Install**: Supports protocol handling for easy installation from websites.
 
-## Rodar (dev)
+### Modern UI/UX
+- **Glassmorphism Design**: Beautiful dark theme with glass effects and blur.
+- **Infinite Scroll**: Browse thousands of mods on GameBanana without pagination limits.
+- **Personalization**: Set your own background image in Settings.
+- **Profiles**: Create and switch between mod loadouts instantly.
+
+## 🛠 Tech Stack
+- **Electron** (Main Process, IPC, File System)
+- **React 18 + TypeScript** (Renderer, UI)
+- **Tailwind CSS** (Styling)
+- **Vite** (Build Tool)
+
+## 🚀 Running Locally
 
 ```bash
+# Install dependencies
 pnpm install
+
+# Run development mode
 pnpm dev
 ```
 
-## Build
+## 📦 Build
+
+To create the installer (NSIS for Windows):
 
 ```bash
 pnpm build
 ```
 
-## Qualidade / homologação
-Checklist em `docs/QA-HOMOLOGATION.md`.
+## ✅ Quality Assurance
+
+Run the test suite to verify ModManager logic:
 
 ```bash
-pnpm lint
-pnpm type-check
 pnpm test:unit
 ```
-
-## Pastas importantes
-- `electron/`: main process + integrações (GameBanana, downloads, mod-manager)
-- `src/`: UI React
-- `Mods/`: persistência local (`mods.json`, `settings.json`, `profiles.json`)
-

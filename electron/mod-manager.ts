@@ -295,23 +295,32 @@ export class ModManager {
             await fs.mkdir(path.dirname(dest), { recursive: true });
 
             // Remove destination if it exists (to avoid error when relinking)
+            // This ensures we don't error out, but we also don't wipe the parent directory.
             try { await fs.unlink(dest); } catch { }
 
-            // Try hardlink first (fast, saves space)
-            await fs.link(src, dest);
-            return true;
-        } catch (error: any) {
-            // If cross-device (EXDEV) or operation not permitted (EPERM), fall back to copy
-            if (error.code === 'EXDEV' || error.code === 'EPERM') {
-                try {
-                    await fs.copyFile(src, dest);
-                    return true;
-                } catch (copyError) {
-                    console.error(`Failed to copy file ${src} to ${dest}`, copyError);
-                    return false;
+            // NON-DESTRUCTIVE DEPLOYMENT STRATEGY:
+            // 1. Try hardlink first (fast, saves space, changes mirror instantly if supported).
+            // 2. Fallback to copy if cross-drive or restricted.
+            // The original mod file in the 'Mods' directory is never moved or deleted by this process.
+            try {
+                await fs.link(src, dest);
+                return true;
+            } catch (linkError: any) {
+                // If cross-device (EXDEV) or operation not permitted (EPERM), fall back to copy
+                if (linkError.code === 'EXDEV' || linkError.code === 'EPERM') {
+                    try {
+                        console.log(`[Deploy] Linking failed, falling back to copy for: ${path.basename(src)}`);
+                        await fs.copyFile(src, dest);
+                        return true;
+                    } catch (copyError) {
+                        console.error(`Failed to copy file ${src} to ${dest}`, copyError);
+                        return false;
+                    }
                 }
+                throw linkError;
             }
-            console.error(`Failed to link file ${src} to ${dest}`, error);
+        } catch (error: any) {
+            console.error(`Failed to deploy file ${src} to ${dest}`, error);
             return false;
         }
     }
@@ -370,7 +379,7 @@ export class ModManager {
     }
 
     async deployMod(mod: any) {
-        console.log(`Deploying mod: ${mod.name}`);
+        console.log(`Deploying mod (Non-destructive): ${mod.name}`);
         const settings = await this.getSettings();
         if (!settings.gamePath) {
             console.error('Game path not set');
