@@ -112,7 +112,7 @@ describe('ModManager', () => {
         expect(result[2].id).toBe('1'); // 1
     });
 
-    it('setModPriority "up" should increase priority (swap with higher item)', async () => {
+    it('setModPriority "up" should increase priority (swap with higher item) and normalize', async () => {
         const mockMods = [
             { id: '2', name: 'High Priority', priority: 100, isEnabled: false },
             { id: '3', name: 'Mid Priority', priority: 50, isEnabled: false },
@@ -122,8 +122,8 @@ describe('ModManager', () => {
         (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
 
         // Move '3' (Mid) UP -> Should swap with '2' (High)
-        // Mid gets 100, High gets 50.
-        // Array becomes: Mid(100), High(50), Low(1)
+        // Array becomes: Mid, High, Low
+        // Priorities Normalized: 3, 2, 1
 
         await modManager.setModPriority('3', 'up');
 
@@ -133,12 +133,17 @@ describe('ModManager', () => {
         const newMid = writtenData.find((m: any) => m.id === '3');
         const newHigh = writtenData.find((m: any) => m.id === '2');
 
-        expect(newMid.priority).toBe(100);
-        expect(newHigh.priority).toBe(50);
+        // Check if order is correct
         expect(writtenData[0].id).toBe('3');
+        expect(writtenData[1].id).toBe('2');
+        expect(writtenData[2].id).toBe('1');
+
+        // Check priorities are normalized
+        expect(newMid.priority).toBe(3);
+        expect(newHigh.priority).toBe(2);
     });
 
-    it('setModPriority "down" should decrease priority (swap with lower item)', async () => {
+    it('setModPriority "down" should decrease priority (swap with lower item) and normalize', async () => {
         const mockMods = [
             { id: '2', name: 'High Priority', priority: 100, isEnabled: false },
             { id: '3', name: 'Mid Priority', priority: 50, isEnabled: false },
@@ -148,7 +153,8 @@ describe('ModManager', () => {
         (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
 
         // Move '2' (High) DOWN -> Should swap with '3' (Mid)
-        // High gets 50, Mid gets 100.
+        // Array: Mid, High, Low
+        // Normalized: 3, 2, 1
 
         await modManager.setModPriority('2', 'down');
 
@@ -159,7 +165,36 @@ describe('ModManager', () => {
         expect(writtenData[1].id).toBe('2');
 
         const newHigh = writtenData.find((m: any) => m.id === '2');
-        expect(newHigh.priority).toBe(50);
+        expect(newHigh.priority).toBe(2);
+    });
+
+    it('fixPriorities should normalize duplicated priorities', async () => {
+        const mockMods = [
+            { id: '1', name: 'A Mod', priority: 100, isEnabled: false },
+            { id: '2', name: 'B Mod', priority: 100, isEnabled: false }, // Duplicate
+            { id: '3', name: 'C Mod', priority: 50, isEnabled: false }
+        ];
+
+        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+        await modManager.fixPriorities();
+
+        const calls = (fs.writeFile as any).mock.calls;
+        const writtenData = JSON.parse(calls[calls.length - 1][1]);
+
+        // Sorted by Priority DESC. Tie-breaker Name ASC.
+        // 100: A vs B. A comes first.
+        // Order: A, B, C
+        // Priorities: 3, 2, 1
+
+        expect(writtenData[0].id).toBe('1');
+        expect(writtenData[0].priority).toBe(3);
+
+        expect(writtenData[1].id).toBe('2');
+        expect(writtenData[1].priority).toBe(2);
+
+        expect(writtenData[2].id).toBe('3');
+        expect(writtenData[2].priority).toBe(1);
     });
 
     it('launchGame should use launch args', async () => {
