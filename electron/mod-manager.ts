@@ -5,12 +5,31 @@ import { execFile } from 'child_process';
 import { app, net, shell } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, Mod, getModChangelog, fetchModDetails } from './gamebanana.js';
+import { fetchModProfile, searchOnlineMods, Mod as OnlineMod, getModChangelog, fetchModDetails } from './gamebanana.js';
 import { fetchLatestRelease } from './github.js';
 
 import { DownloadManager } from './download-manager.js';
 
-
+export interface LocalMod {
+    id: string;
+    name: string;
+    author: string;
+    version: string;
+    description: string;
+    isEnabled: boolean;
+    folderPath: string;
+    priority: number;
+    fileSize: number;
+    gameBananaId?: number;
+    latestVersion?: string;
+    latestFileId?: number;
+    latestFileUrl?: string;
+    hasUpdate?: boolean;
+    iconUrl?: string;
+    deployedFiles?: string[];
+    ue4ssModName?: string;
+    category?: string;
+}
 
 export class ModManager {
     private modsDir: string;
@@ -52,7 +71,7 @@ export class ModManager {
     async createProfile(name: string) {
         try {
             const mods = await this.getInstalledMods();
-            const enabledModIds = mods.filter((m: any) => m.isEnabled).map((m: any) => m.id);
+            const enabledModIds = mods.filter((m: LocalMod) => m.isEnabled).map((m: LocalMod) => m.id);
 
             const profiles = await this.getProfiles();
             const newProfile = {
@@ -89,12 +108,12 @@ export class ModManager {
             if (!profile) return { success: false, message: 'Profile not found' };
 
             const modsFile = await this.getModsFilePath();
-            let mods = [];
+            let mods: LocalMod[] = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             const targetEnabledIds = new Set(profile.modIds);
-            const toDisable: any[] = [];
-            const toEnable: any[] = [];
+            const toDisable: LocalMod[] = [];
+            const toEnable: LocalMod[] = [];
 
             for (const mod of mods) {
                 const shouldBeEnabled = targetEnabledIds.has(mod.id);
@@ -216,11 +235,11 @@ export class ModManager {
         }
     }
 
-    async getInstalledMods() {
+    async getInstalledMods(): Promise<LocalMod[]> {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            const mods = JSON.parse(data);
+            const mods: LocalMod[] = JSON.parse(data);
 
             // Check for 0 bytes size and fix aggressively
             let needsSave = false;
@@ -237,7 +256,7 @@ export class ModManager {
             }
 
             // Sort by priority Descending (Highest Priority First)
-            return mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+            return mods.sort((a, b) => (b.priority || 0) - (a.priority || 0));
         } catch (error) {
             return [];
         }
@@ -260,6 +279,56 @@ export class ModManager {
             // console.error('Error calculating size', e); 
         }
         return size;
+    }
+
+    /**
+     * Ensures all installed mods have unique, sequential priorities.
+     * Preserves existing order where possible.
+     */
+    async fixPriorities() {
+        try {
+            const modsFile = await this.getModsFilePath();
+            let mods: LocalMod[] = [];
+            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return; }
+
+            // Sort by current priority desc (Highest first)
+            // If priorities are equal, use name as tie-breaker for deterministic order
+            mods.sort((a, b) => {
+                const pDiff = (b.priority || 0) - (a.priority || 0);
+                if (pDiff !== 0) return pDiff;
+                return a.name.localeCompare(b.name);
+            });
+
+            let changed = false;
+            // Re-assign priorities: Length -> 1
+            const total = mods.length;
+            for (let i = 0; i < total; i++) {
+                const targetPriority = total - i;
+                if (mods[i].priority !== targetPriority) {
+                    mods[i].priority = targetPriority;
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                console.log('[ModManager] Fixed/Normalized mod priorities.');
+
+                // We must redeploy enabled mods because filenames depend on priority
+                const enabledMods = mods.filter(m => m.isEnabled);
+                if (enabledMods.length > 0) {
+                     console.log(`[ModManager] Redeploying ${enabledMods.length} mods due to priority fix...`);
+                     for (const mod of enabledMods) {
+                         await this.undeployMod(mod);
+                         await this.deployMod(mod);
+                     }
+                }
+
+                // Save updated priorities and deployed paths
+                await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+            }
+        } catch (e) {
+            console.error('Failed to fix priorities', e);
+        }
     }
 
     private resolveGamePaths(gamePath: string) {
@@ -378,22 +447,11 @@ export class ModManager {
         return fileList;
     }
 
-    async deployMod(mod: any) {
-        console.log(`Deploying mod (Non-destructive): ${mod.name}`);
-        const settings = await this.getSettings();
-        if (!settings.gamePath) {
-            console.error('Game path not set');
-            return false;
-        }
-
-        const { paksDir, logicModsDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
+    private async deployModFiles(mod: LocalMod, paksDir: string, logicModsDir: string, binariesDir: string): Promise<{ deployedFiles: string[], ue4ssModName: string | null }> {
         const deployedFiles: string[] = [];
         let ue4ssModName: string | null = null;
 
         try {
-            // Ensure ~mods exists
-            await fs.mkdir(paksDir, { recursive: true });
-
             const files = await this.getAllFiles(mod.folderPath);
             const ue4ssDir = path.join(mod.folderPath, 'ue4ss');
             let isUe4ss = false;
@@ -447,6 +505,28 @@ export class ModManager {
                     }
                 }
             }
+        } catch (e) {
+            console.error('Error in deployModFiles internal loop', e);
+        }
+
+        return { deployedFiles, ue4ssModName };
+    }
+
+    async deployMod(mod: LocalMod) {
+        console.log(`Deploying mod (Non-destructive): ${mod.name}`);
+        const settings = await this.getSettings();
+        if (!settings.gamePath) {
+            console.error('Game path not set');
+            return false;
+        }
+
+        const { paksDir, logicModsDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
+
+        try {
+            // Ensure ~mods exists
+            await fs.mkdir(paksDir, { recursive: true });
+
+            const { deployedFiles, ue4ssModName } = await this.deployModFiles(mod, paksDir, logicModsDir, binariesDir);
 
             if (ue4ssModName) {
                 await this.updateUE4SSModsTxt(binariesDir, ue4ssModName, true);
@@ -462,7 +542,7 @@ export class ModManager {
         }
     }
 
-    async undeployMod(mod: any) {
+    async undeployMod(mod: LocalMod) {
         console.log(`Undeploying mod: ${mod.name}`);
 
         // Handle UE4SS disable
@@ -515,18 +595,18 @@ export class ModManager {
 
             // Update mods.json
             const modsFile = await this.getModsFilePath();
-            let mods = [];
+            let mods: LocalMod[] = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             // Calculate new priority (highest + 1)
-            const maxPriority = mods.reduce((max: number, m: any) => Math.max(max, m.priority || 0), 0);
+            const maxPriority = mods.reduce((max: number, m: LocalMod) => Math.max(max, m.priority || 0), 0);
             const newPriority = maxPriority + 1;
 
             // Check if exists
-            const existingIdx = mods.findIndex((m: any) => m.name === modName);
+            const existingIdx = mods.findIndex((m: LocalMod) => m.name === modName);
             const size = await this.calculateFolderSize(modDestDir);
 
-            const newMod = {
+            const newMod: LocalMod = {
                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
                 name: modName,
                 author: 'Local',
@@ -552,10 +632,10 @@ export class ModManager {
     async uninstallMod(modId: string) {
         try {
             const modsFile = await this.getModsFilePath();
-            let mods = [];
+            let mods: LocalMod[] = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
-            const modIndex = mods.findIndex((m: any) => m.id === modId);
+            const modIndex = mods.findIndex((m: LocalMod) => m.id === modId);
             if (modIndex === -1) {
                 return { success: false, message: 'Mod not found.' };
             }
@@ -585,8 +665,8 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            const mods = JSON.parse(data);
-            const modIndex = mods.findIndex((m: any) => m.id === modId);
+            const mods: LocalMod[] = JSON.parse(data);
+            const modIndex = mods.findIndex((m: LocalMod) => m.id === modId);
 
             if (modIndex !== -1) {
                 const targetMod = mods[modIndex];
@@ -594,13 +674,13 @@ export class ModManager {
                 // Conflict Check (Only when enabling)
                 let conflictMessage = null;
                 if (isEnabled) {
-                    const conflictingMod = mods.find((m: any) =>
+                    const conflictingMod = mods.find((m: LocalMod) =>
                         m.isEnabled &&
                         m.id !== modId &&
                         m.category && targetMod.category &&
                         m.category === targetMod.category &&
                         // Ignore generic categories
-                        !['UI', 'Misc', 'Sounds', 'Music', 'Other'].includes(targetMod.category)
+                        !['UI', 'Misc', 'Sounds', 'Music', 'Other'].includes(targetMod.category!)
                     );
 
                     if (conflictingMod) {
@@ -633,7 +713,7 @@ export class ModManager {
 
     async checkForUpdates() {
         const modsFile = await this.getModsFilePath();
-        let mods: any[] = [];
+        let mods: LocalMod[] = [];
         try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return []; }
 
         const updates: string[] = [];
@@ -708,10 +788,10 @@ export class ModManager {
     async updateMod(modId: string) {
         try {
             const modsFile = await this.getModsFilePath();
-            let mods = [];
+            let mods: LocalMod[] = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return false; }
 
-            const mod = mods.find((m: any) => m.id === modId);
+            const mod = mods.find((m: LocalMod) => m.id === modId);
             if (!mod || !mod.latestFileUrl) return false;
 
             const tempDir = app.getPath('temp');
@@ -746,7 +826,7 @@ export class ModManager {
     }
 
     // Helper to finalize update after download
-    private async finalizeUpdate(mod: any, tempFile: string, mods: any[], modsFile: string) {
+    private async finalizeUpdate(mod: LocalMod, tempFile: string, mods: LocalMod[], modsFile: string) {
         try {
             // Install (Overwrite)
             const modDestDir = mod.folderPath || path.join(this.modsDir, mod.name);
@@ -830,7 +910,7 @@ export class ModManager {
         return mods;
     }
 
-    async installOnlineMod(mod: Mod) {
+    async installOnlineMod(mod: OnlineMod) {
         try {
             console.log(`Installing mod: ${mod.gameBananaId}`);
 
@@ -890,13 +970,13 @@ export class ModManager {
 
                             // 4. Update mods.json
                             const modsFile = await this.getModsFilePath();
-                            let mods = [];
+                            let mods: LocalMod[] = [];
                             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
-                            const existingIdx = mods.findIndex((m: any) => m.gameBananaId === mod.gameBananaId);
+                            const existingIdx = mods.findIndex((m: LocalMod) => m.gameBananaId === mod.gameBananaId);
                             const size = await this.calculateFolderSize(modDestDir);
 
-                            const newModEntry = {
+                            const newModEntry: LocalMod = {
                                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
                                 name: mod.name,
                                 author: mod.author,
@@ -948,7 +1028,7 @@ export class ModManager {
 
             console.log(`[ModManager] Getting changelog for modId: ${id}`);
             const modsFile = await this.getModsFilePath();
-            let mods: any[] = [];
+            let mods: LocalMod[] = [];
             try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
 
             const mod = mods.find(m => m.id === id);
@@ -979,12 +1059,12 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            let mods = JSON.parse(data);
+            let mods: LocalMod[] = JSON.parse(data);
 
             // Sort Descending (High Priority First) to match UI
-            mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+            mods.sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
-            const index = mods.findIndex((m: any) => m.id === modId);
+            const index = mods.findIndex((m: LocalMod) => m.id === modId);
             if (index === -1) return false;
 
             // Up = Move towards index 0 (Highest Priority)
@@ -994,25 +1074,27 @@ export class ModManager {
             if (targetIndex < 0 || targetIndex >= mods.length) return false;
 
             const currentMod = mods[index];
-            const targetMod = mods[targetIndex];
 
-            // Swap priorities to swap positions
-            const temp = currentMod.priority || 0;
-            currentMod.priority = targetMod.priority || 0;
-            targetMod.priority = temp;
+            // Snapshot old priorities to determine who needs redeploy
+            const oldPriorities = new Map(mods.map(m => [m.id, m.priority]));
 
-            // Redeploy both if enabled to reflect new filenames (priority prefix)
-            if (currentMod.isEnabled) {
-                await this.undeployMod(currentMod);
-                await this.deployMod(currentMod);
+            // Move in Array
+            mods.splice(index, 1);
+            mods.splice(targetIndex, 0, currentMod);
+
+            // Reassign priorities based on new array order (Normalization)
+            const total = mods.length;
+            mods.forEach((m, i) => m.priority = total - i);
+
+            // Redeploy any mod whose priority changed and is enabled
+            for (const mod of mods) {
+                if (mod.isEnabled && oldPriorities.get(mod.id) !== mod.priority) {
+                    await this.undeployMod(mod);
+                    await this.deployMod(mod);
+                }
             }
-            if (targetMod.isEnabled) {
-                await this.undeployMod(targetMod);
-                await this.deployMod(targetMod);
-            }
 
-            // Save (Order in JSON doesn't strictly matter as we sort on read, but keeping it sorted is nice)
-            mods.sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+            // Save
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
             return true;
         } catch (e) {
@@ -1130,7 +1212,7 @@ export class ModManager {
 
         // Get enabled mods to potentially pass as parameters
         const mods = await this.getInstalledMods();
-        const enabledMods = Array.isArray(mods) ? mods.filter((m: any) => m.isEnabled) : [];
+        const enabledMods = Array.isArray(mods) ? mods.filter((m: LocalMod) => m.isEnabled) : [];
         console.log(`Launching game with ${enabledMods.length} mods enabled`);
 
         console.log(`Launching game at: ${exePath}`);
