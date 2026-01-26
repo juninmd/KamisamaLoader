@@ -397,3 +397,4 @@ Mods/
 # Test Data
 temp-test-data/
 test-data/
+coverage/
