@@ -622,6 +622,9 @@ export class ModManager {
             else mods.push(newMod);
 
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+            await this.deployMod(newMod);
+
             return { success: true, message: 'Mod installed successfully' };
         } catch (e) {
             console.error(e);
@@ -994,6 +997,8 @@ export class ModManager {
                             else mods.push(newModEntry);
 
                             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
+                            await this.deployMod(newModEntry);
 
                             // Notify UI? The download manager emits 'completed', we can rely on that or send extra event.
                             this.downloadManager!.removeListener('download-completed', onComplete);
