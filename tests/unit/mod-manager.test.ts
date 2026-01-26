@@ -217,4 +217,29 @@ describe('ModManager', () => {
         expect(callArgs[1]).toContain('-dx11');
         expect(callArgs[1]).toContain('-windowed');
     });
+
+    it('installMod should install and immediately deploy the mod', async () => {
+        const deploySpy = vi.spyOn(modManager, 'deployMod').mockResolvedValue(true);
+        (fs.readFile as any).mockResolvedValue('[]'); // No existing mods
+        (fs.mkdir as any).mockResolvedValue(undefined);
+        (fs.copyFile as any).mockResolvedValue(undefined);
+        (fs.writeFile as any).mockResolvedValue(undefined);
+        (modManager as any).calculateFolderSize = vi.fn().mockResolvedValue(1024);
+
+        const result = await modManager.installMod('/path/to/test_mod.pak');
+
+        expect(result.success).toBe(true);
+
+        // Verify file operations
+        expect(fs.copyFile).toHaveBeenCalledWith('/path/to/test_mod.pak', expect.stringContaining('test_mod'));
+
+        // Verify mods.json update
+        expect(fs.writeFile).toHaveBeenCalled();
+
+        // Verify deployMod was called
+        expect(deploySpy).toHaveBeenCalled();
+        const calledMod = deploySpy.mock.calls[0][0];
+        expect(calledMod.name).toBe('test_mod');
+        expect(calledMod.isEnabled).toBe(true);
+    });
 });
