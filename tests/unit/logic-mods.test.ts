@@ -5,6 +5,7 @@ import path from 'path';
 
 vi.mock('child_process', () => ({
     execFile: vi.fn(),
+    default: { execFile: vi.fn() }
 }));
 
 vi.mock('electron', () => ({
@@ -17,8 +18,27 @@ vi.mock('electron', () => ({
     }
 }));
 
-vi.mock('fs/promises');
-vi.mock('fs');
+vi.mock('fs/promises', () => ({
+    default: {
+        readFile: vi.fn(),
+        writeFile: vi.fn(),
+        mkdir: vi.fn(),
+        stat: vi.fn(),
+        unlink: vi.fn(),
+        readdir: vi.fn(),
+        rm: vi.fn(),
+        cp: vi.fn(),
+        access: vi.fn(),
+        link: vi.fn(),
+        copyFile: vi.fn(),
+    }
+}));
+
+vi.mock('fs', () => ({
+    createWriteStream: vi.fn(),
+    default: { createWriteStream: vi.fn() }
+}));
+
 vi.mock('../../electron/gamebanana');
 
 describe('ModManager - LogicMods', () => {
@@ -62,7 +82,7 @@ describe('ModManager - LogicMods', () => {
         (fs.link as any).mockResolvedValue(undefined); // Mock link success
         (fs.unlink as any).mockResolvedValue(undefined); // Mock unlink success
 
-        const success = await modManager.deployMod(mod);
+        const success = await modManager.deployMod(mod as any);
 
         expect(success).toBe(true);
 
