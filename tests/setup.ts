@@ -1,0 +1,42 @@
+import { vi, afterEach } from 'vitest';
+
+// Conditional setup for DOM environment
+if (typeof window !== 'undefined') {
+  const { cleanup } = await import('@testing-library/react');
+
+  // Cleanup React components after each test
+  afterEach(() => {
+    cleanup();
+  });
+
+  // Mock Electron API Bridge
+  Object.defineProperty(window, 'electronAPI', {
+    value: {
+      getInstalledMods: vi.fn(),
+      searchOnlineMods: vi.fn(),
+      installOnlineMod: vi.fn(),
+      toggleMod: vi.fn(),
+      getSettings: vi.fn(),
+      saveSettings: vi.fn(),
+      selectGameDirectory: vi.fn(),
+      installMod: vi.fn(),
+      checkForUpdates: vi.fn(),
+      updateMod: vi.fn(),
+      fetchFeaturedMods: vi.fn(),
+      fetchGameProfile: vi.fn(),
+      checkAppUpdate: vi.fn(),
+      installUE4SS: vi.fn(),
+      launchGame: vi.fn(),
+      openModsDirectory: vi.fn(),
+      getModChangelog: vi.fn(),
+      getModDetails: vi.fn(),
+      setModPriority: vi.fn(),
+      searchBySection: vi.fn(),
+      fetchCategories: vi.fn(),
+      fetchNewMods: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+    },
+    writable: true,
+  });
+}
