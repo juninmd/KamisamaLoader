@@ -1,4 +1,4 @@
-import { net, BrowserWindow } from 'electron';
+import { net, BrowserWindow, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import EventEmitter from 'events';
@@ -229,7 +229,6 @@ export class DownloadManager extends EventEmitter {
     openDownloadFolder(id: string) {
         const item = this.downloads.get(id);
         if (item && item.savePath && this.mainWindow) {
-            const { shell } = require('electron');
             shell.showItemInFolder(item.savePath);
         }
     }

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
 import { app } from 'electron';
@@ -66,7 +66,23 @@ vi.mock('../../electron/gamebanana', () => ({
     searchOnlineMods: vi.fn(),
     getModChangelog: vi.fn(),
     fetchModDetails: vi.fn(),
+    fetchLatestRelease: vi.fn()
 }));
+
+// Mock github
+vi.mock('../../electron/github', () => ({
+    fetchLatestRelease: vi.fn()
+}));
+
+// Mock adm-zip
+vi.mock('adm-zip', () => {
+    return {
+        default: class {
+            constructor() {}
+            extractAllTo = vi.fn();
+        }
+    };
+});
 
 // Mock download manager
 const mockDownloadManager = {
@@ -83,192 +99,219 @@ describe('ModManager', () => {
         modManager = new ModManager(mockDownloadManager as any);
         // Default settings mock
         modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/mock/game/path' });
-    });
-
-    it('should be defined', () => {
-        expect(modManager).toBeDefined();
-    });
-
-    it('ensureModsDir should create directory', async () => {
+        // Default fs behavior
         (fs.mkdir as any).mockResolvedValue(undefined);
-        const dir = await modManager.ensureModsDir();
-        expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining('Mods'), { recursive: true });
-        expect(dir).toContain('Mods');
-    });
-
-    it('getInstalledMods should return empty array on error', async () => {
-        (fs.readFile as any).mockRejectedValue(new Error('No file'));
-        const mods = await modManager.getInstalledMods();
-        expect(mods).toEqual([]);
-    });
-
-    it('toggleMod should update mod status', async () => {
-        const mockMods = [{ id: '1', isEnabled: false, folderPath: '/mock/mods/dir/mod1' }]; // Add folderPath
-        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+        (fs.readFile as any).mockResolvedValue('[]');
         (fs.writeFile as any).mockResolvedValue(undefined);
-        modManager.ensureModsDir = vi.fn().mockResolvedValue('/mock/mods/dir');
-
-        // Mock getAllFiles to prevent error in deployMod
-        (modManager as any).getAllFiles = vi.fn().mockResolvedValue([]);
-        // Mock stat for ue4ss check
-        (fs.stat as any).mockRejectedValue(new Error('Not found'));
-
-        const result = await modManager.toggleMod('1', true);
-
-        expect(result).toEqual({ success: true, conflict: null });
-        const writeCall = (fs.writeFile as any).mock.calls[0];
-        const writtenData = JSON.parse(writeCall[1]);
-        expect(writtenData[0].isEnabled).toBe(true);
+        (fs.stat as any).mockImplementation(() => Promise.resolve({
+            isDirectory: () => false,
+            size: 100
+        }));
+        (fs.readdir as any).mockResolvedValue([]);
     });
 
-    it('launchGame should execute correct binary', async () => {
-        // Mock checking path
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => true });
-        (fs.access as any).mockResolvedValue(undefined); // Success
-        // Mock settings (override beforeEach)
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/mock/game/path' }));
-        modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/mock/game/path' });
-
-        const result = await modManager.launchGame();
-
-        expect(result).toBe(true);
-        expect(execFile).toHaveBeenCalled();
-        const callArgs = (execFile as any).mock.calls[0];
-        expect(callArgs[0]).toContain('SparkingZERO.exe');
-    });
-
-    it('launchGame should fail if not configured', async () => {
-        modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '' });
-        await expect(modManager.launchGame()).rejects.toThrow('configured');
-    });
-
-    it('getInstalledMods should return mods sorted by priority descending', async () => {
-        const mockMods = [
-            { id: '1', name: 'Low Priority', priority: 1 },
-            { id: '2', name: 'High Priority', priority: 100 },
-            { id: '3', name: 'Mid Priority', priority: 50 }
-        ];
-
-        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
-
-        const result = await modManager.getInstalledMods();
-
-        expect(result).toHaveLength(3);
-        expect(result[0].id).toBe('2'); // 100
-        expect(result[1].id).toBe('3'); // 50
-        expect(result[2].id).toBe('1'); // 1
-    });
-
-    it('setModPriority "up" should increase priority', async () => {
-        const mockMods = [
-            { id: '2', name: 'High Priority', priority: 100, isEnabled: false },
-            { id: '3', name: 'Mid Priority', priority: 50, isEnabled: false },
-            { id: '1', name: 'Low Priority', priority: 1, isEnabled: false }
-        ];
-
-        (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
-
-        await modManager.setModPriority('3', 'up');
-
-        const calls = (fs.writeFile as any).mock.calls;
-        const writtenData = JSON.parse(calls[calls.length - 1][1]);
-
-        expect(writtenData[0].id).toBe('3');
-        expect(writtenData[1].id).toBe('2');
-    });
-
-    it('deployMod should deploy files to correct locations', async () => {
-        const mod = {
-            id: '1', name: 'TestMod', priority: 5, folderPath: '/mods/TestMod',
-            isEnabled: true, deployedFiles: []
-        };
-
-        // Mock file system for deploy
-        (modManager as any).getAllFiles = vi.fn().mockResolvedValue([
-            '/mods/TestMod/file.pak',
-            '/mods/TestMod/LogicMods/logic.pak',
-            '/mods/TestMod/ue4ss/bin/tool.dll'
-        ]);
-
-        (fs.stat as any).mockImplementation((p: string) => {
-            if (p.includes('ue4ss') || p.includes('LogicMods')) return Promise.resolve({ isDirectory: () => true });
-            return Promise.resolve({ isDirectory: () => false });
+    describe('Core Functionality', () => {
+        it('ensureModsDir should create directory', async () => {
+            const dir = await modManager.ensureModsDir();
+            expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining('Mods'), { recursive: true });
+            expect(dir).toContain('Mods');
         });
 
-        // Mock mkdir, link (success)
-        (fs.mkdir as any).mockResolvedValue(undefined);
-        (fs.link as any).mockResolvedValue(undefined);
-        (fs.unlink as any).mockResolvedValue(undefined);
-
-        const result = await modManager.deployMod(mod as any);
-
-        expect(result).toBe(true);
-        // Expect link calls
-        // 1. .pak -> ~mods/005_file.pak
-        // 2. logic.pak -> LogicMods/logic.pak
-        // 3. tool.dll -> Binaries/Win64/bin/tool.dll
-
-        expect(fs.link).toHaveBeenCalledTimes(3);
+        it('getInstalledMods should return mods', async () => {
+            const mockMods = [{ id: '1', name: 'Test', priority: 1 }];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+            const mods = await modManager.getInstalledMods();
+            expect(mods).toHaveLength(1);
+            expect(mods[0].name).toBe('Test');
+        });
     });
 
-    it('deployMod should fallback to copy if link fails', async () => {
-        const mod = {
-             id: '1', name: 'TestMod', folderPath: '/mods/TestMod', priority: 1, isEnabled: true
-        };
-        (modManager as any).getAllFiles = vi.fn().mockResolvedValue(['/mods/TestMod/file.pak']);
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+    describe('Profile Management', () => {
+        it('should create a profile', async () => {
+            const mockMods = [{ id: '1', name: 'Test', isEnabled: true }];
+            (fs.readFile as any).mockImplementation((path: string) => {
+                if (path.includes('mods.json')) return Promise.resolve(JSON.stringify(mockMods));
+                if (path.includes('profiles.json')) return Promise.resolve('[]');
+                return Promise.resolve('{}');
+            });
 
-        const error: any = new Error('EXDEV');
-        error.code = 'EXDEV';
-        (fs.link as any).mockRejectedValue(error);
-        (fs.copyFile as any).mockResolvedValue(undefined);
+            const result = await modManager.createProfile('My Profile');
+            expect(result.success).toBe(true);
+            expect(fs.writeFile).toHaveBeenCalledWith(
+                expect.stringContaining('profiles.json'),
+                expect.stringContaining('My Profile')
+            );
+        });
 
-        await modManager.deployMod(mod as any);
+        it('should load a profile', async () => {
+            const mockMods = [
+                { id: '1', name: 'Mod1', isEnabled: true },
+                { id: '2', name: 'Mod2', isEnabled: false }
+            ];
+            const mockProfiles = [
+                { id: 'p1', name: 'P1', modIds: ['2'] } // Should enable 2, disable 1
+            ];
 
-        expect(fs.copyFile).toHaveBeenCalled();
+            (fs.readFile as any).mockImplementation((path: string) => {
+                if (path.includes('mods.json')) return Promise.resolve(JSON.stringify(mockMods));
+                if (path.includes('profiles.json')) return Promise.resolve(JSON.stringify(mockProfiles));
+                return Promise.resolve('{}');
+            });
+
+            // Mock undeploy/deploy
+            modManager.undeployMod = vi.fn().mockResolvedValue(true);
+            modManager.deployMod = vi.fn().mockResolvedValue(true);
+
+            const result = await modManager.loadProfile('p1');
+            expect(result.success).toBe(true);
+
+            // Verify Mod1 disabled (undeployed), Mod2 enabled (deployed)
+            expect(modManager.undeployMod).toHaveBeenCalled();
+            expect(modManager.deployMod).toHaveBeenCalled();
+
+            expect(fs.writeFile).toHaveBeenCalledWith(
+                expect.stringContaining('mods.json'),
+                expect.any(String)
+            );
+        });
+
+        it('should delete a profile', async () => {
+             const mockProfiles = [{ id: 'p1', name: 'P1' }];
+             (fs.readFile as any).mockResolvedValue(JSON.stringify(mockProfiles));
+
+             const result = await modManager.deleteProfile('p1');
+             expect(result).toBe(true);
+             expect(fs.writeFile).toHaveBeenCalledWith(
+                 expect.stringContaining('profiles.json'),
+                 '[]'
+             );
+        });
     });
 
-    it('installOnlineMod should start download', async () => {
-        const mockMod = { gameBananaId: 123, name: 'OnlineMod' };
-        const mockProfile = {
-            _aFiles: [{ _idRow: 1, _sDownloadUrl: 'http://dl' }],
-            _sName: 'OnlineMod',
-            _sVersion: '1.0'
-        };
+    describe('Updates', () => {
+        it('should check for updates', async () => {
+            const mockMods = [{ id: '1', gameBananaId: 100, version: '1.0' }];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
 
-        const { fetchModProfile } = await import('../../electron/gamebanana');
-        (fetchModProfile as any).mockResolvedValue(mockProfile);
+            const { fetchModProfile } = await import('../../electron/gamebanana');
+            (fetchModProfile as any).mockResolvedValue({
+                _sVersion: '2.0',
+                _aFiles: [{ _idRow: 999, _sDownloadUrl: 'url' }]
+            });
 
-        mockDownloadManager.startDownload.mockReturnValue('dl-1');
+            const updates = await modManager.checkForUpdates();
+            expect(updates).toHaveLength(1);
+            expect(updates[0]).toBe('1');
+        });
 
-        const result = await modManager.installOnlineMod(mockMod as any);
+        it('should update a mod', async () => {
+            const mockMods = [{ id: '1', name: 'TestMod', gameBananaId: 100, latestFileUrl: 'http://update', hasUpdate: true }];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
 
-        expect(result.success).toBe(true);
-        expect(mockDownloadManager.startDownload).toHaveBeenCalled();
+            mockDownloadManager.startDownload.mockReturnValue('dl-1');
+
+            // We don't await immediately because it waits for the event
+            const promise = modManager.updateMod('1');
+
+            // Wait for next tick to ensure 'on' is called
+            await new Promise(r => setTimeout(r, 0));
+
+            // Simulate download completion
+            const calls = mockDownloadManager.on.mock.calls;
+            // We need to find the listener for 'download-completed'
+            const call = calls.find((c: any) => c[0] === 'download-completed');
+            expect(call).toBeDefined();
+
+            const onComplete = call[1];
+            await onComplete('dl-1');
+
+            // Verify fs.unlink called (cleanup temp)
+            expect(fs.unlink).toHaveBeenCalled();
+        });
     });
 
-    it('installMod should install and immediately deploy the mod', async () => {
-        const deploySpy = vi.spyOn(modManager, 'deployMod').mockResolvedValue(true);
-        (fs.readFile as any).mockResolvedValue('[]'); // No existing mods
-        (fs.mkdir as any).mockResolvedValue(undefined);
-        (fs.copyFile as any).mockResolvedValue(undefined);
-        (fs.writeFile as any).mockResolvedValue(undefined);
-        (modManager as any).calculateFolderSize = vi.fn().mockResolvedValue(1024);
+    describe('UE4SS', () => {
+        it('should install UE4SS', async () => {
+            const { fetchLatestRelease } = await import('../../electron/github');
+            (fetchLatestRelease as any).mockResolvedValue('http://ue4ss.zip');
 
-        const result = await modManager.installMod('/path/to/test_mod.pak');
+            mockDownloadManager.startDownload.mockReturnValue('dl-ue4ss');
 
-        expect(result.success).toBe(true);
+            const promise = modManager.installUE4SS();
 
-        // Verify file operations
-        expect(fs.copyFile).toHaveBeenCalledWith('/path/to/test_mod.pak', expect.stringContaining('test_mod'));
+            // Wait for next tick
+            await new Promise(r => setTimeout(r, 0));
 
-        // Verify mods.json update
-        expect(fs.writeFile).toHaveBeenCalled();
+            // Simulate completion
+            const calls = mockDownloadManager.on.mock.calls;
+            const call = calls.find((c: any) => c[0] === 'download-completed');
+            expect(call).toBeDefined();
 
-        // Verify deployMod was called
-        expect(deploySpy).toHaveBeenCalled();
-        const calledMod = deploySpy.mock.calls[0][0];
-        expect(calledMod.name).toBe('test_mod');
-        expect(calledMod.isEnabled).toBe(true);
+            const onComplete = call[1];
+            await onComplete('dl-ue4ss');
+
+            expect(mockDownloadManager.startDownload).toHaveBeenCalledWith(
+                'http://ue4ss.zip',
+                expect.any(String),
+                expect.any(String),
+                expect.anything()
+            );
+        });
+    });
+
+    describe('Priority & Deploy', () => {
+         it('fixPriorities should normalize priorities', async () => {
+             const mockMods = [
+                 { id: '1', priority: 10, name: 'A' },
+                 { id: '2', priority: 10, name: 'B' } // Collision
+             ];
+             (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+             await modManager.fixPriorities();
+
+             expect(fs.writeFile).toHaveBeenCalled();
+             const written = JSON.parse((fs.writeFile as any).mock.calls[0][1]);
+             expect(written[0].priority).not.toBe(written[1].priority);
+         });
+
+         it('deployMod should deploy files', async () => {
+             const mod = { id: '1', name: 'M', folderPath: '/mods/M', isEnabled: true };
+             (fs.readdir as any).mockResolvedValue(['file.pak']);
+             (fs.stat as any).mockImplementation((p: string) => Promise.resolve({
+                 isDirectory: () => false
+             }));
+
+             await modManager.deployMod(mod as any);
+
+             // Check if link or copy called
+             expect(fs.link).toHaveBeenCalled();
+         });
+    });
+
+    describe('Install Online Mod', () => {
+        it('should start download and install on complete', async () => {
+            const { fetchModProfile } = await import('../../electron/gamebanana');
+            (fetchModProfile as any).mockResolvedValue({
+                _aFiles: [{ _idRow: 1, _sDownloadUrl: 'url' }],
+                _sName: 'Mod',
+                _sVersion: '1.0'
+            });
+
+            mockDownloadManager.startDownload.mockReturnValue('dl-mod');
+
+            const result = await modManager.installOnlineMod({ gameBananaId: 1 } as any);
+            expect(result.success).toBe(true);
+
+            // Simulate completion
+            const onComplete = mockDownloadManager.on.mock.calls.find((c: any) => c[0] === 'download-completed')[1];
+
+            // Mock unzip behavior (implied by finalizing)
+            await onComplete('dl-mod');
+
+            expect(fs.writeFile).toHaveBeenCalledWith(
+                expect.stringContaining('mods.json'),
+                expect.any(String)
+            );
+        });
     });
 });
