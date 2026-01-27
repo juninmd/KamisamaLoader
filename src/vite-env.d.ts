@@ -47,8 +47,8 @@ interface Window {
     cancelDownload: (id: string) => Promise<void>;
     openDownloadFolder: (id: string) => Promise<void>;
     clearCompletedDownloads: () => Promise<void>;
-    onDownloadUpdate: (callback: (downloads: any[]) => void) => void;
-    onDownloadScanFinished: (callback: () => void) => void;
+    onDownloadUpdate: (callback: (downloads: any[]) => void) => () => void;
+    onDownloadScanFinished: (callback: () => void) => () => void;
 
     // Game
     launchGame: () => Promise<boolean>;
