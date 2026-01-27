@@ -1,4 +1,7 @@
-import { vi, afterEach } from 'vitest';
+import { vi, afterEach, expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
 
 // Conditional setup for DOM environment
 if (typeof window !== 'undefined') {
@@ -19,6 +22,8 @@ if (typeof window !== 'undefined') {
       getSettings: vi.fn(),
       saveSettings: vi.fn(),
       selectGameDirectory: vi.fn(),
+      selectModDirectory: vi.fn(),
+      selectBackgroundImage: vi.fn(),
       installMod: vi.fn(),
       checkForUpdates: vi.fn(),
       updateMod: vi.fn(),
@@ -34,8 +39,31 @@ if (typeof window !== 'undefined') {
       searchBySection: vi.fn(),
       fetchCategories: vi.fn(),
       fetchNewMods: vi.fn(),
+      getAllOnlineMods: vi.fn(),
+      uninstallMod: vi.fn(),
+
+      // Download Manager
+      getDownloads: vi.fn(),
+      startDownload: vi.fn(),
+      pauseDownload: vi.fn(),
+      resumeDownload: vi.fn(),
+      cancelDownload: vi.fn(),
+      clearCompletedDownloads: vi.fn(),
+      openDownloadFolder: vi.fn(),
+      onDownloadUpdate: vi.fn(),
+      onDownloadScanFinished: vi.fn(),
+
+      // Utils
+      minimize: vi.fn(),
+      maximize: vi.fn(),
+      close: vi.fn(),
+
       on: vi.fn(),
       off: vi.fn(),
+      createProfile: vi.fn(),
+      loadProfile: vi.fn(),
+      deleteProfile: vi.fn(),
+      getProfiles: vi.fn(),
     },
     writable: true,
   });

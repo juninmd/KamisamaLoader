@@ -33,7 +33,13 @@ export default defineConfig({
             'tailwind.config.js',
             'eslint.config.js'
         ],
-        all: true
+        all: true,
+        thresholds: {
+            lines: 60,
+            functions: 55,
+            branches: 55,
+            statements: 60
+        }
     }
   },
 });
