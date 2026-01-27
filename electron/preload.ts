@@ -23,9 +23,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDownloadFolder: (id: string) => ipcRenderer.invoke('open-download-folder', id),
   clearCompletedDownloads: () => ipcRenderer.invoke('clear-completed-downloads'),
   onDownloadUpdate: (callback: (downloads: any[]) => void) => {
-    // Clean up previous listeners to avoid duplicates if necessary, or just add
-    ipcRenderer.removeAllListeners('downloads-update');
-    ipcRenderer.on('downloads-update', (_event, value) => callback(value));
+    const subscription = (_event: any, value: any) => callback(value);
+    ipcRenderer.on('downloads-update', subscription);
+    return () => ipcRenderer.removeListener('downloads-update', subscription);
   },
   updateMod: (modId: string) => ipcRenderer.invoke('update-mod', modId),
 
@@ -55,7 +55,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pauseDownload: (id: string) => ipcRenderer.invoke('pause-download', id),
   resumeDownload: (id: string) => ipcRenderer.invoke('resume-download', id),
   onDownloadScanFinished: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('download-scan-finished');
-    ipcRenderer.on('download-scan-finished', callback);
+    const subscription = () => callback();
+    ipcRenderer.on('download-scan-finished', subscription);
+    return () => ipcRenderer.removeListener('download-scan-finished', subscription);
   },
 });
