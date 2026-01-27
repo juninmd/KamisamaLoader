@@ -28,9 +28,8 @@ const Mods: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'enabled' | 'disabled' | 'updates'>('all');
 
-    // New: Client-Side Mod Handling Support
-    const [allOnlineMods, setAllOnlineMods] = useState<Mod[]>([]); // New: Full Local Dataset
-    const [browseMods, setBrowseMods] = useState<Mod[]>([]); // Displayed Page
+    // Server-Side Pagination State
+    const [browseMods, setBrowseMods] = useState<Mod[]>([]);
     const [loadingBrowse, setLoadingBrowse] = useState(false);
     const [browsePage, setBrowsePage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -41,16 +40,16 @@ const Mods: React.FC = () => {
     const [updateChangelog, setUpdateChangelog] = useState<any | null>(null);
 
     const [checkingUpdates, setCheckingUpdates] = useState(false);
-    const [updatingMods, setUpdatingMods] = useState<string[]>([]); // List of IDs currently updating
+    const [updatingMods, setUpdatingMods] = useState<string[]>([]);
 
     // Drag and Drop state
     const [isDragging, setIsDragging] = useState(false);
 
-    // New: Filter and Category state
+    // Filter and Category state
     const [categories, setCategories] = useState<Category[]>([]);
     const [filters, setFilters] = useState<FilterState>({
         categories: [],
-        sortBy: 'date', // Default to date as it is most reliable
+        sortBy: 'date',
         order: 'desc',
         dateRange: 'all',
         nsfw: false,
@@ -60,6 +59,10 @@ const Mods: React.FC = () => {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
     const dragCounter = useRef(0);
+    // Ref to track if initial load happened to prevent double firing
+    const initialLoadDone = useRef(false);
+    // Track latest request to avoid race conditions
+    const lastRequestId = useRef(0);
 
     // Initial load for Installed Mods
     useEffect(() => {
@@ -68,28 +71,17 @@ const Mods: React.FC = () => {
 
     // Listen for deep link events or external changes
     useEffect(() => {
-        window.electronAPI.onDownloadScanFinished(() => {
+        const removeListener = window.electronAPI.onDownloadScanFinished(() => {
             loadInstalledMods();
             setActiveTab('downloads');
             showToast('Download started via external link', 'info');
         });
+        return () => {
+             if (removeListener) removeListener();
+        };
     }, []);
 
-    // Load Browse Mods on tab change if empty
-    useEffect(() => {
-        if (activeTab === 'browse' && browseMods.length === 0 && allOnlineMods.length === 0) {
-            loadCategories();
-            loadBrowseMods(1, false);
-        }
-    }, [activeTab]);
-
-    // Reset page when filters change
-    useEffect(() => {
-        if (activeTab === 'browse') {
-            setBrowsePage(1);
-        }
-    }, [filters, searchQuery]);
-
+    // Load Categories
     const loadCategories = async () => {
         try {
             const cats = await window.electronAPI.fetchCategories();
@@ -106,130 +98,137 @@ const Mods: React.FC = () => {
     };
 
     const loadInstalledMods = async () => {
-        // Don't show full loading spinner if just refreshing
         if (installedMods.length === 0) setInstalledLoading(true);
         try {
             const mods = await window.electronAPI.getInstalledMods();
             setInstalledMods(mods);
         } catch (error) {
-            console.error('Failed to load installed mods', 'error');
+            console.error('Failed to load installed mods', error);
             showToast('Failed to load installed mods', 'error');
         } finally {
             setInstalledLoading(false);
         }
     };
 
-    const loadBrowseMods = async (page: number, reset: boolean = false, forceRefresh: boolean = false) => {
-        if (loadingBrowse && !reset && !forceRefresh) return;
+    // Server-Side Fetch
+    const loadBrowseMods = async (page: number, reset: boolean = false) => {
+        // Increment request ID
+        const requestId = ++lastRequestId.current;
 
-        // Trigger fetch if we don't have data OR forced refresh
-        if (allOnlineMods.length === 0 || forceRefresh) {
-            setLoadingBrowse(true);
-            try {
-                console.log('[Browse] Fetching full online mod list...');
-                const fullList = await window.electronAPI.getAllOnlineMods(forceRefresh);
-                console.log(`[Browse] Fetched ${fullList.length} total mods.`);
-                setAllOnlineMods(fullList);
-                if (forceRefresh) showToast("Online mod list updated", "success");
-            } catch (error) {
-                console.error('Failed to fetch all online mods:', error);
-                showToast('Failed to load online mods', 'error');
-            } finally {
-                setLoadingBrowse(false);
+        if (loadingBrowse && !reset) return;
+
+        setLoadingBrowse(true);
+        try {
+            console.log(`[Browse] Fetching page ${page}...`);
+
+            const options: any = {
+                page,
+                perPage: 20,
+                gameId: 21179,
+                search: searchQuery,
+                sort: filters.sortBy,
+                order: filters.order,
+                dateRange: filters.dateRange
+            };
+
+            if (filters.categories.length > 0) {
+                options.categoryId = filters.categories[0];
             }
-        }
 
-        // Ensure page is set correctly
-        if (reset || page === 1) {
-            setBrowsePage(1);
-        } else {
-            setBrowsePage(page);
+            const results = await window.electronAPI.searchBySection(options);
+
+            // Check if this request is stale
+            if (requestId !== lastRequestId.current) {
+                console.log(`[Browse] Ignoring stale request ${requestId}`);
+                return;
+            }
+
+            // Mark installed status
+            let processed = results.map((m: any) => ({
+                 ...m,
+                 isInstalled: installedMods.some(i => i.gameBananaId === m.gameBananaId)
+            }));
+
+            // Client-side filtering fallback for unsupported API filters
+            if (!filters.nsfw) {
+                processed = processed.filter((m: any) => !m.isNsfw);
+            }
+             if (filters.zeroSpark && !searchQuery.toLowerCase().includes('zerospark')) {
+                processed = processed.filter((m: any) =>
+                    (m.name && m.name.toLowerCase().includes('zerospark')) ||
+                    (m.description && m.description.toLowerCase().includes('zerospark'))
+                );
+            }
+            if (filters.colorZ && !searchQuery.toLowerCase().includes('colorz')) {
+                processed = processed.filter((m: any) =>
+                    (m.name && m.name.toLowerCase().includes('colorz')) ||
+                    (m.description && m.description.toLowerCase().includes('colorz'))
+                );
+            }
+
+            if (reset || page === 1) {
+                setBrowseMods(processed);
+                setBrowsePage(1);
+            } else {
+                setBrowseMods(prev => [...prev, ...processed]);
+            }
+
+            // If we got fewer results than requested, we likely hit the end
+            if (results.length < 20) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+        } catch (error) {
+            console.error('Failed to load online mods:', error);
+            showToast('Failed to load online mods', 'error');
+        } finally {
+            setLoadingBrowse(false);
         }
     };
 
-    // Master Effect for Client-Side Filtering, Sorting, and Pagination
+    // Effect: Initial Load on Tab Switch
     useEffect(() => {
-        if (activeTab !== 'browse') return;
-        if (allOnlineMods.length === 0) return;
-
-        console.log('[Browse] Applying local filters...', { filters, searchQuery, page: browsePage });
-
-        let result = [...allOnlineMods];
-
-        // 1. Search
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(m =>
-                m.name.toLowerCase().includes(query) ||
-                (m.description && m.description.toLowerCase().includes(query)) ||
-                m.author.toLowerCase().includes(query)
-            );
-        }
-
-        // 2. Categories
-        if (filters.categories.length > 0) {
-            const selectedCat = filters.categories[0];
-            result = result.filter(m => m.category === selectedCat);
-        }
-
-        // 3. NSFW
-        if (!filters.nsfw) {
-            result = result.filter(m => !m.isNsfw);
-        }
-
-        // 4. ZeroSpark / ColorZ
-        if (filters.zeroSpark && !searchQuery.toLowerCase().includes('zerospark')) {
-            result = result.filter(m =>
-                (m.name && m.name.toLowerCase().includes('zerospark')) ||
-                (m.description && m.description.toLowerCase().includes('zerospark'))
-            );
-        }
-
-        if (filters.colorZ && !searchQuery.toLowerCase().includes('colorz')) {
-            result = result.filter(m =>
-                (m.name && m.name.toLowerCase().includes('colorz')) ||
-                (m.description && m.description.toLowerCase().includes('colorz'))
-            );
-        }
-
-        // 5. Sort
-        result.sort((a: any, b: any) => {
-            let valA, valB;
-            switch (filters.sortBy) {
-                case 'downloads':
-                    valA = a.downloadCount || 0; valB = b.downloadCount || 0;
-                    break;
-                case 'views':
-                    valA = a.viewCount || 0; valB = b.viewCount || 0;
-                    break;
-                case 'likes':
-                    valA = a.likeCount || 0; valB = b.likeCount || 0;
-                    break;
-                case 'date':
-                default:
-                    valA = a.dateAdded || 0; valB = b.dateAdded || 0;
-                    break;
+        if (activeTab === 'browse') {
+            if (browseMods.length === 0 && !initialLoadDone.current) {
+                loadCategories();
+                loadBrowseMods(1, true);
+                initialLoadDone.current = true;
             }
-            return filters.order === 'asc' ? valA - valB : valB - valA;
-        });
+        }
+    }, [activeTab]);
 
-        // 6. Pagination (Infinite Scroll)
-        const itemsPerPage = 20;
-        const end = browsePage * itemsPerPage;
-        const sliced = result.slice(0, end);
+    // Effect: Refresh on Filters/Search Change
+    useEffect(() => {
+        if (activeTab === 'browse') {
+            const timer = setTimeout(() => {
+                 setBrowsePage(1);
+                 loadBrowseMods(1, true);
+            }, 500); // Debounce
+            return () => clearTimeout(timer);
+        }
+    }, [filters, searchQuery]);
 
-        setHasMore(end < result.length);
+    // Effect: Infinite Scroll (Page > 1)
+    useEffect(() => {
+        if (browsePage > 1 && activeTab === 'browse') {
+            loadBrowseMods(browsePage, false);
+        }
+    }, [browsePage]);
 
-        // Mark installed
-        const installedIds = new Set(installedMods.map(m => m.gameBananaId));
-        const finalMods = sliced.map(m => ({
-            ...m,
-            isInstalled: installedIds.has(m.gameBananaId)
-        }));
-
-        setBrowseMods(finalMods);
-
-    }, [allOnlineMods, filters, searchQuery, browsePage, installedMods, activeTab]);
+    // Effect: Sync Installed Status
+    useEffect(() => {
+        if (browseMods.length > 0) {
+            setBrowseMods(prev => {
+                const installedIds = new Set(installedMods.map(m => m.gameBananaId));
+                return prev.map(m => ({
+                    ...m,
+                    isInstalled: installedIds.has(m.gameBananaId)
+                }));
+            });
+        }
+    }, [installedMods]);
 
     // Infinite Scroll Observer
     const observerTarget = useRef<HTMLDivElement>(null);
@@ -252,7 +251,7 @@ const Mods: React.FC = () => {
         return () => observer.disconnect();
     }, [loadingBrowse, hasMore, browseMods]);
 
-    // Filter Logic for Installed Mods
+    // Filter Logic for Installed Mods (Local)
     const filteredInstalledMods = installedMods.filter(mod => {
         const matchesSearch = mod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             mod.author.toLowerCase().includes(searchQuery.toLowerCase());
@@ -272,7 +271,6 @@ const Mods: React.FC = () => {
         try {
             const updatedIds = await window.electronAPI.checkForUpdates();
             if (updatedIds.length > 0) {
-                // Refresh list to show updates
                 await loadInstalledMods();
             } else {
                 showToast('No updates found', 'info');
@@ -292,14 +290,12 @@ const Mods: React.FC = () => {
     };
 
     const handleUpdateClick = async (mod: Mod) => {
-        // Fetch Changelog
         try {
             const changelog = await window.electronAPI.getModChangelog(mod.id);
             setUpdateChangelog(changelog);
             setUpdateDialogMod(mod);
         } catch (_e) {
             console.error(_e);
-            // Fallback if failed, just show empty
             setUpdateChangelog(null);
             setUpdateDialogMod(mod);
         }
@@ -329,12 +325,11 @@ const Mods: React.FC = () => {
             showToast('Failed to update mod', 'error');
         } finally {
             setUpdatingMods(prev => prev.filter(mid => mid !== id));
-            setUpdateDialogMod(null); // Close dialog if open
+            setUpdateDialogMod(null);
         }
     };
 
     const handleToggle = async (id: string) => {
-        // Optimistic Update
         setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: !m.isEnabled } : m));
 
         const mod = installedMods.find(m => m.id === id);
@@ -344,10 +339,9 @@ const Mods: React.FC = () => {
 
             if (result.success) {
                 if (result.conflict) {
-                    showToast(result.conflict, 'info'); // changed warning to info as warning is not in ToastContextType
+                    showToast(result.conflict, 'info');
                 }
             } else {
-                // Revert if failed
                 setInstalledMods(prev => prev.map(m => m.id === id ? { ...m, isEnabled: !newState } : m));
                 showToast('Failed to toggle mod', 'error');
             }
@@ -375,13 +369,12 @@ const Mods: React.FC = () => {
     };
 
     const handleUninstall = async (id: string) => {
-        // Using native confirm for simplicity, a custom modal would be better for UX
         if (window.confirm('Are you sure you want to permanently uninstall this mod?')) {
             try {
                 const result = await window.electronAPI.uninstallMod(id);
                 if (result.success) {
                     showToast('Mod uninstalled successfully', 'success');
-                    loadInstalledMods(); // Refresh the list
+                    loadInstalledMods();
                 } else {
                     showToast(result.message || 'Failed to uninstall mod', 'error');
                 }
@@ -392,7 +385,6 @@ const Mods: React.FC = () => {
         }
     };
 
-    // Drag and Drop Handlers
     const handleDragEnter = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -426,7 +418,6 @@ const Mods: React.FC = () => {
             const filePath = (e.dataTransfer.files[0] as any).path;
             const result = await window.electronAPI.installMod(filePath);
             if (result.success) {
-                // Refresh list
                 loadInstalledMods();
                 showToast('Mod installed successfully', 'success');
             } else {
@@ -443,7 +434,6 @@ const Mods: React.FC = () => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
         >
-            {/* Drag Overlay */}
             {isDragging && (
                 <div className="absolute inset-0 z-50 bg-blue-600/90 backdrop-blur-md rounded-xl flex flex-col items-center justify-center border-4 border-white/20 border-dashed animate-in fade-in duration-200">
                     <UploadCloud size={80} className="text-white mb-4 animate-bounce" />
@@ -452,10 +442,8 @@ const Mods: React.FC = () => {
                 </div>
             )}
 
-            {/* Top Bar - High Z-Index for Dropdowns */}
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 space-y-4 xl:space-y-0 flex-shrink-0 relative z-40">
 
-                {/* Tabs */}
                 <div className="flex bg-black/40 p-1 rounded-xl backdrop-blur-sm border border-white/10">
                     <button
                         onClick={() => setActiveTab('installed')}
@@ -486,16 +474,13 @@ const Mods: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Actions Row */}
                 <div className="flex items-center space-x-3 w-full xl:w-auto">
-                    {/* Profile Manager */}
                     {activeTab === 'installed' && (
                         <div className="flex items-center space-x-2">
                             <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
                         </div>
                     )}
 
-                    {/* Search */}
                     <div className="relative group flex-1 xl:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors" size={18} />
                         <input
@@ -507,7 +492,6 @@ const Mods: React.FC = () => {
                         />
                     </div>
 
-                    {/* Filter (Only for Installed) */}
                     {activeTab === 'installed' && (
                         <>
                             <div className="relative">
@@ -524,7 +508,6 @@ const Mods: React.FC = () => {
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                             </div>
 
-                            {/* Check Updates Button */}
                             <button
                                 onClick={handleCheckUpdates}
                                 disabled={checkingUpdates}
@@ -534,7 +517,6 @@ const Mods: React.FC = () => {
                                 <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
                             </button>
 
-                            {/* Update All Button */}
                             {hasUpdates && (
                                 <button
                                     onClick={handleUpdateAll}
@@ -544,7 +526,6 @@ const Mods: React.FC = () => {
                                     <span>Update All</span>
                                 </button>
                             )}
-                            {/* Stats */}
                             <div className="flex items-center space-x-3 text-xs text-gray-400 border-l border-white/10 pl-3 ml-2">
                                 <div className="flex flex-col">
                                     <span className="font-bold text-white">{filteredInstalledMods.length}</span>
@@ -559,14 +540,8 @@ const Mods: React.FC = () => {
                     )}
                     {activeTab === 'browse' && (
                         <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-3 text-xs text-gray-400 border-r border-white/10 pr-3 mr-2">
-                                <div className="flex flex-col items-end">
-                                    <span className="font-bold text-white">{allOnlineMods.length}</span>
-                                    <span>Total Mods</span>
-                                </div>
-                            </div>
                             <button
-                                onClick={() => loadBrowseMods(1, true, true)} // Force refresh
+                                onClick={() => loadBrowseMods(1, true)}
                                 disabled={loadingBrowse}
                                 className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors text-white"
                                 title="Refresh Online Mods"
@@ -578,10 +553,7 @@ const Mods: React.FC = () => {
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div
-                className="flex-1 overflow-auto pr-2 pb-4 scroll-smooth"
-            >
+            <div className="flex-1 overflow-auto pr-2 pb-4 scroll-smooth">
                 {activeTab === 'installed' ? (
                     <ModGrid
                         mods={filteredInstalledMods}
@@ -597,50 +569,50 @@ const Mods: React.FC = () => {
                     <DownloadsList />
                 ) : (
                     <div className="flex gap-4">
-                        {/* Category Sidebar - Fixed width, non-overlapping */}
                         <div className="flex-shrink-0">
                             <CategorySidebar
                                 categories={categories}
                                 selectedCategories={selectedCategories}
                                 onCategorySelect={(category) => {
                                     const newSelected = selectedCategories.includes(category)
-                                        ? [] // Deselect if same
-                                        : [category]; // Single select for API simplicity
+                                        ? []
+                                        : [category];
                                     setSelectedCategories(newSelected);
                                     setFilters(f => ({ ...f, categories: newSelected }));
                                 }}
                             />
                         </div>
 
-                        {/* Main Content - Takes remaining space */}
                         <div className="flex-1 flex flex-col min-w-0">
-                            {/* Filter Bar */}
                             <FilterBar
                                 availableCategories={categories}
                                 activeFilters={filters}
                                 onFilterChange={(newFilters) => {
-                                    console.log('[FilterBar] New filters:', newFilters);
                                     setFilters(newFilters);
                                     setSelectedCategories(newFilters.categories);
                                 }}
                             />
 
-                            {/* Browse List */}
                             <div className="flex-1">
                                 <ModGrid
                                     mods={browseMods}
                                     installedMods={installedMods}
-                                    loading={loadingBrowse || (allOnlineMods.length === 0 && loadingBrowse)}
+                                    loading={loadingBrowse && browsePage === 1}
                                     onInstall={handleInstall}
                                     onSelect={(mod) => setSelectedMod(mod)}
                                     onToggle={handleToggle}
                                 />
                             </div>
 
-                            {/* Infinite Scroll Sentinel */}
-                            {!loadingBrowse && browseMods.length > 0 && hasMore && (
+                            {(loadingBrowse && browsePage > 1) || (browseMods.length > 0 && hasMore) ? (
                                 <div ref={observerTarget} className="flex justify-center items-center py-8 shrink-0 w-full">
                                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            ) : null}
+
+                            {!loadingBrowse && browseMods.length === 0 && (
+                                <div className="flex justify-center items-center h-64 text-gray-400">
+                                    No mods found.
                                 </div>
                             )}
                         </div>
@@ -648,30 +620,24 @@ const Mods: React.FC = () => {
                 )}
             </div>
 
-            {/* Mod Details Modal */}
-            {
-                selectedMod && (
-                    <ModDetailsModal
-                        mod={selectedMod}
-                        isOpen={!!selectedMod}
-                        onClose={() => setSelectedMod(null)}
-                        onInstall={(mod) => handleInstall(mod as any)}
-                    />
-                )
-            }
+            {selectedMod && (
+                <ModDetailsModal
+                    mod={selectedMod}
+                    isOpen={!!selectedMod}
+                    onClose={() => setSelectedMod(null)}
+                    onInstall={(mod) => handleInstall(mod as any)}
+                />
+            )}
 
-            {/* Update Dialog */}
-            {
-                updateDialogMod && (
-                    <UpdateDialog
-                        mod={updateDialogMod}
-                        changelog={updateChangelog}
-                        isUpdating={updatingMods.includes(updateDialogMod.id)}
-                        onUpdate={() => handlePerformUpdate(updateDialogMod.id)}
-                        onClose={() => setUpdateDialogMod(null)}
-                    />
-                )
-            }
+            {updateDialogMod && (
+                <UpdateDialog
+                    mod={updateDialogMod}
+                    changelog={updateChangelog}
+                    isUpdating={updatingMods.includes(updateDialogMod.id)}
+                    onUpdate={() => handlePerformUpdate(updateDialogMod.id)}
+                    onClose={() => setUpdateDialogMod(null)}
+                />
+            )}
         </div >
     );
 };
