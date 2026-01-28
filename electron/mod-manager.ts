@@ -195,7 +195,7 @@ export class ModManager {
         return path.join(this.modsDir, 'mods.json');
     }
 
-    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string }> {
+    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string; backgroundOpacity?: number }> {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
@@ -210,7 +210,7 @@ export class ModManager {
         }
     }
 
-    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string }) {
+    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string; backgroundOpacity?: number }) {
         try {
             if (settings.modDownloadPath && settings.modDownloadPath !== this.modsDir) {
                 // Changing mod directory

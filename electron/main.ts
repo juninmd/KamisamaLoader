@@ -201,9 +201,26 @@ function handleProtocolUrl(url: string) {
   console.log('Received Protocol URL:', url);
   try {
     const urlObj = new URL(url);
+
+    // Support kamisama://install?id=123
+    // Support gb-modmanager://install/21179/123 (GameID/ModID)
+
     if (urlObj.host === 'install') {
-      const id = urlObj.searchParams.get('id');
-      const gameBananaId = id ? parseInt(id) : 0;
+      let gameBananaId = 0;
+
+      const idParam = urlObj.searchParams.get('id');
+      if (idParam) {
+        gameBananaId = parseInt(idParam);
+      } else {
+        // Parse path: /21179/12345
+        const parts = urlObj.pathname.split('/').filter(p => p.length > 0);
+        if (parts.length >= 2) {
+           // parts[0] is likely GameId, parts[1] is ModId
+           gameBananaId = parseInt(parts[1]);
+        } else if (parts.length === 1) {
+           gameBananaId = parseInt(parts[0]);
+        }
+      }
 
       if (gameBananaId > 0) {
         console.log(`Deep link install triggered for ID: ${gameBananaId}`);
@@ -244,19 +261,21 @@ if (!gotTheLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    const url = commandLine.find(arg => arg.startsWith('kamisama://'));
+    const url = commandLine.find(arg => arg.startsWith('kamisama://') || arg.startsWith('gb-modmanager://'));
     if (url) handleProtocolUrl(url);
   });
 
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
       app.setAsDefaultProtocolClient('kamisama', process.execPath, [path.resolve(process.argv[1])]);
+      app.setAsDefaultProtocolClient('gb-modmanager', process.execPath, [path.resolve(process.argv[1])]);
     }
   } else {
     app.setAsDefaultProtocolClient('kamisama');
+    app.setAsDefaultProtocolClient('gb-modmanager');
   }
 
-  const startupsUrl = process.argv.find(arg => arg.startsWith('kamisama://'));
+  const startupsUrl = process.argv.find(arg => arg.startsWith('kamisama://') || arg.startsWith('gb-modmanager://'));
   if (startupsUrl) handleProtocolUrl(startupsUrl);
 
   app.whenReady().then(async () => {

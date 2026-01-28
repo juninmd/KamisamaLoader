@@ -23,7 +23,8 @@
     "protocols": {
       "name": "kamisama-protocol",
       "schemes": [
-        "kamisama"
+        "kamisama",
+        "gb-modmanager"
       ]
     },
     "win": {
