@@ -385,6 +385,20 @@ const Mods: React.FC = () => {
         }
     };
 
+    const handlePriorityChange = async (modId: string, direction: 'up' | 'down') => {
+        try {
+            const success = await window.electronAPI.setModPriority(modId, direction);
+            if (success) {
+                loadInstalledMods();
+            } else {
+                showToast('Failed to change priority', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Error changing priority', 'error');
+        }
+    };
+
     const handleDragEnter = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -562,6 +576,7 @@ const Mods: React.FC = () => {
                         onToggle={handleToggle}
                         onUpdate={(mod) => handleUpdateClick(mod)}
                         onUninstall={handleUninstall}
+                        onPriorityChange={handlePriorityChange}
                         updatingMods={updatingMods}
                         onSelect={(mod) => setSelectedMod(mod)}
                     />
