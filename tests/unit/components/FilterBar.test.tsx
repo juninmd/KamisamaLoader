@@ -115,12 +115,14 @@ describe('FilterBar', () => {
         // <div ...> <span>{category}</span> <button onClick...> <X /> </button> </div>
 
         const catChip = screen.getByText('Cat1');
+        // The X button is the next sibling or we can find it by role within the container if we had one.
+        // Given the structure <div><span>Text</span><button><X/></button></div>
+        // nextElementSibling is the button.
         const removeBtn = catChip.nextElementSibling;
 
-        if (removeBtn) {
-            fireEvent.click(removeBtn);
-            expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({ categories: [] }));
-        }
+        expect(removeBtn).toBeInTheDocument();
+        fireEvent.click(removeBtn!);
+        expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({ categories: [] }));
     });
 
     it('should clear all filters', () => {
