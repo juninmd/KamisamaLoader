@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Download, RefreshCw, Trash2, Heart, Folder } from 'lucide-react';
+import { Download, RefreshCw, Trash2, Heart, Folder, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -17,6 +17,7 @@ interface ModCardProps {
     onUninstall?: (id: string) => void;
     onUpdate?: (mod: Mod) => void;
     onSelect?: (mod: Mod) => void;
+    onPriorityChange?: (id: string, direction: 'up' | 'down') => void;
     isUpdating?: boolean;
 }
 
@@ -29,6 +30,7 @@ export const ModCard: React.FC<ModCardProps> = ({
     onUninstall,
     onUpdate,
     onSelect,
+    onPriorityChange,
     isUpdating
 }) => {
     // Determine status for visuals
@@ -94,10 +96,15 @@ export const ModCard: React.FC<ModCardProps> = ({
                     </div>
 
                     {/* Quick Category Tag */}
-                    <div className="absolute bottom-2 left-2">
+                    <div className="absolute bottom-2 left-2 flex gap-2">
                         <Badge variant="glass" className="text-[10px] uppercase tracking-wider bg-black/60">
                             {mod.category || 'Mod'}
                         </Badge>
+                        {isInstalled && localMod?.priority !== undefined && (
+                            <Badge variant="glass" className="text-[10px] bg-blue-600/60 backdrop-blur-md">
+                                Prio: {localMod.priority}
+                            </Badge>
+                        )}
                     </div>
                 </div>
 
@@ -165,6 +172,25 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 >
                                     <RefreshCw size={14} className={isUpdating ? "animate-spin" : ""} />
                                 </Button>
+                            )}
+
+                            {onPriorityChange && (
+                                <div className="flex flex-col gap-0.5">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onPriorityChange(localMod.id, 'up'); }}
+                                        className="h-3.5 w-6 flex items-center justify-center bg-white/5 hover:bg-white/20 rounded text-xs text-gray-400 hover:text-white transition-colors"
+                                        title="Increase Priority (Move Up)"
+                                    >
+                                        <ArrowUp size={10} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onPriorityChange(localMod.id, 'down'); }}
+                                        className="h-3.5 w-6 flex items-center justify-center bg-white/5 hover:bg-white/20 rounded text-xs text-gray-400 hover:text-white transition-colors"
+                                        title="Decrease Priority (Move Down)"
+                                    >
+                                        <ArrowDown size={10} />
+                                    </button>
+                                </div>
                             )}
 
                             <Button
