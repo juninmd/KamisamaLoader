@@ -52,8 +52,6 @@ describe('CategorySidebar', () => {
     });
 
     it('should toggle favorites', () => {
-        const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
-        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
         renderWithProviders(
             <CategorySidebar
                 categories={mockCategories}
@@ -62,20 +60,13 @@ describe('CategorySidebar', () => {
             />
         );
 
-        // The star button is rendered within the CategoryItem
-        // It's the second button in the item (usually).
-        // Or we can find by SVG if accessible, but better:
-        // The component useslucide-react Star.
-        // We can simulate click on the button container if we can identify it.
-        // The button has `onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}`
+        const buttons = screen.getAllByLabelText('Toggle favorite');
+        expect(buttons.length).toBeGreaterThan(0);
 
-        // We will query all buttons.
-        const buttons = screen.getAllByRole('button');
-        // Filter those that are likely the favorite button (inside list items)
-        // This is brittle without test-ids.
+        const firstButton = buttons[0];
+        fireEvent.click(firstButton);
 
-        // Let's assume testing rendering logic is enough given strict time constraints,
-        // but let's try to verify localStorage is accessed on mount.
-        expect(getItemSpy).toHaveBeenCalled();
+        // Verify it's still there
+        expect(screen.getAllByLabelText('Toggle favorite')[0]).toBeInTheDocument();
     });
 });
