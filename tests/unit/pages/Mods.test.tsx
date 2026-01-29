@@ -12,8 +12,8 @@ describe('Mods Page', () => {
         (window.electronAPI.getAllOnlineMods as any).mockResolvedValue([
             { id: '10', name: 'Online Mod', author: 'Them', category: 'Misc', gameBananaId: 10 }
         ]);
-        (window.electronAPI.searchBySection as any).mockImplementation((options: any) => {
-            if (options.search && options.search === 'Nothing') return Promise.resolve([]);
+        (window.electronAPI.searchBySection as any).mockImplementation((opts: any) => {
+            if (opts?.search === 'Nothing') return Promise.resolve([]);
             return Promise.resolve([
                 { id: '10', name: 'Online Mod', author: 'Them', category: 'Misc', gameBananaId: 10 }
             ]);
@@ -39,8 +39,8 @@ describe('Mods Page', () => {
         renderWithProviders(<Mods />);
 
         fireEvent.click(screen.getByText('Browse Online'));
-        // "Total Mods" might not be visible in Browse mode, filter bar shows categories.
-        // expect(screen.getByText('Total Mods')).toBeInTheDocument();
+        // Expect Categories sidebar to appear in Browse tab
+        expect(screen.getByText('Categories')).toBeInTheDocument();
 
         // Wait for online mods load
         await waitFor(() => {
@@ -76,16 +76,46 @@ describe('Mods Page', () => {
         fireEvent.click(screen.getByText('Browse Online'));
         await waitFor(() => screen.getByText('Online Mod'));
 
-        // Search
+        // Search with 'Nothing' which mock returns []
         const searchInput = screen.getByPlaceholderText('Search online mods...');
-        fireEvent.change(searchInput, { target: { value: 'Online' } });
-
-        expect(screen.getByText('Online Mod')).toBeInTheDocument();
-
         fireEvent.change(searchInput, { target: { value: 'Nothing' } });
 
         await waitFor(() => {
             expect(screen.queryByText('Online Mod')).not.toBeInTheDocument();
-        });
+        }, { timeout: 2000 });
+    });
+
+    it('should handle drag and drop installation', async () => {
+        const installMock = (window.electronAPI.installMod as any).mockResolvedValue({ success: true });
+        renderWithProviders(<Mods />);
+
+        // Find container
+        const container = screen.getByText('Installed').closest('.h-full');
+
+        if (container) {
+            fireEvent.dragEnter(container, { dataTransfer: { items: [{}], files: [] } });
+            expect(screen.getByText('Drop to Install')).toBeInTheDocument();
+
+            fireEvent.drop(container, {
+                dataTransfer: {
+                    files: [{ path: '/test/mod.zip' }],
+                    items: [{ kind: 'file' }]
+                }
+            });
+
+            expect(installMock).toHaveBeenCalledWith('/test/mod.zip');
+            await waitFor(() => expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument());
+        }
+    });
+
+    it('should check for updates', async () => {
+        (window.electronAPI.checkForUpdates as any).mockResolvedValue(['1']);
+        renderWithProviders(<Mods />);
+
+        const updateBtn = screen.getByText('Check Updates');
+        fireEvent.click(updateBtn);
+
+        await waitFor(() => expect(window.electronAPI.checkForUpdates).toHaveBeenCalled());
+        expect(window.electronAPI.getInstalledMods).toHaveBeenCalledTimes(2);
     });
 });

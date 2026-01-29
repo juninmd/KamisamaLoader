@@ -31,14 +31,15 @@ export default defineConfig({
             'playwright.config.ts',
             'postcss.config.js',
             'tailwind.config.js',
-            'eslint.config.js'
+            'eslint.config.js',
+            'src/types.ts'
         ],
         all: true,
         thresholds: {
-            lines: 60,
-            functions: 55,
-            branches: 55,
-            statements: 60
+            lines: 70,
+            functions: 65,
+            branches: 65,
+            statements: 70
         }
     }
   },

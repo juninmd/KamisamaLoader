@@ -60,4 +60,85 @@ describe('FilterBar', () => {
         fireEvent.click(screen.getByText('Most Liked'));
         expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({ sortBy: 'likes' }));
     });
+
+    it('should handle date range dropdown', () => {
+        renderWithProviders(
+            <FilterBar
+                availableCategories={mockCategories}
+                activeFilters={defaultFilters}
+                onFilterChange={mockChange}
+            />
+        );
+
+        fireEvent.click(screen.getByText('All Time'));
+        expect(screen.getByText('Last Week')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('Last Week'));
+        expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({ dateRange: 'week' }));
+    });
+
+    it('should toggle categories', () => {
+        renderWithProviders(
+            <FilterBar
+                availableCategories={mockCategories}
+                activeFilters={defaultFilters}
+                onFilterChange={mockChange}
+            />
+        );
+
+        fireEvent.click(screen.getByText('Category'));
+        fireEvent.click(screen.getByText('Cat1'));
+
+        // Add
+        expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({
+            categories: expect.arrayContaining(['Cat1'])
+        }));
+    });
+
+    it('should remove category via chip', () => {
+        renderWithProviders(
+            <FilterBar
+                availableCategories={mockCategories}
+                activeFilters={{ ...defaultFilters, categories: ['Cat1'] }}
+                onFilterChange={mockChange}
+            />
+        );
+
+        // Find chip remove button
+        // Chips are rendered as "Cat1" text with an X button next to it.
+        // The X icon inside button.
+        const removeBtns = screen.getAllByRole('button');
+        // We can look for the specific button.
+        // Better: look for Cat1 text container
+
+        // The chip code:
+        // <div ...> <span>{category}</span> <button onClick...> <X /> </button> </div>
+
+        const catChip = screen.getByText('Cat1');
+        // The X button is the next sibling or we can find it by role within the container if we had one.
+        // Given the structure <div><span>Text</span><button><X/></button></div>
+        // nextElementSibling is the button.
+        const removeBtn = catChip.nextElementSibling;
+
+        expect(removeBtn).toBeInTheDocument();
+        fireEvent.click(removeBtn!);
+        expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({ categories: [] }));
+    });
+
+    it('should clear all filters', () => {
+        renderWithProviders(
+            <FilterBar
+                availableCategories={mockCategories}
+                activeFilters={{ ...defaultFilters, categories: ['Cat1'] }}
+                onFilterChange={mockChange}
+            />
+        );
+
+        fireEvent.click(screen.getByText('Clear All'));
+        expect(mockChange).toHaveBeenCalledWith(expect.objectContaining({
+            categories: [],
+            sortBy: 'downloads',
+            dateRange: 'all'
+        }));
+    });
 });

@@ -21,9 +21,17 @@ vi.mock('../../../src/components/ToastContext', () => ({
     ToastProvider: ({ children }: any) => <div>{children}</div>
 }));
 
+import { renderWithProviders, screen, fireEvent } from '../test-utils';
+
 describe('App', () => {
+    // We need to use real Layout to test navigation logic which passes setActivePage
+    // But we mocked MainLayout in the file...
+    // Let's unmock MainLayout for navigation tests or test internal state if possible.
+    // Actually, App passes `onNavigate` to Layout.
+    // If we mock Layout, we need to mock it implementation to use onNavigate.
+
     it('renders Dashboard by default', () => {
-        render(<App />);
-        expect(screen.getByText('Dashboard Page')).toBeDefined();
+        renderWithProviders(<App />);
+        expect(screen.getByText('Dashboard Page')).toBeInTheDocument();
     });
 });

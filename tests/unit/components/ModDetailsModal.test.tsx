@@ -75,4 +75,42 @@ describe('ModDetailsModal', () => {
         expect(mockInstall).toHaveBeenCalledWith(mockMod);
         expect(mockClose).toHaveBeenCalled();
     });
+
+    it('should close on x click', async () => {
+        renderWithProviders(
+            <ModDetailsModal
+                mod={mockMod}
+                isOpen={true}
+                onClose={mockClose}
+                onInstall={mockInstall}
+            />
+        );
+
+        // Find X button (usually top right)
+        // It has <X size={20} />
+        // Can find by svg or just the first button
+        const buttons = screen.getAllByRole('button');
+        fireEvent.click(buttons[0]); // Usually the first one is close
+        expect(mockClose).toHaveBeenCalled();
+    });
+
+    it('should render changelog', async () => {
+        (window.electronAPI.getModChangelog as any).mockResolvedValue([
+            { version: '1.1', date: 1600000000, text: 'Fixes' }
+        ]);
+
+        renderWithProviders(
+            <ModDetailsModal
+                mod={mockMod}
+                isOpen={true}
+                onClose={mockClose}
+                onInstall={mockInstall}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('Changelog')).toBeInTheDocument();
+            expect(screen.getByText('1.1')).toBeInTheDocument();
+        });
+    });
 });

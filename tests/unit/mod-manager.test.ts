@@ -314,4 +314,220 @@ describe('ModManager', () => {
             );
         });
     });
+
+    describe('Mod Management Actions', () => {
+        it('should toggle mod and detect conflicts', async () => {
+            const mockMods = [
+                { id: '1', name: 'Mod1', category: 'Skins', isEnabled: false },
+                { id: '2', name: 'Mod2', category: 'Skins', isEnabled: true }
+            ];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+            modManager.deployMod = vi.fn().mockResolvedValue(true);
+            modManager.undeployMod = vi.fn().mockResolvedValue(true);
+
+            const result = await modManager.toggleMod('1', true);
+            expect(result.success).toBe(true);
+            expect(result.conflict).toContain('conflicts with "Mod2"');
+            expect(modManager.deployMod).toHaveBeenCalled();
+        });
+
+        it('should disable mod', async () => {
+            const mockMods = [{ id: '1', name: 'Mod1', isEnabled: true }];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+            modManager.undeployMod = vi.fn().mockResolvedValue(true);
+
+            const result = await modManager.toggleMod('1', false);
+            expect(result.success).toBe(true);
+            expect(modManager.undeployMod).toHaveBeenCalled();
+        });
+
+        it('should uninstall mod', async () => {
+            const mockMods = [{ id: '1', name: 'Mod1', folderPath: '/mods/Mod1' }];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+            modManager.undeployMod = vi.fn().mockResolvedValue(true);
+
+            const result = await modManager.uninstallMod('1');
+            expect(result.success).toBe(true);
+            expect(modManager.undeployMod).toHaveBeenCalled();
+            expect(fs.rm).toHaveBeenCalledWith('/mods/Mod1', expect.anything());
+        });
+
+        it('should fail to uninstall non-existent mod', async () => {
+            (fs.readFile as any).mockResolvedValue('[]');
+            const result = await modManager.uninstallMod('999');
+            expect(result.success).toBe(false);
+        });
+
+        it('should set mod priority up', async () => {
+            const mockMods = [
+                { id: '1', priority: 2, isEnabled: true },
+                { id: '2', priority: 1, isEnabled: true }
+            ];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+            modManager.undeployMod = vi.fn().mockResolvedValue(true);
+            modManager.deployMod = vi.fn().mockResolvedValue(true);
+
+            // Move ID 2 UP (towards index 0, higher priority)
+            // Current sorted: 1 (p2), 2 (p1). Index of 2 is 1. Target is 0.
+            // Wait, logic says: sort descending (p2, p1).
+            // Index 0: p2(id1), Index 1: p1(id2).
+            // modId '2', direction 'up' -> targetIndex = 1 - 1 = 0.
+            const result = await modManager.setModPriority('2', 'up');
+
+            expect(result).toBe(true);
+            expect(fs.writeFile).toHaveBeenCalled();
+            // Verify redeploy called
+            expect(modManager.undeployMod).toHaveBeenCalled();
+            expect(modManager.deployMod).toHaveBeenCalled();
+        });
+
+        it('should handle setModPriority invalid id', async () => {
+            (fs.readFile as any).mockResolvedValue('[]');
+            const result = await modManager.setModPriority('999', 'up');
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('Game Launch & Misc', () => {
+        it('should launch game', async () => {
+            const exePath = '/game/SparkingZERO.exe';
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: exePath, launchArgs: '-foo' });
+            (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+
+            await modManager.launchGame();
+            expect(execFile).toHaveBeenCalledWith(
+                exePath,
+                expect.arrayContaining(['-fileopenlog', '-foo']),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('should resolve game executable from directory', async () => {
+            const dirPath = '/game';
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: dirPath });
+            (fs.stat as any).mockImplementation((p) => {
+                if (p === dirPath) return Promise.resolve({ isDirectory: () => true });
+                return Promise.resolve({ isDirectory: () => false });
+            });
+            (fs.access as any).mockResolvedValue(undefined); // Found
+
+            await modManager.launchGame();
+            expect(execFile).toHaveBeenCalledWith(
+                expect.stringContaining('SparkingZERO.exe'),
+                expect.anything(),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('should fail launch if path invalid', async () => {
+             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '' });
+             await expect(modManager.launchGame()).rejects.toThrow();
+        });
+
+        it('should handle launch execution error', async () => {
+            const exePath = '/game/SparkingZERO.exe';
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: exePath });
+            (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+
+            // Mock execFile to fail
+            (execFile as any).mockImplementation((path, args, opts, cb) => {
+                cb(new Error('Launch failed'));
+            });
+
+            // launchGame doesn't throw on exec error, it logs. We spy on console.error
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            await modManager.launchGame();
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to launch game:', expect.anything());
+        });
+    });
+
+    describe('Depoyment Fallback', () => {
+        it('should fallback to copy if link fails', async () => {
+            const mod = { id: '1', name: 'M', folderPath: '/mods/M' };
+            (fs.readdir as any).mockResolvedValue(['file.pak']);
+            (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+
+            // Mock link failure
+            (fs.link as any).mockRejectedValue({ code: 'EXDEV' });
+            (fs.copyFile as any).mockResolvedValue(undefined);
+
+            await modManager.deployMod(mod as any);
+
+            expect(fs.link).toHaveBeenCalled();
+            expect(fs.copyFile).toHaveBeenCalled();
+        });
+    });
+
+    describe('Advanced Deployment Logic', () => {
+        it('should deploy UE4SS mods correctly', async () => {
+             const mod = { id: '1', name: 'UE4SSMod', folderPath: '/mods/UE4SSMod', isEnabled: true };
+             const ue4ssPath = '/mods/UE4SSMod/ue4ss';
+             const modsDir = '/mods/UE4SSMod/ue4ss/Mods';
+             const myModDir = '/mods/UE4SSMod/ue4ss/Mods/MyMod';
+             const modDllPath = '/mods/UE4SSMod/ue4ss/Mods/MyMod/main.dll';
+
+             // Mock recursive file scan
+             (fs.readdir as any).mockImplementation((dir) => {
+                 if (dir === mod.folderPath) return Promise.resolve(['ue4ss']);
+                 if (dir === ue4ssPath) return Promise.resolve(['Mods']);
+                 if (dir === modsDir) return Promise.resolve(['MyMod']);
+                 if (dir === myModDir) return Promise.resolve(['main.dll']);
+                 return Promise.resolve([]);
+             });
+
+             (fs.stat as any).mockImplementation((p) => {
+                 if (p === mod.folderPath || p === ue4ssPath || p === modsDir || p === myModDir) {
+                     return Promise.resolve({ isDirectory: () => true });
+                 }
+                 return Promise.resolve({ isDirectory: () => false });
+             });
+
+             // Mock reading mods.txt
+             (fs.readFile as any).mockImplementation((path) => {
+                 if (path.includes('mods.txt')) return Promise.resolve('OtherMod : 1\n');
+                 return Promise.resolve('[]');
+             });
+
+             await modManager.deployMod(mod as any);
+
+             // Check if file was deployed to Binaries/Win64/...
+             // path relative to ue4ss: Mods/MyMod/main.dll
+             // Dest: .../Binaries/Win64/Mods/MyMod/main.dll
+             expect(fs.link).toHaveBeenCalledWith(
+                 modDllPath,
+                 expect.stringContaining('Binaries')
+             );
+
+             // Check if mods.txt updated
+             expect(fs.writeFile).toHaveBeenCalledWith(
+                 expect.stringContaining('mods.txt'),
+                 expect.stringContaining('MyMod : 1')
+             );
+        });
+
+        it('should deploy LogicMods correctly', async () => {
+             const mod = { id: '1', name: 'Logic', folderPath: '/mods/Logic', isEnabled: true };
+             const logicDir = '/mods/Logic/LogicMods';
+             const pakPath = '/mods/Logic/LogicMods/logic.pak';
+
+             (fs.readdir as any).mockImplementation((dir) => {
+                 if (dir === mod.folderPath) return Promise.resolve(['LogicMods']);
+                 if (dir === logicDir) return Promise.resolve(['logic.pak']);
+                 return Promise.resolve([]);
+             });
+             (fs.stat as any).mockImplementation((p) => {
+                 if (p === mod.folderPath || p === logicDir) return Promise.resolve({ isDirectory: () => true });
+                 return Promise.resolve({ isDirectory: () => false });
+             });
+
+             await modManager.deployMod(mod as any);
+
+             expect(fs.link).toHaveBeenCalledWith(
+                 pakPath,
+                 expect.stringContaining('LogicMods')
+             );
+        });
+    });
 });
