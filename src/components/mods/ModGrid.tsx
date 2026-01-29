@@ -13,6 +13,7 @@ interface ModGridProps {
     onUninstall?: (id: string) => void;
     onUpdate?: (mod: Mod) => void;
     onSelect?: (mod: Mod) => void;
+    onPriorityChange?: (id: string, direction: 'up' | 'down') => void;
     updatingMods?: string[];
     className?: string;
 }
@@ -26,6 +27,7 @@ export const ModGrid: React.FC<ModGridProps> = ({
     onUninstall,
     onUpdate,
     onSelect,
+    onPriorityChange,
     updatingMods = [],
     className
 }) => {
@@ -81,6 +83,7 @@ export const ModGrid: React.FC<ModGridProps> = ({
                         onUninstall={onUninstall}
                         onUpdate={onUpdate}
                         onSelect={onSelect}
+                        onPriorityChange={onPriorityChange}
                         isUpdating={effectiveLocalMod ? updatingMods.includes(effectiveLocalMod.id) : false}
                     />
                 );

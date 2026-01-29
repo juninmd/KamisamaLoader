@@ -94,6 +94,27 @@ const Settings: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
+                    <h3 className="text-lg font-medium text-gray-200">Background Opacity</h3>
+                    <div className="flex items-center space-x-4">
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={settings.backgroundOpacity !== undefined ? settings.backgroundOpacity : 0.7}
+                            onChange={(e) => updateSettings({ backgroundOpacity: parseFloat(e.target.value) })}
+                            className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-sm font-medium text-gray-300 w-12">
+                            {Math.round((settings.backgroundOpacity !== undefined ? settings.backgroundOpacity : 0.7) * 100)}%
+                        </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        Adjust the visibility of the background image overlay. Lower is more visible.
+                    </p>
+                </div>
+
+                <div className="space-y-2">
                     <h3 className="text-lg font-medium text-gray-200">Launch Arguments</h3>
                     <div className="flex space-x-2">
                         <input

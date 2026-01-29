@@ -48,7 +48,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activePage, onNavigat
         >
             {/* Background Overlay for readability if image is set */}
             {settings.backgroundImage && (
-                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
+                <div
+                    className="absolute inset-0 bg-black backdrop-blur-sm z-0"
+                    style={{ opacity: settings.backgroundOpacity !== undefined ? settings.backgroundOpacity : 0.7 }}
+                />
             )}
 
             {/* Glass Sidebar */}

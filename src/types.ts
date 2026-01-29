@@ -20,6 +20,7 @@ export interface Mod {
     submitter?: string;
     submitterUrl?: string;
     isNsfw?: boolean;
+    priority?: number;
     // Client-side only properties
     isInstalled?: boolean;
     fileSize?: number;
