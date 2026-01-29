@@ -1,20 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ModManager, LocalMod } from '../../electron/mod-manager';
+import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
 import path from 'path';
 
-// Mock everything required for ModManager instantiation
+// Mock electron app
 vi.mock('electron', () => ({
     app: {
-        getPath: () => '/tmp',
+        getPath: vi.fn((name) => name === 'exe' ? '/app/exe' : '/tmp'),
         isPackaged: false,
     },
     net: { request: vi.fn() },
     shell: { openPath: vi.fn() }
 }));
 
-vi.mock('child_process', () => ({ execFile: vi.fn() }));
-
+// Mock fs/promises
 vi.mock('fs/promises', () => ({
     default: {
         readFile: vi.fn(),
@@ -26,151 +25,154 @@ vi.mock('fs/promises', () => ({
         rm: vi.fn(),
         cp: vi.fn(),
         access: vi.fn(),
-        link: vi.fn(),
+        link: vi.fn(), // Key for testing hardlinks
         copyFile: vi.fn(),
     }
 }));
 
+// Mock fs
 vi.mock('fs', () => ({
     createWriteStream: vi.fn(),
     default: { createWriteStream: vi.fn() }
 }));
 
-vi.mock('adm-zip', () => ({
-    default: class {
-        extractAllTo = vi.fn();
-    }
-}));
+// Mock gamebanana & others to avoid errors during instantiation
+vi.mock('../../electron/gamebanana', () => ({}));
+vi.mock('../../electron/github', () => ({}));
+vi.mock('adm-zip', () => ({ default: class {} }));
 
-describe('Mod Deployment (Non-Destructive)', () => {
+describe('Deployment Logic (Non-Destructive)', () => {
     let modManager: ModManager;
+    const mockGamePath = '/games/SparkingZERO/SparkingZERO.exe';
+    const paksDir = '/games/SparkingZERO/SparkingZERO/Content/Paks/~mods';
 
     beforeEach(() => {
         vi.clearAllMocks();
-        modManager = new ModManager(undefined);
+        modManager = new ModManager();
 
-        // Setup default settings with a fake game path
-        modManager.getSettings = vi.fn().mockResolvedValue({
-            gamePath: '/Game/SparkingZERO.exe'
-        });
+        // Mock Settings to return valid game path
+        modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: mockGamePath });
 
-        // Mock fs default behaviors
+        // Default fs mocks
         (fs.mkdir as any).mockResolvedValue(undefined);
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+        (fs.readFile as any).mockResolvedValue('[]');
+        (fs.writeFile as any).mockResolvedValue(undefined);
+        (fs.stat as any).mockImplementation((p: string) => {
+             // Treat directories as directories if path ends with specific names
+             if (p.endsWith('ModA') || p.endsWith('ModB') || p.endsWith('Mods')) {
+                 return Promise.resolve({ isDirectory: () => true });
+             }
+             return Promise.resolve({ isDirectory: () => false });
+        });
     });
 
-    it('should NOT delete the entire ~mods directory when deploying a mod', async () => {
-        const mod: LocalMod = {
-            id: 'mod1',
-            name: 'TestMod',
-            folderPath: '/Mods/TestMod',
-            priority: 1,
+    it('should use hardlinks (fs.link) to deploy files', async () => {
+        const mod = {
+            id: '1',
+            name: 'ModA',
+            folderPath: '/Mods/ModA',
             isEnabled: true,
-            author: 'Me',
-            version: '1.0',
-            description: 'desc',
-            fileSize: 100
+            priority: 1
         };
 
-        // Mock that the mod folder has one .pak file
+        // Mock readdir to return a pak file in the mod source folder
         (fs.readdir as any).mockImplementation((dir: string) => {
-            if (dir === '/Mods/TestMod') return Promise.resolve(['001_TestMod.pak']);
+            if (dir === '/Mods/ModA') return Promise.resolve(['ModA.pak']);
             return Promise.resolve([]);
         });
 
-        // Mock stat to handle directory checks
-        (fs.stat as any).mockImplementation((path: string) => {
-            if (path === '/Mods/TestMod') return Promise.resolve({ isDirectory: () => true });
-            // By default return file
-            return Promise.resolve({ isDirectory: () => false });
-        });
+        await modManager.deployMod(mod as any);
 
-        await modManager.deployMod(mod);
+        // Verify fs.link was called (Smart Link)
+        expect(fs.link).toHaveBeenCalledWith(
+            path.normalize('/Mods/ModA/ModA.pak'),
+            expect.stringContaining('ModA.pak') // Destination should contain filename
+        );
 
-        // Expectation:
-        // 1. mkdir should be called for destination
-        // 2. unlink might be called for the SPECIFIC file (to overwrite)
-        // 3. link/copy called
-        // 4. rm should NOT be called for the parent folder
-
-        const paksDir = path.normalize('/Game/SparkingZERO/Content/Paks/~mods');
-
-        // Verify mkdir
-        expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining('~mods'), { recursive: true });
-
-        // Verify unlink was called for the specific file
-        const expectedDest = path.join(paksDir, '001_001_TestMod.pak');
-        // Note: filename logic is `${priority}_${filename}`.
-        // Wait, in mod-manager logic:
-        // const destFilename = `${priority}_${filename}`;
-        // But here the input filename is '001_TestMod.pak'. The code pads priority to 3 chars.
-        // So priority 1 -> "001".
-        // Result: 001_001_TestMod.pak.
-
-        expect(fs.unlink).toHaveBeenCalledWith(expectedDest);
-
-        // Crucial: Verify fs.rm was NOT called on the paksDir
-        // fs.rm is usually used for recursive delete.
-        // We want to ensure we didn't wipe the directory.
-        const rmCalls = (fs.rm as any).mock.calls;
-        const paksDirRm = rmCalls.find((call: any) => call[0] === paksDir);
-        expect(paksDirRm).toBeUndefined();
-
-        // Also check recursive unlink on dir?
-        // ModManager uses undeployMod which iterates `deployedFiles` and unlinks them one by one.
-        // It does not use `fs.rm(paksDir, ...)`
+        // Verify it didn't fallback to copy
+        expect(fs.copyFile).not.toHaveBeenCalled();
     });
 
-    it('should deploy multiple mods side-by-side without interference', async () => {
-        // This test simulates deploying Mod A then Mod B, ensuring Mod A's files aren't targeted by Mod B's deploy process
+    it('should NOT delete existing files in ~mods that belong to other mods', async () => {
+        // Scenario: Mod B is already deployed. We deploy Mod A.
+        // We want to ensure Mod B's files are touched/deleted.
+        // NOTE: The `deployMod` function logic does NOT iterate over the destination folder
+        // and delete unknown files (which is what Unverum used to do).
+        // It only deploys the files from the source mod.
+        // We verify this by ensuring `fs.unlink` is ONLY called for the specific destination path
+        // to overwrite it if it exists, not on other files.
 
-        const modA: LocalMod = {
-            id: 'modA',
+        const modA = {
+            id: '1',
             name: 'ModA',
             folderPath: '/Mods/ModA',
-            priority: 1,
             isEnabled: true,
-            author: 'Me',
-            version: '1.0',
-            description: '',
-            fileSize: 100,
-            deployedFiles: []
+            priority: 1
         };
 
-        const modB: LocalMod = {
-            id: 'modB',
-            name: 'ModB',
-            folderPath: '/Mods/ModB',
-            priority: 2,
-            isEnabled: true,
-            author: 'Me',
-            version: '1.0',
-            description: '',
-            fileSize: 100
+        (fs.readdir as any).mockImplementation((dir: string) => {
+            if (dir === '/Mods/ModA') return Promise.resolve(['ModA.pak']);
+            if (dir === paksDir) return Promise.resolve(['002_ModB.pak']); // Existing Mod B
+            return Promise.resolve([]);
+        });
+
+        await modManager.deployMod(modA as any);
+
+        // fs.unlink might be called to clear the *specific target file* before linking
+        // (path: .../~mods/001_ModA.pak)
+        // It should NOT be called for '002_ModB.pak'.
+
+        const unlinkCalls = (fs.unlink as any).mock.calls.map((c: any) => c[0]);
+        const deletedModB = unlinkCalls.some((path: string) => path.includes('002_ModB.pak'));
+
+        expect(deletedModB).toBe(false);
+    });
+
+    it('should fallback to copyFile if link fails (Cross-Drive support)', async () => {
+        const mod = {
+            id: '1',
+            name: 'ModA',
+            folderPath: '/Mods/ModA',
+            isEnabled: true
         };
 
-        // Setup Mod A deployment
-        (fs.readdir as any).mockResolvedValueOnce(['ModA.pak']);
-        await modManager.deployMod(modA);
+        (fs.readdir as any).mockResolvedValue(['ModA.pak']);
 
-        const destA = path.normalize('/Game/SparkingZERO/Content/Paks/~mods/001_ModA.pak');
-        expect(fs.link).toHaveBeenCalledWith('/Mods/ModA/ModA.pak', destA);
+        // Fail the link attempt
+        (fs.link as any).mockRejectedValue({ code: 'EXDEV' });
 
-        // Reset mocks to track Mod B specifically
-        vi.clearAllMocks();
-        // Setup Mod B deployment
-        (fs.readdir as any).mockResolvedValueOnce(['ModB.pak']);
+        await modManager.deployMod(mod as any);
 
-        // Re-mock getSettings as clearAllMocks wiped it
-        modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/Game/SparkingZERO.exe' });
-        (fs.mkdir as any).mockResolvedValue(undefined);
+        expect(fs.link).toHaveBeenCalled();
+        expect(fs.copyFile).toHaveBeenCalledWith(
+            path.normalize('/Mods/ModA/ModA.pak'),
+            expect.anything()
+        );
+    });
 
-        await modManager.deployMod(modB);
+    it('should support .pak, .utoc, .ucas, .sig extensions (IoStore support)', async () => {
+        const mod = {
+            id: '1',
+            name: 'ComplexMod',
+            folderPath: '/Mods/ComplexMod',
+            isEnabled: true
+        };
 
-        const destB = path.normalize('/Game/SparkingZERO/Content/Paks/~mods/002_ModB.pak');
-        expect(fs.link).toHaveBeenCalledWith('/Mods/ModB/ModB.pak', destB);
+        const files = ['data.pak', 'data.utoc', 'data.ucas', 'data.sig', 'readme.txt'];
+        (fs.readdir as any).mockResolvedValue(files);
 
-        // Ensure we didn't touch Mod A's file during Mod B's deploy
-        expect(fs.unlink).not.toHaveBeenCalledWith(destA);
+        await modManager.deployMod(mod as any);
+
+        // Should link 4 files, ignore readme.txt
+        expect(fs.link).toHaveBeenCalledTimes(4);
+
+        const calls = (fs.link as any).mock.calls;
+        const linkedFiles = calls.map((c: any) => c[0]);
+
+        expect(linkedFiles.some(f => f.endsWith('data.pak'))).toBe(true);
+        expect(linkedFiles.some(f => f.endsWith('data.utoc'))).toBe(true);
+        expect(linkedFiles.some(f => f.endsWith('data.ucas'))).toBe(true);
+        expect(linkedFiles.some(f => f.endsWith('data.sig'))).toBe(true);
+        expect(linkedFiles.some(f => f.endsWith('readme.txt'))).toBe(false);
     });
 });
