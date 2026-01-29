@@ -802,7 +802,8 @@ export class ModManager {
             if (this.downloadManager) {
                 return new Promise((resolve) => {
                     const fileName = `update_${mod.id}.zip`;
-                    const id = this.downloadManager!.startDownload(mod.latestFileUrl, tempDir, fileName, { type: 'update', modId });
+                    const downloadUrl = mod.latestFileUrl!;
+                    const id = this.downloadManager!.startDownload(downloadUrl, tempDir, fileName, { type: 'update', modId });
 
                     const onComplete = async (dlId: string) => {
                         if (dlId === id) {
@@ -840,7 +841,7 @@ export class ModManager {
 
             await fs.unlink(tempFile);
 
-            mod.version = mod.latestVersion;
+            mod.version = mod.latestVersion || mod.version;
             mod.hasUpdate = false;
 
             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
@@ -979,6 +980,10 @@ export class ModManager {
                             const existingIdx = mods.findIndex((m: LocalMod) => m.gameBananaId === mod.gameBananaId);
                             const size = await this.calculateFolderSize(modDestDir);
 
+                            // Calculate new priority (highest + 1)
+                            const maxPriority = mods.reduce((max: number, m: LocalMod) => Math.max(max, m.priority || 0), 0);
+                            const newPriority = maxPriority + 1;
+
                             const newModEntry: LocalMod = {
                                 id: existingIdx !== -1 ? mods[existingIdx].id : Date.now().toString(),
                                 name: mod.name,
@@ -987,6 +992,7 @@ export class ModManager {
                                 description: mod.description,
                                 isEnabled: true,
                                 folderPath: modDestDir,
+                                priority: existingIdx !== -1 ? (mods[existingIdx].priority || newPriority) : newPriority,
                                 gameBananaId: mod.gameBananaId,
                                 iconUrl: mod.iconUrl,
                                 latestFileId: latestFile._idRow,
@@ -1043,7 +1049,7 @@ export class ModManager {
             }
 
             console.log(`[ModManager] Found gameBananaId: ${mod.gameBananaId} for modId: ${id}`);
-            return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId));
+            return await import('./gamebanana.js').then(m => m.fetchModUpdates(mod.gameBananaId!));
         } catch (error) {
             console.error(`[ModManager] Error in getModChangelog for id: ${id}`, error);
             return null;
