@@ -5,6 +5,7 @@ interface Settings {
     modDownloadPath?: string;
     backgroundImage?: string;
     launchArgs?: string;
+    backgroundOpacity?: number;
 }
 
 interface SettingsContextType {
