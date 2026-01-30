@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   test: {
+    globals: true,
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}', 'tests/integration.spec.ts'],
     exclude: ['tests/electron.spec.ts', 'tests/full_system.spec.ts', 'node_modules', 'dist'],
     environment: 'node', // Default to node for backend/integration

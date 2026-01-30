@@ -1,10 +1,9 @@
 import { vi, afterEach, expect } from 'vitest';
-import * as matchers from '@testing-library/jest-dom/matchers';
-
-expect.extend(matchers);
+import '@testing-library/jest-dom'; // Side-effect import for auto-extend
 
 // Conditional setup for DOM environment
 if (typeof window !== 'undefined') {
+  // Use dynamic import for cleanup to avoid import errors in non-DOM envs if any
   const { cleanup } = await import('@testing-library/react');
 
   // Cleanup React components after each test

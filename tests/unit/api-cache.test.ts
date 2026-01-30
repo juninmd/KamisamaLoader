@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { APICache } from '../../electron/api-cache';
 import fs from 'fs/promises';
-import { app } from 'electron';
 
 vi.mock('fs/promises', () => ({
     default: {
