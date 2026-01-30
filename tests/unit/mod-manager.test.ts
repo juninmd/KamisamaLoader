@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
-import { app } from 'electron';
 import { execFile } from 'child_process';
 import path from 'path';
 

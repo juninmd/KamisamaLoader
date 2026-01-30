@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
-import { render, screen } from '@testing-library/react';
 import App from '../../../src/App';
 import { describe, it, expect, vi } from 'vitest';
+import { renderWithProviders, screen } from '../test-utils';
 
 // Mock child components to avoid deep rendering issues
 vi.mock('../../../src/pages/Dashboard', () => ({ default: () => <div>Dashboard Page</div> }));
@@ -20,8 +20,6 @@ vi.mock('../../../src/components/SettingsContext', () => ({
 vi.mock('../../../src/components/ToastContext', () => ({
     ToastProvider: ({ children }: any) => <div>{children}</div>
 }));
-
-import { renderWithProviders, screen, fireEvent } from '../test-utils';
 
 describe('App', () => {
     // We need to use real Layout to test navigation logic which passes setActivePage
