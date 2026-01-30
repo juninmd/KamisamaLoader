@@ -28,7 +28,7 @@ jobs:
     - name: Install dependencies
       run: pnpm install
 
-    - name: Run Unit Tests
+    - name: Run Unit Tests with Coverage Enforced
       run: pnpm run test:unit --coverage
 
     - name: Build

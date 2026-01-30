@@ -19,7 +19,7 @@ describe('ModDetailsModal', () => {
         (window.electronAPI.getModChangelog as any).mockResolvedValue([]);
         (window.electronAPI.getModDetails as any).mockResolvedValue({
             description: '<p>Desc</p>',
-            images: ['img1.jpg', 'img2.jpg']
+            images: ['img1.jpg', 'img2.jpg', 'img3.jpg']
         });
     });
 
@@ -54,11 +54,9 @@ describe('ModDetailsModal', () => {
             expect(imgs.length).toBeGreaterThan(0);
         });
 
-        // Find next button (ChevronRight)
-        // Usually buttons inside the image container.
-        // We can query by role button.
         const buttons = screen.getAllByRole('button');
-        // Assuming navigation buttons are present
+        // Just verify buttons exist
+        expect(buttons.length).toBeGreaterThan(1);
     });
 
     it('should trigger install', () => {
@@ -86,11 +84,8 @@ describe('ModDetailsModal', () => {
             />
         );
 
-        // Find X button (usually top right)
-        // It has <X size={20} />
-        // Can find by svg or just the first button
         const buttons = screen.getAllByRole('button');
-        fireEvent.click(buttons[0]); // Usually the first one is close
+        fireEvent.click(buttons[0]);
         expect(mockClose).toHaveBeenCalled();
     });
 
@@ -111,6 +106,43 @@ describe('ModDetailsModal', () => {
         await waitFor(() => {
             expect(screen.getByText('Changelog')).toBeInTheDocument();
             expect(screen.getByText('1.1')).toBeInTheDocument();
+        });
+    });
+
+    it('should handle fetch errors gracefully', async () => {
+         (window.electronAPI.getModDetails as any).mockRejectedValue(new Error('Fail'));
+         renderWithProviders(
+            <ModDetailsModal
+                mod={mockMod}
+                isOpen={true}
+                onClose={mockClose}
+                onInstall={mockInstall}
+            />
+        );
+
+        await waitFor(() => {
+             expect(screen.getByText('Goku Mod')).toBeInTheDocument();
+        });
+    });
+
+    it('should fallback to iconUrl if no images', async () => {
+         (window.electronAPI.getModDetails as any).mockResolvedValue({
+             description: 'Desc',
+             images: []
+         });
+         const modWithIcon = { ...mockMod, iconUrl: 'icon.png' };
+         renderWithProviders(
+            <ModDetailsModal
+                mod={modWithIcon}
+                isOpen={true}
+                onClose={mockClose}
+                onInstall={mockInstall}
+            />
+        );
+
+        await waitFor(() => {
+             const img = screen.getByAltText('Goku Mod') as HTMLImageElement;
+             expect(img.src).toContain('icon.png');
         });
     });
 });
