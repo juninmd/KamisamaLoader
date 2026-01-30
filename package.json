@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "main": "dist-electron/main.js",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:electron\" \"npm run dev:vite\"",
     "dev:vite": "vite",

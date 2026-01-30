@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
-import { app } from 'electron';
 import { execFile } from 'child_process';
 import path from 'path';
 
@@ -44,6 +43,7 @@ vi.mock('fs/promises', () => ({
         unlink: vi.fn(),
         readdir: vi.fn(),
         rm: vi.fn(),
+        rmdir: vi.fn(),
         cp: vi.fn(),
         access: vi.fn(),
         link: vi.fn(),
@@ -528,6 +528,42 @@ describe('ModManager', () => {
                  pakPath,
                  expect.stringContaining('LogicMods')
              );
+        });
+    });
+
+    describe('Non-destructive Deployment', () => {
+        it('should NOT wipe the destination directory on deploy', async () => {
+            const mod = { id: '1', name: 'SafeMod', folderPath: '/mods/SafeMod', isEnabled: true };
+            const pakPath = '/mods/SafeMod/safe.pak';
+
+            // Mock source file existence
+            (fs.readdir as any).mockImplementation((dir) => {
+                if (dir === mod.folderPath) return Promise.resolve(['safe.pak']);
+                return Promise.resolve([]);
+            });
+            (fs.stat as any).mockImplementation((p) => {
+                if (p === mod.folderPath) return Promise.resolve({ isDirectory: () => true });
+                return Promise.resolve({ isDirectory: () => false });
+            });
+
+            // Mock destination directory (~mods) cleanup check
+            // We want to ensure fs.rm or fs.rmdir is NOT called on the paksDir
+            const rmSpy = vi.spyOn(fs, 'rm');
+            const rmdirSpy = vi.spyOn(fs, 'rmdir');
+
+            await modManager.deployMod(mod as any);
+
+            // It should link the new file
+            expect(fs.link).toHaveBeenCalledWith(
+                pakPath,
+                expect.stringContaining('~mods')
+            );
+
+            // It should NOT wipe the directory
+            // Note: We might see fs.unlink for the specific destination file (to overwrite),
+            // but we should NOT see recursive removal of the parent folder.
+            expect(rmSpy).not.toHaveBeenCalledWith(expect.stringContaining('~mods'), expect.objectContaining({ recursive: true }));
+            expect(rmdirSpy).not.toHaveBeenCalledWith(expect.stringContaining('~mods'), expect.anything());
         });
     });
 });
