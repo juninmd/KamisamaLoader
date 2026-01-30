@@ -2,23 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DownloadManager } from '../../electron/download-manager';
 import { EventEmitter } from 'events';
 import fs from 'fs';
-import { net, BrowserWindow } from 'electron';
 
 // Mock electron
-vi.mock('electron', () => {
-    const mockShell = { showItemInFolder: vi.fn() };
-    return {
-        net: { request: vi.fn() },
-        BrowserWindow: vi.fn(),
-        shell: mockShell,
-        // Ensure require('electron') works for destructuring
-        default: {
-            net: { request: vi.fn() },
-            BrowserWindow: vi.fn(),
-            shell: mockShell
-        }
-    };
-});
+const mockElectron = vi.hoisted(() => ({
+    net: { request: vi.fn() },
+    BrowserWindow: vi.fn(),
+    shell: { showItemInFolder: vi.fn() },
+}));
+
+vi.mock('electron', () => ({
+    net: mockElectron.net,
+    BrowserWindow: mockElectron.BrowserWindow,
+    shell: mockElectron.shell,
+    default: mockElectron
+}));
 
 // Mock fs
 vi.mock('fs', () => ({
@@ -50,7 +47,7 @@ describe('DownloadManager', () => {
         mockRequest = new EventEmitter();
         mockRequest.end = vi.fn();
         mockRequest.abort = vi.fn();
-        (net.request as any).mockReturnValue(mockRequest);
+        (mockElectron.net.request as any).mockReturnValue(mockRequest);
 
         // Setup Response Mock
         mockResponse = new EventEmitter() as any;
@@ -77,7 +74,7 @@ describe('DownloadManager', () => {
     it('should start a download', () => {
         const id = manager.startDownload('http://test.com', '/tmp', 'test.zip');
         expect(id).toBeDefined();
-        expect(net.request).toHaveBeenCalledWith({ url: 'http://test.com', method: 'GET' });
+        expect(mockElectron.net.request).toHaveBeenCalledWith({ url: 'http://test.com', method: 'GET' });
         expect(mockRequest.end).toHaveBeenCalled();
 
         const downloads = manager.getDownloads();
@@ -156,8 +153,8 @@ describe('DownloadManager', () => {
         mockRequest.emit('response', mockResponse);
 
         // Should trigger a second request
-        expect(net.request).toHaveBeenCalledTimes(2);
-        expect(net.request).toHaveBeenLastCalledWith(expect.objectContaining({ url: 'http://redirect.com' }));
+        expect(mockElectron.net.request).toHaveBeenCalledTimes(2);
+        expect(mockElectron.net.request).toHaveBeenLastCalledWith(expect.objectContaining({ url: 'http://redirect.com' }));
     });
 
     it('should pause and resume download', () => {
@@ -176,7 +173,7 @@ describe('DownloadManager', () => {
         downloads = manager.getDownloads();
         expect(downloads[0].state).toBe('progressing');
         // Should resume with Range header
-        expect(net.request).toHaveBeenLastCalledWith(expect.objectContaining({
+        expect(mockElectron.net.request).toHaveBeenLastCalledWith(expect.objectContaining({
             headers: { 'Range': 'bytes=100-' }
         }));
     });
