@@ -134,12 +134,14 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                                 <button
                                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
                                     className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all z-10"
+                                    data-testid="prev-image"
                                 >
                                     <ChevronLeft size={24} />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); nextImage(); }}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all z-10"
+                                    data-testid="next-image"
                                 >
                                     <ChevronRight size={24} />
                                 </button>
@@ -151,6 +153,7 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                                             key={idx}
                                             onClick={() => setCurrentImageIndex(idx)}
                                             className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'}`}
+                                            aria-label={`View image ${idx + 1}`}
                                         />
                                     ))}
                                 </div>
