@@ -3,32 +3,25 @@ import { _electron as electron, ElectronApplication } from 'playwright';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Fix __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let electronApp: ElectronApplication;
 
 test.beforeAll(async () => {
-    const mainScriptPath = path.join(__dirname, '../dist-electron/main.js');
-    console.log('Launching Electron with main script:', mainScriptPath);
-
     // Launch Electron app.
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.cjs')],
+        args: [path.join(__dirname, '../dist-electron/main.js'), '--no-sandbox'],
         // Add debugging environment variable if needed
         env: {
             ...process.env,
             // NODE_ENV: 'test' 
-        },
-        timeout: 30000 // Explicit launch timeout
+        }
     });
 });
 
 test.afterAll(async () => {
-    if (electronApp) {
-        await electronApp.close();
-    }
+    await electronApp.close();
 });
 
 test('Application launch', async () => {

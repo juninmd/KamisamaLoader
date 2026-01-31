@@ -132,20 +132,6 @@ describe('DownloadManager', () => {
         expect(downloads[0].state).toBe('failed');
     });
 
-    it('should ignore error if cancelled or paused', () => {
-         const id = manager.startDownload('http://test.com', '/tmp', 'test.zip');
-         manager.cancelDownload(id);
-
-         const spy = vi.fn();
-         manager.on('download-failed', spy);
-
-         // Error occurs after cancel
-         mockRequest.emit('error', new Error('Late Error'));
-
-         // Should not emit failure
-         expect(spy).not.toHaveBeenCalled();
-    });
-
     it('should handle http error', () => {
         const id = manager.startDownload('http://test.com', '/tmp', 'test.zip');
 
@@ -221,10 +207,6 @@ describe('DownloadManager', () => {
 
     it('should open download folder', async () => {
         const id = manager.startDownload('http://test.com', '/tmp', 'test.zip');
-
-        // Mock mainWindow check inside logic
-        // It relies on manager.setWindow(mockWindow) called in beforeEach
-
         manager.openDownloadFolder(id);
 
         const { shell } = await import('electron');

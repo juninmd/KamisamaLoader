@@ -2,11 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['electron.spec.ts', 'full_system.spec.ts'], // Only run explicit E2E tests
-  testIgnore: ['unit/**', 'integration.spec.ts'], // Explicitly ignore unit and vitest integration tests
-  timeout: 60000, // Increased timeout for CI
+  timeout: 120000,
   expect: {
-    timeout: 15000,
+    timeout: 10000,
   },
   // Run your local dev server before starting the tests
   webServer: {
@@ -25,6 +23,9 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  retries: 2, // Add retries for stability
+  retries: 0,
   workers: 1,
+  use: {
+    trace: 'on-first-retry',
+  },
 });
