@@ -400,7 +400,7 @@ export class ModManager {
         const zip = new AdmZip(buffer);
 
         return new Promise((resolve, reject) => {
-            zip.extractAllToAsync(dest, true, (error) => {
+            zip.extractAllToAsync(dest, true, false, (error) => {
                 if (error) {
                     reject(error);
                 } else {

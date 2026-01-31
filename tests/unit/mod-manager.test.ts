@@ -80,7 +80,7 @@ vi.mock('adm-zip', () => {
         default: class {
             constructor() { }
             extractAllTo = vi.fn();
-            extractAllToAsync = vi.fn((dest, overwrite, cb) => {
+            extractAllToAsync = vi.fn((dest, overwrite, keepPerms, cb) => {
                 if (cb) cb(null);
             });
         }
