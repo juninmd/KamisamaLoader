@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('downloads-update', subscription);
   },
   updateMod: (modId: string) => ipcRenderer.invoke('update-mod', modId),
+  updateAllMods: (modIds: string[]) => ipcRenderer.invoke('update-all-mods', modIds),
 
   // Online Mods
   searchOnlineMods: (page: number, search?: string) => ipcRenderer.invoke('search-online-mods', page, search),
