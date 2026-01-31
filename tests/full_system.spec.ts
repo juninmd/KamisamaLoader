@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Fix __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let electronApp: ElectronApplication;
 let window: Page;
@@ -10,9 +15,11 @@ test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async () => {
     console.log('Launching Electron...');
+    const mainScriptPath = path.join(__dirname, '../dist-electron/main.js');
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.js')],
-        env: { ...process.env, NODE_ENV: 'test' }
+        args: [mainScriptPath],
+        env: { ...process.env, NODE_ENV: 'test' },
+        timeout: 30000
     });
     window = await electronApp.firstWindow();
     await window.waitForLoadState('domcontentloaded');
@@ -28,7 +35,9 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
     console.log('Closing Electron...');
-    await electronApp.close();
+    if (electronApp) {
+        await electronApp.close();
+    }
 });
 
 test('01. Dashboard Loads and Navigation', async () => {

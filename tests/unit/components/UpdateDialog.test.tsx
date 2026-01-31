@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from 'vitest';
-import { renderWithProviders, screen, fireEvent } from '../test-utils';
+import { renderWithProviders, screen, fireEvent, act } from '../test-utils';
 import UpdateDialog from '../../../src/components/UpdateDialog';
 
 describe('UpdateDialog', () => {
@@ -17,46 +17,55 @@ describe('UpdateDialog', () => {
     const mockUpdate = vi.fn();
     const mockClose = vi.fn();
 
-    it('should render updates', () => {
-        renderWithProviders(
-            <UpdateDialog
-                mod={mockMod}
-                changelog={mockChangelog}
-                isUpdating={false}
-                onUpdate={mockUpdate}
-                onClose={mockClose}
-            />
-        );
+    it('should render updates', async () => {
+        await act(async () => {
+            renderWithProviders(
+                <UpdateDialog
+                    mod={mockMod}
+                    changelog={mockChangelog}
+                    isUpdating={false}
+                    onUpdate={mockUpdate}
+                    onClose={mockClose}
+                />
+            );
+        });
 
         expect(screen.getByText('New: v2.0')).toBeInTheDocument();
         expect(screen.getByText('New feature')).toBeInTheDocument();
     });
 
-    it('should trigger update', () => {
-        renderWithProviders(
-            <UpdateDialog
-                mod={mockMod}
-                changelog={mockChangelog}
-                isUpdating={false}
-                onUpdate={mockUpdate}
-                onClose={mockClose}
-            />
-        );
+    it('should trigger update', async () => {
+        await act(async () => {
+             renderWithProviders(
+                <UpdateDialog
+                    mod={mockMod}
+                    changelog={mockChangelog}
+                    isUpdating={false}
+                    onUpdate={mockUpdate}
+                    onClose={mockClose}
+                />
+            );
+        });
 
-        fireEvent.click(screen.getByText('Yes, Update'));
+        const updateBtn = screen.getByText('Yes, Update');
+        await act(async () => {
+            fireEvent.click(updateBtn);
+        });
         expect(mockUpdate).toHaveBeenCalled();
     });
 
-    it('should show updating state', () => {
-        renderWithProviders(
-            <UpdateDialog
-                mod={mockMod}
-                changelog={mockChangelog}
-                isUpdating={true}
-                onUpdate={mockUpdate}
-                onClose={mockClose}
-            />
-        );
+    it('should show updating state', async () => {
+        await act(async () => {
+             renderWithProviders(
+                <UpdateDialog
+                    mod={mockMod}
+                    changelog={mockChangelog}
+                    isUpdating={true}
+                    onUpdate={mockUpdate}
+                    onClose={mockClose}
+                />
+            );
+        });
 
         expect(screen.getByText('Updating...')).toBeInTheDocument();
         expect(screen.getByText('Updating...').closest('button')).toBeDisabled();
