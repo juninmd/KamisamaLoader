@@ -284,8 +284,39 @@ const Mods: React.FC = () => {
 
     const handleUpdateAll = async () => {
         const modsToUpdate = installedMods.filter(m => m.hasUpdate);
-        for (const mod of modsToUpdate) {
-            await handlePerformUpdate(mod.id);
+        const ids = modsToUpdate.map(m => m.id);
+
+        if (ids.length === 0) return;
+
+        setUpdatingMods(prev => [...new Set([...prev, ...ids])]);
+        showToast(`Starting batch update for ${ids.length} mods...`, 'info');
+
+        try {
+            const result = await window.electronAPI.updateAllMods(ids);
+
+            setInstalledMods(prev => prev.map(m => {
+                const updateResult = result.results.find(r => r.id === m.id);
+                if (updateResult && updateResult.success) {
+                    return {
+                        ...m,
+                        hasUpdate: false,
+                        version: m.latestVersion || m.version
+                    };
+                }
+                return m;
+            }));
+
+            if (result.failCount > 0) {
+                showToast(`Batch update finished. Success: ${result.successCount}, Failed: ${result.failCount}`, 'info');
+            } else {
+                showToast(`All ${result.successCount} mods updated successfully!`, 'success');
+            }
+
+        } catch (e) {
+            console.error('Batch update failed', e);
+            showToast('Batch update failed', 'error');
+        } finally {
+            setUpdatingMods(prev => prev.filter(id => !ids.includes(id)));
         }
     };
 
