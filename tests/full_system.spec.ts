@@ -117,9 +117,9 @@ test('04. Browse Online Mods (Real API)', async () => {
     await window.click('button:has-text("Browse Online")');
 
     // Wait for API Load (Real Network call)
-    // We expect mod cards to appear. They should have class 'glass-panel' or similar
+    // We expect mod cards to appear. They should have class 'glass-card' or similar
     // Or check for a known text like "by" (author)
-    const modCard = window.locator('.glass-panel').first();
+    const modCard = window.locator('.glass-card').first();
     await expect(modCard).toBeVisible({ timeout: 15000 }); // Give API time
 
     await window.screenshot({ path: 'tests/evidence/05-browse-online-initial.png' });
