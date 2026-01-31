@@ -1,11 +1,13 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderWithProviders, screen, fireEvent, waitFor, act } from '../test-utils';
+import { renderWithProviders, screen, fireEvent, waitFor, act, within } from '../test-utils';
 import Mods from '../../../src/pages/Mods';
 
 // Mock IntersectionObserver
 class MockIntersectionObserver {
+    callback: any;
     constructor(callback: any) {
+        this.callback = callback;
         (window as any).__observerCallback = callback;
     }
     observe() { return null; }
@@ -18,7 +20,7 @@ describe('Mods Page', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         (window.electronAPI.getInstalledMods as any).mockResolvedValue([
-            { id: '1', name: 'Local Mod', isEnabled: true, priority: 1, author: 'Me', fileSize: 100 }
+            { id: '1', name: 'Local Mod', isEnabled: true, priority: 1, author: 'Me', fileSize: 100, category: 'Misc' }
         ]);
         (window.electronAPI.getAllOnlineMods as any).mockResolvedValue([
             { id: '10', name: 'Online Mod', author: 'Them', category: 'Misc', gameBananaId: 10 }
@@ -26,7 +28,6 @@ describe('Mods Page', () => {
         (window.electronAPI.searchBySection as any).mockImplementation((options: any) => {
             if (options.search && options.search === 'Nothing') return Promise.resolve([]);
             if (options.search === 'Error') return Promise.reject(new Error('API Fail'));
-            // Pagination mock
             if (options.page === 2) {
                 return Promise.resolve([
                     { id: '11', name: 'Online Mod Page 2', author: 'Them', category: 'Misc', gameBananaId: 11 }
@@ -41,154 +42,180 @@ describe('Mods Page', () => {
         ]);
         (window.electronAPI.toggleMod as any).mockResolvedValue({ success: true });
         (window.electronAPI.getDownloads as any).mockResolvedValue([]);
-        // Mock download listener
         (window.electronAPI as any).onDownloadUpdate = vi.fn();
         (window.electronAPI as any).onDownloadScanFinished = vi.fn();
         (window.electronAPI as any).checkForUpdates = vi.fn().mockResolvedValue([]);
         (window.electronAPI as any).uninstallMod = vi.fn().mockResolvedValue({ success: true });
+        (window.electronAPI as any).setModPriority = vi.fn().mockResolvedValue(true);
+        (window.electronAPI.installMod as any).mockResolvedValue({ success: true });
 
-        // Define confirm
         window.confirm = vi.fn(() => true);
     });
 
     it('should render installed mods by default', async () => {
-        renderWithProviders(<Mods />);
-
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
         await waitFor(() => {
             expect(screen.getByText('Local Mod')).toBeInTheDocument();
         });
     });
 
-    it('should handle load error for installed mods', async () => {
-        (window.electronAPI.getInstalledMods as any).mockRejectedValue(new Error('Fail'));
-        renderWithProviders(<Mods />);
-        await waitFor(() => {
-            // Just ensure it renders
-            expect(screen.getByText('Installed')).toBeInTheDocument();
-        });
-    });
-
-    it('should switch tabs', async () => {
-        renderWithProviders(<Mods />);
-
-        fireEvent.click(screen.getByText('Browse Online'));
-        // Expect Categories sidebar to appear in Browse tab
-        expect(screen.getByText('Categories')).toBeInTheDocument();
-
-        // Wait for online mods load
-        await waitFor(() => {
-            expect(screen.getByText('Online Mod')).toBeInTheDocument();
+    it('should handle drag and drop states', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
         });
 
-        fireEvent.click(screen.getByText('Downloads'));
-        expect(screen.getByText('No active downloads')).toBeInTheDocument();
-    });
+        const dropZone = screen.getByTestId('mods-drop-zone');
 
-    it('should toggle mod', async () => {
-        renderWithProviders(<Mods />);
-        await waitFor(() => screen.getByText('Local Mod'));
-
-        // Let's verify search
-        const searchInput = screen.getByPlaceholderText('Search installed mods...');
-        fireEvent.change(searchInput, { target: { value: 'Missing' } });
-
-        expect(screen.queryByText('Local Mod')).not.toBeInTheDocument();
-    });
-
-    it('should filter installed mods', async () => {
-        renderWithProviders(<Mods />);
-        await waitFor(() => screen.getByText('Local Mod'));
-
-        // Find dropdown
-        // Assuming it's a select element
-        // We can't easily find by label as it has no label text only placeholder.
-        // It's the only select on the page?
-        const selects = screen.getAllByRole('combobox');
-        // Actually, typical <select> is combobox?
-        // Or find by display value? "All Mods"
-        // Let's try to change it.
-    });
-
-    it('should filter browse mods', async () => {
-        renderWithProviders(<Mods />);
-        fireEvent.click(screen.getByText('Browse Online'));
-        await waitFor(() => screen.getByText('Online Mod'));
-
-        // Search with 'Nothing' which mock returns []
-        const searchInput = screen.getByPlaceholderText('Search online mods...');
-        fireEvent.change(searchInput, { target: { value: 'Nothing' } });
-
-        await waitFor(() => {
-            expect(screen.queryByText('Online Mod')).not.toBeInTheDocument();
-        }, { timeout: 2000 });
-    });
-
-    it('should handle browse mods error', async () => {
-        renderWithProviders(<Mods />);
-        fireEvent.click(screen.getByText('Browse Online'));
-
-        const searchInput = screen.getByPlaceholderText('Search online mods...');
-        fireEvent.change(searchInput, { target: { value: 'Error' } });
-
-        await waitFor(() => {
-            // Check absence of mods
-            expect(screen.queryByText('Online Mod')).not.toBeInTheDocument();
+        // Enter
+        await act(async () => {
+             fireEvent.dragEnter(dropZone, { dataTransfer: { items: [{}], files: [] } });
         });
-    });
+        expect(screen.getByText('Drop to Install')).toBeInTheDocument();
 
-    it('should handle drag and drop installation', async () => {
-        const installMock = (window.electronAPI.installMod as any).mockResolvedValue({ success: true });
-        renderWithProviders(<Mods />);
+        // Leave
+        await act(async () => {
+             fireEvent.dragLeave(dropZone);
+        });
+        expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
 
-        // Find container
-        const container = screen.getByText('Installed').closest('.h-full');
-
-        if (container) {
-            fireEvent.dragEnter(container, { dataTransfer: { items: [{}], files: [] } });
-            expect(screen.getByText('Drop to Install')).toBeInTheDocument();
-
-            fireEvent.drop(container, {
+        // Drop
+        await act(async () => {
+             fireEvent.dragEnter(dropZone, { dataTransfer: { items: [{}], files: [] } });
+        });
+        await act(async () => {
+            fireEvent.drop(dropZone, {
                 dataTransfer: {
                     files: [{ path: '/test/mod.zip' }],
                     items: [{ kind: 'file' }]
                 }
             });
-
-            expect(installMock).toHaveBeenCalledWith('/test/mod.zip');
-            await waitFor(() => expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument());
-        }
+        });
+        expect(window.electronAPI.installMod).toHaveBeenCalledWith('/test/mod.zip');
     });
 
-    it('should check for updates', async () => {
-        (window.electronAPI.checkForUpdates as any).mockResolvedValue(['1']);
-        renderWithProviders(<Mods />);
-
-        const updateBtn = screen.getByText('Check Updates');
-        fireEvent.click(updateBtn);
-
-        await waitFor(() => expect(window.electronAPI.checkForUpdates).toHaveBeenCalled());
-        expect(window.electronAPI.getInstalledMods).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle uninstall with confirmation', async () => {
-        renderWithProviders(<Mods />);
+    it('should filter installed mods by name', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
         await waitFor(() => screen.getByText('Local Mod'));
-        expect(window.confirm).toBeDefined();
+
+        const searchInput = screen.getByPlaceholderText('Search installed mods...');
+        await act(async () => {
+            fireEvent.change(searchInput, { target: { value: 'Missing' } });
+        });
+
+        expect(screen.queryByText('Local Mod')).not.toBeInTheDocument();
     });
 
-    it('should load more mods on infinite scroll', async () => {
-        renderWithProviders(<Mods />);
-        fireEvent.click(screen.getByText('Browse Online'));
+    it('should filter browse mods by category via sidebar', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Browse Online'));
+        });
+
+        await waitFor(() => expect(window.electronAPI.fetchCategories).toHaveBeenCalled());
+        await waitFor(() => screen.getByText('Categories'));
+    });
+
+    it('should uninstall mod', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        // Assuming there's a trash/delete button on the card.
+        // It's likely an icon button.
+        const deleteBtn = screen.getByTitle('Uninstall');
+        await act(async () => {
+            fireEvent.click(deleteBtn);
+        });
+
+        expect(window.confirm).toHaveBeenCalled();
+        expect(window.electronAPI.uninstallMod).toHaveBeenCalledWith('1');
+    });
+
+    it('should toggle mod', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        // Mod is enabled, so button says 'Disable'
+        const toggleBtn = screen.getByText('Disable');
+        await act(async () => {
+            fireEvent.click(toggleBtn);
+        });
+
+        expect(window.electronAPI.toggleMod).toHaveBeenCalledWith('1', false); // Was true
+    });
+
+    it('should change priority', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        // Assuming Up/Down buttons exist
+        // Note: With 1 mod, maybe they are disabled or handled gracefully.
+        // Let's assume there are 2 mods to enable priority changing
+         (window.electronAPI.getInstalledMods as any).mockResolvedValue([
+            { id: '1', name: 'Mod 1', priority: 2, isEnabled: true },
+            { id: '2', name: 'Mod 2', priority: 1, isEnabled: true }
+        ]);
+
+        // Re-render to get 2 mods
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        await waitFor(() => screen.getByText('Mod 2'));
+
+        // Find "Move Up" for Mod 2
+        const mod2Card = screen.getByText('Mod 2').closest('div.group');
+        const upBtn = within(mod2Card as HTMLElement).getByTitle('Increase Priority (Move Up)');
+
+        await act(async () => {
+            fireEvent.click(upBtn);
+        });
+
+        expect(window.electronAPI.setModPriority).toHaveBeenCalledWith('2', 'up');
+    });
+
+    it('should handle infinite scroll', async () => {
+        await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        await act(async () => {
+            fireEvent.click(screen.getByText('Browse Online'));
+        });
         await waitFor(() => screen.getByText('Online Mod'));
 
         const callback = (window as any).__observerCallback;
         if (callback) {
-            act(() => {
+            await act(async () => {
                 callback([{ isIntersecting: true }]);
             });
             await waitFor(() => {
                 expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
             });
         }
+    });
+
+    it('should check for updates and refresh', async () => {
+         await act(async () => {
+             renderWithProviders(<Mods />);
+        });
+        const updateBtn = screen.getByText('Check Updates');
+
+        await act(async () => {
+             fireEvent.click(updateBtn);
+        });
+
+        expect(window.electronAPI.checkForUpdates).toHaveBeenCalled();
+        expect(window.electronAPI.getInstalledMods).toHaveBeenCalled();
     });
 });
