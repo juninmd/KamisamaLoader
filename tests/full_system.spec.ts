@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 import { _electron as electron, ElectronApplication, Page } from 'playwright';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Fix __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let electronApp: ElectronApplication;
 let window: Page;
@@ -28,7 +33,9 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
     console.log('Closing Electron...');
-    await electronApp.close();
+    if (electronApp) {
+        await electronApp.close();
+    }
 });
 
 test('01. Dashboard Loads and Navigation', async () => {
