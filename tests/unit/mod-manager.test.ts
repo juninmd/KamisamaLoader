@@ -80,6 +80,9 @@ vi.mock('adm-zip', () => {
         default: class {
             constructor() { }
             extractAllTo = vi.fn();
+            extractAllToAsync = vi.fn((dest, overwrite, keepPerms, cb) => {
+                if (cb) cb(null);
+            });
         }
     };
 });
@@ -815,7 +818,10 @@ describe('ModManager', () => {
         it('should install zip', async () => {
             const zipPath = '/dl/mod.zip';
             const modManager = new ModManager(mockDownloadManager as any);
-            (fs.readFile as any).mockResolvedValue('[]');
+            (fs.readFile as any).mockImplementation((path) => {
+                if (path === zipPath) return Promise.resolve(Buffer.from('zip'));
+                return Promise.resolve('[]');
+            });
 
             const result = await modManager.installMod(zipPath);
             expect(result.success).toBe(true);
