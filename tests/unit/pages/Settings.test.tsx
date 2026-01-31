@@ -4,15 +4,17 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '../test-utils';
 import Settings from '../../../src/pages/Settings';
 
 describe('Settings Page', () => {
+    const mockSettings = {
+        gamePath: '/game/path',
+        modDownloadPath: '/mod/path',
+        backgroundImage: 'bg.jpg',
+        launchArgs: '-test',
+        backgroundOpacity: 0.5
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
-        (window.electronAPI.getSettings as any).mockResolvedValue({
-            gamePath: '/game/path',
-            modDownloadPath: '/mod/path',
-            backgroundImage: 'bg.jpg',
-            launchArgs: '-test',
-            backgroundOpacity: 0.5
-        });
+        (window.electronAPI.getSettings as any).mockResolvedValue(mockSettings);
         (window.electronAPI.installUE4SS as any).mockResolvedValue({ success: true, message: 'Done' });
         (window.electronAPI.selectGameDirectory as any).mockResolvedValue('/new/game/path');
         (window.electronAPI.selectModDirectory as any).mockResolvedValue(undefined); // Canceled
@@ -20,7 +22,7 @@ describe('Settings Page', () => {
     });
 
     it('should render settings', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
 
         await waitFor(() => {
             expect(screen.getByDisplayValue('/game/path')).toBeInTheDocument();
@@ -30,7 +32,7 @@ describe('Settings Page', () => {
     });
 
     it('should update launch args', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
         await waitFor(() => screen.getByDisplayValue('-test'));
 
         const input = screen.getByDisplayValue('-test');
@@ -40,7 +42,7 @@ describe('Settings Page', () => {
     });
 
     it('should select game directory', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
         const buttons = screen.getAllByText('Browse');
         // 0: Game, 1: Mod, 2: BG
         fireEvent.click(buttons[0]);
@@ -54,7 +56,7 @@ describe('Settings Page', () => {
     });
 
     it('should select mod directory', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
         const buttons = screen.getAllByText('Browse');
         fireEvent.click(buttons[1]);
 
@@ -62,7 +64,7 @@ describe('Settings Page', () => {
     });
 
     it('should update background opacity', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
         await waitFor(() => screen.getByText('50%'));
 
         const slider = screen.getByRole('slider'); // range input
@@ -72,7 +74,7 @@ describe('Settings Page', () => {
     });
 
     it('should install UE4SS', async () => {
-        renderWithProviders(<Settings />);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
 
         fireEvent.click(screen.getByText('Install / Update UE4SS'));
 
@@ -83,7 +85,7 @@ describe('Settings Page', () => {
 
     it('should handle UE4SS failure', async () => {
          (window.electronAPI.installUE4SS as any).mockResolvedValue({ success: false, message: 'Fail' });
-         renderWithProviders(<Settings />);
+         renderWithProviders(<Settings />, { initialSettings: mockSettings });
          fireEvent.click(screen.getByText('Install / Update UE4SS'));
          await waitFor(() => {
              // Toast check logic implied by finding failure message if rendered or just call

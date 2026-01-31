@@ -1,58 +1,60 @@
 /// <reference types="vite/client" />
+import { LocalMod, OnlineMod, Profile, Settings } from './types';
 
-interface Window {
-  electronAPI: {
-    minimize: () => void;
-    maximize: () => void;
-    close: () => void;
+declare global {
+  interface Window {
+    electronAPI: {
+      minimize: () => void;
+      maximize: () => void;
+      close: () => void;
 
-    // Mod Management
-    getInstalledMods: () => Promise<any[]>;
-    installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
-    uninstallMod: (modId: string) => Promise<{ success: boolean; message: string }>;
-    toggleMod: (modId: string, isEnabled: boolean) => Promise<{ success: boolean; conflict?: string }>;
-    getSettings: () => Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string }>;
-    saveSettings: (settings: any) => Promise<boolean>;
-    selectGameDirectory: () => Promise<string | null>;
-    selectModDirectory: () => Promise<string | null>;
-    selectBackgroundImage: () => Promise<string | null>;
-    openModsDirectory: () => Promise<boolean>;
-    setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
+      // Mod Management
+      getInstalledMods: () => Promise<LocalMod[]>;
+      installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
+      uninstallMod: (modId: string) => Promise<{ success: boolean; message: string }>;
+      toggleMod: (modId: string, isEnabled: boolean) => Promise<{ success: boolean; conflict?: string }>;
+      getSettings: () => Promise<Settings>;
+      saveSettings: (settings: Settings) => Promise<boolean>;
+      selectGameDirectory: () => Promise<string | null>;
+      selectModDirectory: () => Promise<string | null>;
+      selectBackgroundImage: () => Promise<string | null>;
+      openModsDirectory: () => Promise<boolean>;
+      setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
 
-    // Updates
-    checkForUpdates: () => Promise<string[]>;
-    updateMod: (modId: string) => Promise<boolean>;
-    updateAllMods: (modIds: string[]) => Promise<{ successCount: number; failCount: number; results: { id: string; success: boolean }[] }>;
-    getModChangelog: (modId: string) => Promise<{ version: string; date: number; changes: { cat: string; text: string }[]; title?: string } | null>;
+      // Updates
+      checkForUpdates: () => Promise<string[]>;
+      updateMod: (modId: string) => Promise<boolean>;
+      getModChangelog: (modId: string) => Promise<{ version: string; date: number; changes: { cat: string; text: string }[]; title?: string } | null>;
 
-    // Online Mods & Search
-    searchOnlineMods: (page: number, search?: string) => Promise<any[]>;
-    searchBySection: (options: any) => Promise<any[]>;
-    fetchCategories: (gameId?: number) => Promise<any[]>;
-    fetchNewMods: (page?: number) => Promise<any[]>;
-    getAllOnlineMods: (forceRefresh?: boolean) => Promise<any[]>;
-    fetchFeaturedMods: () => Promise<any[]>;
-    getModDetails: (gameBananaId: number) => Promise<any>;
-    installOnlineMod: (mod: any) => Promise<{ success: boolean; message: string; downloadId?: string }>;
+      // Online Mods & Search
+      searchOnlineMods: (page: number, search?: string) => Promise<OnlineMod[]>;
+      searchBySection: (options: any) => Promise<OnlineMod[]>;
+      fetchCategories: (gameId?: number) => Promise<any[]>;
+      fetchNewMods: (page?: number) => Promise<OnlineMod[]>;
+      getAllOnlineMods: (forceRefresh?: boolean) => Promise<OnlineMod[]>;
+      fetchFeaturedMods: () => Promise<OnlineMod[]>;
+      getModDetails: (gameBananaId: number) => Promise<any>;
+      installOnlineMod: (mod: OnlineMod) => Promise<{ success: boolean; message: string; downloadId?: string }>;
 
-    // Profiles
-    getProfiles: () => Promise<any[]>;
-    createProfile: (name: string) => Promise<{ success: boolean; profile?: any; message?: string }>;
-    deleteProfile: (id: string) => Promise<boolean>;
-    loadProfile: (id: string) => Promise<{ success: boolean; message?: string }>;
+      // Profiles
+      getProfiles: () => Promise<Profile[]>;
+      createProfile: (name: string) => Promise<{ success: boolean; profile?: Profile; message?: string }>;
+      deleteProfile: (id: string) => Promise<boolean>;
+      loadProfile: (id: string) => Promise<{ success: boolean; message?: string }>;
 
-    // Downloads
-    getDownloads: () => Promise<any[]>;
-    pauseDownload: (id: string) => Promise<void>;
-    resumeDownload: (id: string) => Promise<void>;
-    cancelDownload: (id: string) => Promise<void>;
-    openDownloadFolder: (id: string) => Promise<void>;
-    clearCompletedDownloads: () => Promise<void>;
-    onDownloadUpdate: (callback: (downloads: any[]) => void) => () => void;
-    onDownloadScanFinished: (callback: () => void) => () => void;
+      // Downloads
+      getDownloads: () => Promise<any[]>;
+      pauseDownload: (id: string) => Promise<void>;
+      resumeDownload: (id: string) => Promise<void>;
+      cancelDownload: (id: string) => Promise<void>;
+      openDownloadFolder: (id: string) => Promise<void>;
+      clearCompletedDownloads: () => Promise<void>;
+      onDownloadUpdate: (callback: (downloads: any[]) => void) => () => void;
+      onDownloadScanFinished: (callback: () => void) => () => void;
 
-    // Game
-    launchGame: () => Promise<boolean>;
-    installUE4SS: () => Promise<{ success: boolean; message: string }>;
+      // Game
+      launchGame: () => Promise<boolean>;
+      installUE4SS: () => Promise<{ success: boolean; message: string }>;
+    }
   }
 }

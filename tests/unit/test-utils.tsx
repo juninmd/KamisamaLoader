@@ -1,7 +1,8 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ToastProvider } from '../../src/components/ToastContext';
-import { SettingsProvider } from '../../src/components/SettingsContext';
+import { SettingsContext } from '../../src/components/SettingsContext';
+import { Settings } from '../../src/types';
 import { vi } from 'vitest';
 
 // Ensure default mocks prevent crashes
@@ -22,20 +23,82 @@ if (typeof window !== 'undefined' && window.electronAPI) {
     (window.electronAPI.getInstalledMods as any).mockResolvedValue([]);
 }
 
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <ToastProvider>
-        <SettingsProvider>
+const MockSettingsProvider = ({ children, initialSettings }: { children: React.ReactNode, initialSettings?: Partial<Settings> }) => {
+    const [settings, setSettings] = useState<Settings>({
+        gamePath: '/mock/game/path',
+        modDownloadPath: '/mock/mods',
+        backgroundImage: '',
+        activeProfileId: 'default',
+        launchArgs: '',
+        backgroundOpacity: 0.5,
+        ...initialSettings
+    });
+
+    const updateSettings = async (newSettings: Partial<Settings>) => {
+        const merged = { ...settings, ...newSettings };
+        setSettings(merged);
+        if (window.electronAPI?.saveSettings) {
+            await window.electronAPI.saveSettings(merged);
+        }
+    };
+
+    const selectGameDirectory = async () => {
+        if (window.electronAPI?.selectGameDirectory) {
+            const path = await window.electronAPI.selectGameDirectory();
+            if (path) updateSettings({ gamePath: path });
+        }
+    };
+
+    const selectModDirectory = async () => {
+        if (window.electronAPI?.selectModDirectory) {
+            const path = await window.electronAPI.selectModDirectory();
+            if (path) updateSettings({ modDownloadPath: path });
+        }
+    };
+
+    const selectBackgroundImage = async () => {
+         if (window.electronAPI?.selectBackgroundImage) {
+            const path = await window.electronAPI.selectBackgroundImage();
+            if (path) updateSettings({ backgroundImage: path });
+        }
+    };
+
+    return (
+        <SettingsContext.Provider value={{
+            settings,
+            updateSettings,
+            selectGameDirectory,
+            selectModDirectory,
+            selectBackgroundImage,
+            loading: false
+        }}>
             {children}
-        </SettingsProvider>
-    </ToastProvider>
-  );
+        </SettingsContext.Provider>
+    );
 };
+
+interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+    initialSettings?: Partial<Settings>;
+}
 
 const customRender = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>,
-) => render(ui, { wrapper: AllTheProviders, ...options });
+  options?: CustomRenderOptions,
+) => {
+    const { initialSettings, ...renderOptions } = options || {};
+
+    const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+      return (
+        <ToastProvider>
+            <MockSettingsProvider initialSettings={initialSettings}>
+                {children}
+            </MockSettingsProvider>
+        </ToastProvider>
+      );
+    };
+
+    return render(ui, { wrapper: AllTheProviders, ...renderOptions });
+};
 
 export * from '@testing-library/react';
 export { customRender as renderWithProviders };

@@ -62,5 +62,3 @@ export interface Settings {
     launchArgs?: string;
     backgroundOpacity?: number;
 }
-
-export type Mod = LocalMod | OnlineMod;
