@@ -1,12 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface Settings {
-    gamePath: string;
-    modDownloadPath?: string;
-    backgroundImage?: string;
-    launchArgs?: string;
-    backgroundOpacity?: number;
-}
+import { Settings } from '../types';
 
 interface SettingsContextType {
     settings: Settings;
@@ -17,7 +10,7 @@ interface SettingsContextType {
     loading: boolean;
 }
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [settings, setSettings] = useState<Settings>({ gamePath: '' });
