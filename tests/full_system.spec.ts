@@ -15,9 +15,11 @@ test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async () => {
     console.log('Launching Electron...');
+    const mainScriptPath = path.join(__dirname, '../dist-electron/main.js');
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.js')],
-        env: { ...process.env, NODE_ENV: 'test' }
+        args: [mainScriptPath],
+        env: { ...process.env, NODE_ENV: 'test' },
+        timeout: 30000
     });
     window = await electronApp.firstWindow();
     await window.waitForLoadState('domcontentloaded');

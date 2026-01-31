@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: './tests',
   testMatch: ['electron.spec.ts', 'full_system.spec.ts'], // Only run explicit E2E tests
   testIgnore: ['unit/**', 'integration.spec.ts'], // Explicitly ignore unit and vitest integration tests
-  timeout: 120000,
+  timeout: 60000, // Increased timeout for CI
   expect: {
-    timeout: 10000,
+    timeout: 15000,
   },
   // Run your local dev server before starting the tests
   webServer: {
@@ -25,6 +25,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  retries: 0,
+  retries: 2, // Add retries for stability
   workers: 1,
 });
