@@ -33,7 +33,7 @@ export interface OnlineMod {
     version: string;
     description: string;
     isEnabled: boolean;
-    iconUrl: string;
+    iconUrl?: string;
     gameBananaId: number;
     latestVersion: string;
     viewCount?: number;

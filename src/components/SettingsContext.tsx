@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Settings } from '../types';
+import type { Settings } from '../types';
 
 interface SettingsContextType {
     settings: Settings;
