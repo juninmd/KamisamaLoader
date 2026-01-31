@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { Settings, OnlineMod } from './shared-types.js';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('minimize-window'),
@@ -11,7 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   uninstallMod: (modId: string) => ipcRenderer.invoke('uninstall-mod', modId),
   toggleMod: (modId: string, isEnabled: boolean) => ipcRenderer.invoke('toggle-mod', modId, isEnabled),
   getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
+  saveSettings: (settings: Settings) => ipcRenderer.invoke('save-settings', settings),
   selectGameDirectory: () => ipcRenderer.invoke('select-game-directory'),
   selectModDirectory: () => ipcRenderer.invoke('select-mod-directory'),
   selectBackgroundImage: () => ipcRenderer.invoke('select-background-image'),
@@ -45,7 +46,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProfile: (id: string) => ipcRenderer.invoke('delete-profile', id),
   loadProfile: (id: string) => ipcRenderer.invoke('load-profile', id),
 
-  installOnlineMod: (mod: any) => ipcRenderer.invoke('install-online-mod', mod),
+  installOnlineMod: (mod: OnlineMod) => ipcRenderer.invoke('install-online-mod', mod),
 
   // Additional helpers
   launchGame: () => ipcRenderer.invoke('launch-game'),
