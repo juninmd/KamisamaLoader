@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['electron.spec.ts', 'full_system.spec.ts'], // Only run explicit E2E tests
+  testIgnore: ['unit/**', 'integration.spec.ts'], // Explicitly ignore unit and vitest integration tests
   timeout: 120000,
   expect: {
     timeout: 10000,
@@ -25,7 +27,4 @@ export default defineConfig({
   ],
   retries: 0,
   workers: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
 });
