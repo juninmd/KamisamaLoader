@@ -105,6 +105,10 @@ function registerIpcHandlers() {
     return await modManager.updateMod(modId);
   });
 
+  ipcMain.handle('update-all-mods', async (_event, modIds) => {
+    return await modManager.updateAllMods(modIds);
+  });
+
   ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
     return await modManager.searchOnlineMods(page, search);
   });
