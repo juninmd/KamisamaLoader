@@ -77,6 +77,17 @@ test('02. Verify Installed Mods Tab (View Modes)', async () => {
 
 test('03. Profile Manager Visibility', async () => {
     console.log('Testing Profile Manager...');
+
+    // Ensure clean state (menu closed)
+    // The overlay has z-[100] in ProfileManager.tsx
+    const overlaySelector = '.fixed.inset-0.z-\\[100\\]';
+    const overlay = window.locator(overlaySelector);
+    if (await overlay.isVisible()) {
+        console.log('Profile menu was open, closing it...');
+        await overlay.click();
+        await window.waitForTimeout(500);
+    }
+
     // Click Profiles button
     const profilesBtn = window.locator('button:has-text("Profiles")');
     await profilesBtn.click();
@@ -90,12 +101,11 @@ test('03. Profile Manager Visibility', async () => {
     await window.screenshot({ path: 'tests/evidence/04-profile-dropdown.png' });
 
     // Close it
-    // Attempt to click the overlay if it exists, otherwise the button
-    const overlay = window.locator('.fixed.inset-0.z-\\[9998\\]');
     if (await overlay.isVisible()) {
         await overlay.click();
     } else {
-        await profilesBtn.click();
+        // Fallback: try force clicking button if overlay isn't catching it (unlikely)
+        await profilesBtn.click({ force: true });
     }
     await window.waitForTimeout(300);
 });
