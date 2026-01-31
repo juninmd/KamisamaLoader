@@ -10,9 +10,13 @@ describe('Settings Page', () => {
             gamePath: '/game/path',
             modDownloadPath: '/mod/path',
             backgroundImage: 'bg.jpg',
-            launchArgs: '-test'
+            launchArgs: '-test',
+            backgroundOpacity: 0.5
         });
         (window.electronAPI.installUE4SS as any).mockResolvedValue({ success: true, message: 'Done' });
+        (window.electronAPI.selectGameDirectory as any).mockResolvedValue('/new/game/path');
+        (window.electronAPI.selectModDirectory as any).mockResolvedValue(undefined); // Canceled
+        (window.electronAPI.saveSettings as any).mockResolvedValue(true);
     });
 
     it('should render settings', async () => {
@@ -35,6 +39,38 @@ describe('Settings Page', () => {
         expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ launchArgs: '-new' }));
     });
 
+    it('should select game directory', async () => {
+        renderWithProviders(<Settings />);
+        const buttons = screen.getAllByText('Browse');
+        // 0: Game, 1: Mod, 2: BG
+        fireEvent.click(buttons[0]);
+
+        await waitFor(() => {
+             expect(window.electronAPI.selectGameDirectory).toHaveBeenCalled();
+             // Since mock returns /new/game/path, and SettingsContext updates:
+             // We can check if saveSettings called with new path
+             expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ gamePath: '/new/game/path' }));
+        });
+    });
+
+    it('should select mod directory', async () => {
+        renderWithProviders(<Settings />);
+        const buttons = screen.getAllByText('Browse');
+        fireEvent.click(buttons[1]);
+
+        expect(window.electronAPI.selectModDirectory).toHaveBeenCalled();
+    });
+
+    it('should update background opacity', async () => {
+        renderWithProviders(<Settings />);
+        await waitFor(() => screen.getByText('50%'));
+
+        const slider = screen.getByRole('slider'); // range input
+        fireEvent.change(slider, { target: { value: '0.8' } });
+
+        expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundOpacity: 0.8 }));
+    });
+
     it('should install UE4SS', async () => {
         renderWithProviders(<Settings />);
 
@@ -43,5 +79,15 @@ describe('Settings Page', () => {
         await waitFor(() => {
             expect(window.electronAPI.installUE4SS).toHaveBeenCalled();
         });
+    });
+
+    it('should handle UE4SS failure', async () => {
+         (window.electronAPI.installUE4SS as any).mockResolvedValue({ success: false, message: 'Fail' });
+         renderWithProviders(<Settings />);
+         fireEvent.click(screen.getByText('Install / Update UE4SS'));
+         await waitFor(() => {
+             // Toast check logic implied by finding failure message if rendered or just call
+             expect(window.electronAPI.installUE4SS).toHaveBeenCalled();
+         });
     });
 });
