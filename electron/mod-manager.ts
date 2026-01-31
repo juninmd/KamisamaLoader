@@ -394,6 +394,22 @@ export class ModManager {
         }
     }
 
+    private async extractZip(zipPath: string, dest: string): Promise<void> {
+        // Read file async to avoid blocking main thread
+        const buffer = await fs.readFile(zipPath);
+        const zip = new AdmZip(buffer);
+
+        return new Promise((resolve, reject) => {
+            zip.extractAllToAsync(dest, true, false, (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     private async updateUE4SSModsTxt(binariesDir: string, modName: string, enabled: boolean) {
         const modsTxtPath = path.join(binariesDir, 'Mods', 'mods.txt');
         try {
@@ -585,8 +601,7 @@ export class ModManager {
 
             // Check if zip
             if (filePath.endsWith('.zip')) {
-                const zip = new AdmZip(filePath);
-                zip.extractAllTo(modDestDir, true);
+                await this.extractZip(filePath, modDestDir);
             } else {
                 // Copy file directly (e.g. .pak)
                 await fs.mkdir(modDestDir, { recursive: true });
@@ -863,8 +878,7 @@ export class ModManager {
             const modDestDir = mod.folderPath || path.join(this.modsDir, mod.name);
             await fs.mkdir(modDestDir, { recursive: true });
 
-            const zip = new AdmZip(tempFile);
-            zip.extractAllTo(modDestDir, true);
+            await this.extractZip(tempFile, modDestDir);
 
             await fs.unlink(tempFile);
 
@@ -990,8 +1004,7 @@ export class ModManager {
                             await fs.mkdir(modDestDir, { recursive: true });
 
                             try {
-                                const zip = new AdmZip(tempFile);
-                                zip.extractAllTo(modDestDir, true);
+                                await this.extractZip(tempFile, modDestDir);
                             } catch (e) {
                                 console.error('Zip extraction failed', e);
                                 // could emit an error event to UI via DownloadManager?
@@ -1188,13 +1201,12 @@ export class ModManager {
 
     private async finalizeUE4SSInstall(zipPath: string, destDir: string) {
         try {
-            const zip = new AdmZip(zipPath);
             // Extract to temp folder first to check structure
             const extractTemp = path.join(path.dirname(zipPath), 'ue4ss_extract');
             // Clean previous extract
             try { await fs.rm(extractTemp, { recursive: true, force: true }); } catch { }
 
-            zip.extractAllTo(extractTemp, true);
+            await this.extractZip(zipPath, extractTemp);
 
             // Check if it has a root folder
             const files = await fs.readdir(extractTemp);
