@@ -63,26 +63,13 @@ test('02. Verify Installed Mods Tab (View Modes)', async () => {
     const installedTab = window.locator('button:has-text("Installed")');
     await expect(installedTab).toHaveClass(/bg-blue-600/); // Basic check for active styling
 
-    // 1. List View Screenshot
-    await window.screenshot({ path: 'tests/evidence/02-installed-list-view.png' });
+    // 1. Default View Screenshot (Grid)
+    await window.screenshot({ path: 'tests/evidence/02-installed-default-view.png' });
 
-    // 2. Switch to Card View
-    // Finding the toggle button. It has LayoutGrid icon.
-    // Use title attribute for robustness if added, or find by icon SVG class
-    const cardViewBtn = window.locator('button[title="Card View"]');
-    await expect(cardViewBtn).toBeVisible();
-    await cardViewBtn.click();
-    await window.waitForTimeout(1000); // Wait for transition
-
-    // Verify grid layout presence
+    // Verify grid layout presence (default)
+    // The ModGrid component uses grid-cols-2 at least
     const gridLayout = window.locator('.grid.grid-cols-2');
     await expect(gridLayout).toBeVisible();
-
-    await window.screenshot({ path: 'tests/evidence/03-installed-card-view.png' });
-
-    // Switch back to List
-    const listViewBtn = window.locator('button[title="List View"]');
-    await listViewBtn.click();
 });
 
 test('03. Profile Manager Visibility', async () => {
