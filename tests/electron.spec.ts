@@ -7,7 +7,7 @@ let electronApp: ElectronApplication;
 test.beforeAll(async () => {
     // Launch Electron app.
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.js')],
+        args: [path.join(__dirname, '../dist-electron/main.cjs')],
         // Add debugging environment variable if needed
         env: {
             ...process.env,

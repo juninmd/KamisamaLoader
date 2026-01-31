@@ -168,7 +168,7 @@ function createWindow() {
     frame: false, // Custom frame
     backgroundColor: '#000000', // Start black to match dark theme
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
