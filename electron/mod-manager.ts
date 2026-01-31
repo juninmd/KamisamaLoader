@@ -829,6 +829,33 @@ export class ModManager {
         }
     }
 
+    async updateAllMods(modIds: string[]) {
+        console.log(`[ModManager] Updating ${modIds.length} mods...`);
+        const limit = pLimit(3); // Limit concurrency to 3 downloads at a time
+        const results: { id: string, success: boolean }[] = [];
+        let successCount = 0;
+        let failCount = 0;
+
+        const promises = modIds.map(id => limit(async () => {
+            try {
+                // updateMod returns Promise<boolean> (mostly)
+                const result = await this.updateMod(id);
+                const success = !!result;
+                results.push({ id, success });
+                if (success) successCount++;
+                else failCount++;
+            } catch (e) {
+                console.error(`Failed to update mod ${id}`, e);
+                results.push({ id, success: false });
+                failCount++;
+            }
+        }));
+
+        await Promise.all(promises);
+
+        return { successCount, failCount, results };
+    }
+
     // Helper to finalize update after download
     private async finalizeUpdate(mod: LocalMod, tempFile: string, mods: LocalMod[], modsFile: string) {
         try {

@@ -17,7 +17,7 @@ test.beforeAll(async () => {
     console.log('Launching Electron...');
     const mainScriptPath = path.join(__dirname, '../dist-electron/main.js');
     electronApp = await electron.launch({
-        args: [mainScriptPath],
+        args: [mainScriptPath, '--no-sandbox'],
         env: { ...process.env, NODE_ENV: 'test' },
         timeout: 30000
     });
