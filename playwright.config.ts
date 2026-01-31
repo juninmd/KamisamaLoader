@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['electron.spec.ts', 'full_system.spec.ts'],
   timeout: 120000,
   expect: {
     timeout: 10000,
