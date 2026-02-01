@@ -9,6 +9,8 @@ const TestComponent = () => {
     return (
         <div>
             <span data-testid="gamePath">{settings.gamePath}</span>
+            <span data-testid="modPath">{settings.modDownloadPath}</span>
+            <span data-testid="bgImage">{settings.backgroundImage}</span>
             <button onClick={() => updateSettings({ gamePath: '/new/path' })}>Update</button>
             <button onClick={selectGameDirectory}>Select</button>
             <button onClick={selectModDirectory}>Select Mod Dir</button>
@@ -108,7 +110,7 @@ describe('SettingsContext', () => {
         await waitFor(() => screen.getByTestId('gamePath'));
 
         act(() => {
-            screen.getByText('Select').click();
+            screen.getByText('Select Game').click();
         });
 
         await waitFor(() => {

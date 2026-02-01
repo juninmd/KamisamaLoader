@@ -23,7 +23,9 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-    await electronApp.close();
+    if (electronApp) {
+        await electronApp.close();
+    }
 });
 
 test('Application launch', async () => {
