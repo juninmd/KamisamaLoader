@@ -843,4 +843,94 @@ describe('ModManager', () => {
             expect(result.success).toBe(false);
         });
     });
+
+    describe('Additional Coverage', () => {
+        it('fixPriorities should do nothing if order is already correct', async () => {
+             const mockMods = [
+                { id: '1', priority: 2, name: 'A', isEnabled: true },
+                { id: '2', priority: 1, name: 'B', isEnabled: true }
+            ];
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+
+            // Should not call undeploy/deploy or write file if no changes
+            const writeSpy = vi.spyOn(fs, 'writeFile');
+            await modManager.fixPriorities();
+            expect(writeSpy).not.toHaveBeenCalled();
+        });
+
+        it('updateAllMods should handle partial failures', async () => {
+            const modIds = ['1', '2'];
+            // Mock updateMod to succeed for 1 and fail for 2
+            modManager.updateMod = vi.fn()
+                .mockResolvedValueOnce(true)
+                .mockResolvedValueOnce(false);
+
+            const result = await modManager.updateAllMods(modIds);
+            expect(result.successCount).toBe(1);
+            expect(result.failCount).toBe(1);
+            expect(result.results).toHaveLength(2);
+        });
+
+        it('installUE4SS should use fallback if download manager is not present', async () => {
+            const noDlManager = new ModManager(undefined);
+            noDlManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/p' });
+
+            const { fetchLatestRelease } = await import('../../electron/github');
+            (fetchLatestRelease as any).mockResolvedValue('http://ue4ss.zip');
+
+            // Mock downloadFile (private method, but we can mock net.request)
+            // Or simpler: Mock downloadFile on the instance if possible, or mock net.request
+            // Since downloadFile is private, we can't easily spy on it without casting.
+            // But we can mock net.request which downloadFile uses.
+
+            // However, we can also cast to any to mock the private method for this specific test
+            (noDlManager as any).downloadFile = vi.fn().mockResolvedValue(undefined);
+            (noDlManager as any).finalizeUE4SSInstall = vi.fn().mockResolvedValue({ success: true });
+
+            const result = await noDlManager.installUE4SS();
+            expect(result.success).toBe(true);
+            expect((noDlManager as any).downloadFile).toHaveBeenCalled();
+        });
+
+        it('launchGame should catch execFile errors (callback)', async () => {
+             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game.exe' });
+             (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+
+             (execFile as any).mockImplementation((file, args, opts, cb) => {
+                 cb(new Error('Spawn failed'));
+             });
+
+             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+             await modManager.launchGame();
+             expect(consoleSpy).toHaveBeenCalledWith('Failed to launch game:', expect.any(Error));
+        });
+
+        it('toggleMod should warn on category conflict', async () => {
+             const mockMods = [
+                { id: '1', name: 'A', category: 'Skins', isEnabled: false },
+                { id: '2', name: 'B', category: 'Skins', isEnabled: true }
+             ];
+             (fs.readFile as any).mockResolvedValue(JSON.stringify(mockMods));
+             modManager.deployMod = vi.fn().mockResolvedValue(true);
+             modManager.syncActiveProfile = vi.fn(); // avoid error
+
+             const result = await modManager.toggleMod('1', true);
+             expect(result.success).toBe(true);
+             expect(result.conflict).toContain('conflicts with "B"');
+        });
+
+        it('getSettings should return default if file read fails', async () => {
+            const mgr = new ModManager();
+            (fs.readFile as any).mockRejectedValue(new Error('Fail'));
+            const settings = await mgr.getSettings();
+            expect(settings).toEqual({ gamePath: '' });
+        });
+
+        it('calculateFolderSize should handle stat error gracefully', async () => {
+             (fs.readdir as any).mockResolvedValue(['file']);
+             (fs.stat as any).mockRejectedValue(new Error('Stat fail'));
+             const size = await modManager.calculateFolderSize('/path');
+             expect(size).toBe(0);
+        });
+    });
 });
