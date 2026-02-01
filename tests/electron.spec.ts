@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const mainScriptPath = path.join(__dirname, '../dist-electron/main.js');
+
 let electronApp: ElectronApplication;
 
 test.beforeAll(async () => {
