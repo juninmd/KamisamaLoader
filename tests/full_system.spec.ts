@@ -200,7 +200,7 @@ test('06. Mod Details Modal (Real API)', async () => {
 
     // Click the first mod in the search results (h3 in mod grid, not sidebar)
     const firstMod = window.locator('.grid.grid-cols-2 h3').first();
-    await firstMod.click();
+    await firstMod.click({ timeout: 60000 });
 
     // Wait for Modal - look for "Submitter" label
     await expect(window.locator('text=Submitter')).toBeVisible({ timeout: 10000 });
