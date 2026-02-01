@@ -64,13 +64,12 @@ describe('ProfileManager', () => {
         fireEvent.click(screen.getByTitle('Manage Mod Profiles'));
         await waitFor(() => screen.getByText('Profile 1'));
 
-        const deleteButtons = screen.getAllByRole('button');
-        // Find the delete button inside the list item. It has Trash2 icon.
-        // Or find the button that is hidden by default.
-        // It's the last button?
-        // Let's assume there is one delete button because there is one profile.
-        // There are: Toggle Button, Create Button, Delete Button.
-        const deleteBtn = deleteButtons[2];
+        const profileItem = await screen.findByText('Profile 1');
+        const profileContainer = profileItem.closest('.group');
+        expect(profileContainer).toBeInTheDocument();
+
+        // The delete button is the only <button> element inside this component.
+        const deleteBtn = within(profileContainer!).getByRole('button');
 
         fireEvent.click(deleteBtn);
 
