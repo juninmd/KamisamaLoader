@@ -430,6 +430,31 @@ describe('ModManager', () => {
             // .pak and .sig should be linked
             expect(fs.link).toHaveBeenCalledTimes(2);
         });
+
+        it('should deploy Movies (audio/video) correctly', async () => {
+            const mod = { id: '1', name: 'MovieMod', folderPath: '/mods/MovieMod', isEnabled: true };
+            const moviesDir = '/mods/MovieMod/Movies';
+            const movieFile = '/mods/MovieMod/Movies/intro.usm';
+
+            // Mock fs structure
+            (fs.readdir as any).mockImplementation((dir) => {
+                if (dir === mod.folderPath) return Promise.resolve(['Movies']);
+                if (dir === moviesDir) return Promise.resolve(['intro.usm']);
+                return Promise.resolve([]);
+            });
+            (fs.stat as any).mockImplementation((p) => {
+                if (p === mod.folderPath || p === moviesDir) return Promise.resolve({ isDirectory: () => true });
+                return Promise.resolve({ isDirectory: () => false });
+            });
+
+            await modManager.deployMod(mod as any);
+
+            // Should deploy to Content/Movies/intro.usm without priority prefix
+            expect(fs.link).toHaveBeenCalledWith(
+                movieFile,
+                expect.stringContaining(path.join('Content', 'Movies', 'intro.usm'))
+            );
+        });
     });
 
     describe('Deploy Fallbacks and Errors', () => {

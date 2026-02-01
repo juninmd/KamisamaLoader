@@ -165,7 +165,7 @@ test('05. Search and Filter (Real API)', async () => {
     const cards = window.locator('.grid h3'); // h3 inside the grid for mod titles
 
     // Wait for cards OR empty state (up to 20s)
-    const emptyState = window.locator('text=No mods found');
+    const emptyState = window.locator('text=No mods found').first();
     try {
         await Promise.race([
             cards.first().waitFor({ state: 'visible', timeout: 20000 }),

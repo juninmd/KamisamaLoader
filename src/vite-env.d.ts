@@ -24,6 +24,7 @@ declare global {
       // Updates
       checkForUpdates: () => Promise<string[]>;
       updateMod: (modId: string) => Promise<boolean>;
+      updateAllMods: (modIds: string[]) => Promise<{ successCount: number; failCount: number; results: any[] }>;
       getModChangelog: (modId: string) => Promise<{ version: string; date: number; changes: { cat: string; text: string }[]; title?: string } | null>;
 
       // Online Mods & Search
