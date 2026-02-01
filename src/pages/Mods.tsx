@@ -579,7 +579,7 @@ const Mods: React.FC = () => {
                                     <span>Mods</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="font-bold text-white">{formatBytes(filteredInstalledMods.reduce((acc: number, mod: any) => acc + (mod.fileSize || 0), 0))}</span>
+                                    <span className="font-bold text-white">{formatBytes(filteredInstalledMods.reduce((acc: number, mod: LocalMod) => acc + (mod.fileSize || 0), 0))}</span>
                                     <span>Size</span>
                                 </div>
                             </div>

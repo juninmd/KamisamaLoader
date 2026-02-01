@@ -338,8 +338,9 @@ export class ModManager {
         const paksDir = path.join(root, 'SparkingZERO', 'Content', 'Paks', '~mods');
         const logicModsDir = path.join(root, 'SparkingZERO', 'Content', 'Paks', 'LogicMods');
         const binariesDir = path.join(root, 'SparkingZERO', 'Binaries', 'Win64');
+        const contentDir = path.join(root, 'SparkingZERO', 'Content');
 
-        return { paksDir, logicModsDir, binariesDir };
+        return { paksDir, logicModsDir, binariesDir, contentDir };
     }
 
     private async deployFile(src: string, dest: string): Promise<boolean> {
@@ -446,7 +447,7 @@ export class ModManager {
         return fileList;
     }
 
-    private async deployModFiles(mod: LocalMod, paksDir: string, logicModsDir: string, binariesDir: string): Promise<{ deployedFiles: string[], ue4ssModName: string | null }> {
+    private async deployModFiles(mod: LocalMod, paksDir: string, logicModsDir: string, binariesDir: string, contentDir: string): Promise<{ deployedFiles: string[], ue4ssModName: string | null }> {
         const deployedFiles: string[] = [];
         let ue4ssModName: string | null = null;
 
@@ -459,6 +460,10 @@ export class ModManager {
             const logicModsSrcDir = path.join(mod.folderPath, 'LogicMods');
             let isLogicMod = false;
             try { isLogicMod = (await fs.stat(logicModsSrcDir)).isDirectory(); } catch { }
+
+            const moviesSrcDir = path.join(mod.folderPath, 'Movies');
+            let isMovies = false;
+            try { isMovies = (await fs.stat(moviesSrcDir)).isDirectory(); } catch { }
 
             for (const src of files) {
                 // If it is inside ue4ss dir
@@ -483,6 +488,16 @@ export class ModManager {
                 if (isLogicMod && src.startsWith(logicModsSrcDir)) {
                     const relativePath = path.relative(logicModsSrcDir, src);
                     const dest = path.join(logicModsDir, relativePath);
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
+                    continue;
+                }
+
+                // If it is inside Movies dir (Audio/Video loose files)
+                if (isMovies && src.startsWith(moviesSrcDir)) {
+                    const relativePath = path.relative(moviesSrcDir, src);
+                    const dest = path.join(contentDir, 'Movies', relativePath);
                     if (await this.deployFile(src, dest)) {
                         deployedFiles.push(dest);
                     }
@@ -519,13 +534,13 @@ export class ModManager {
             return false;
         }
 
-        const { paksDir, logicModsDir, binariesDir } = this.resolveGamePaths(settings.gamePath);
+        const { paksDir, logicModsDir, binariesDir, contentDir } = this.resolveGamePaths(settings.gamePath);
 
         try {
             // Ensure ~mods exists
             await fs.mkdir(paksDir, { recursive: true });
 
-            const { deployedFiles, ue4ssModName } = await this.deployModFiles(mod, paksDir, logicModsDir, binariesDir);
+            const { deployedFiles, ue4ssModName } = await this.deployModFiles(mod, paksDir, logicModsDir, binariesDir, contentDir);
 
             if (ue4ssModName) {
                 await this.updateUE4SSModsTxt(binariesDir, ue4ssModName, true);
