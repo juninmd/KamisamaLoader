@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderWithProviders, screen, fireEvent, waitFor, act } from '../test-utils';
+import { renderWithProviders, screen, fireEvent, waitFor } from '../test-utils';
 import Dashboard from '../../../src/pages/Dashboard';
 
 describe('Dashboard', () => {
@@ -18,9 +18,7 @@ describe('Dashboard', () => {
     });
 
     it('should render stats', async () => {
-        await act(async () => {
-            renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
-        });
+        renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
 
         await waitFor(() => {
             // Total: 2
@@ -33,9 +31,7 @@ describe('Dashboard', () => {
     });
 
     it('should render featured mods', async () => {
-        await act(async () => {
-            renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
-        });
+        renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
 
         await waitFor(() => {
             expect(screen.getByText('Featured Mod')).toBeInTheDocument();
@@ -43,14 +39,10 @@ describe('Dashboard', () => {
     });
 
     it('should launch game', async () => {
-        await act(async () => {
-            renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
-        });
+        renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
 
         const launchBtn = screen.getByText('LAUNCH GAME');
-        await act(async () => {
-             fireEvent.click(launchBtn);
-        });
+        fireEvent.click(launchBtn);
 
         expect(window.electronAPI.launchGame).toHaveBeenCalled();
         expect(screen.getByText('INITIALIZING...')).toBeInTheDocument();
@@ -58,14 +50,10 @@ describe('Dashboard', () => {
 
     it('should navigate', async () => {
         const mockNavigate = vi.fn();
-        await act(async () => {
-            renderWithProviders(<Dashboard onNavigate={mockNavigate} />);
-        });
+        renderWithProviders(<Dashboard onNavigate={mockNavigate} />);
 
         await waitFor(() => screen.getByText('View All'));
-        await act(async () => {
-            fireEvent.click(screen.getByText('View All'));
-        });
+        fireEvent.click(screen.getByText('View All'));
 
         expect(mockNavigate).toHaveBeenCalledWith('mods');
     });
