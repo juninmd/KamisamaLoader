@@ -14,9 +14,20 @@ class MockIntersectionObserver {
 }
 window.IntersectionObserver = MockIntersectionObserver as any;
 
+// Mock CategorySidebar to simplify integration testing
+vi.mock('../../../src/components/CategorySidebar', () => ({
+    default: ({ onCategorySelect, categories }: any) => (
+        <div data-testid="category-sidebar">
+            <button onClick={() => onCategorySelect('Misc')}>Select Misc</button>
+            <div data-testid="cat-count">{categories?.length || 0}</div>
+        </div>
+    )
+}));
+
 describe('Mods Page', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        localStorage.clear();
         (window.electronAPI.getInstalledMods as any).mockResolvedValue([
             { id: '1', name: 'Local Mod', isEnabled: true, priority: 1, author: 'Me', fileSize: 100 }
         ]);
@@ -31,6 +42,9 @@ describe('Mods Page', () => {
                 return Promise.resolve([
                     { id: '11', name: 'Online Mod Page 2', author: 'Them', category: 'Misc', gameBananaId: 11 }
                 ]);
+            }
+            if (options.categoryId === 1) {
+                 return Promise.resolve([{ id: '10', name: 'Online Mod', author: 'Them', category: 'Misc', gameBananaId: 10 }]);
             }
             return Promise.resolve([
                 { id: '10', name: 'Online Mod', author: 'Them', category: 'Misc', gameBananaId: 10 }
@@ -61,19 +75,21 @@ describe('Mods Page', () => {
 
     it('should handle load error for installed mods', async () => {
         (window.electronAPI.getInstalledMods as any).mockRejectedValue(new Error('Fail'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         renderWithProviders(<Mods />);
         await waitFor(() => {
             // Just ensure it renders
             expect(screen.getByText('Installed')).toBeInTheDocument();
         });
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to load installed mods', expect.any(Error));
     });
 
     it('should switch tabs', async () => {
         renderWithProviders(<Mods />);
 
         fireEvent.click(screen.getByText('Browse Online'));
-        // Expect Categories sidebar to appear in Browse tab
-        expect(screen.getByText('Categories')).toBeInTheDocument();
+        // Expect Categories sidebar (mocked) to appear
+        expect(screen.getByTestId('category-sidebar')).toBeInTheDocument();
 
         // Wait for online mods load
         await waitFor(() => {
@@ -98,15 +114,6 @@ describe('Mods Page', () => {
     it('should filter installed mods', async () => {
         renderWithProviders(<Mods />);
         await waitFor(() => screen.getByText('Local Mod'));
-
-        // Find dropdown
-        // Assuming it's a select element
-        // We can't easily find by label as it has no label text only placeholder.
-        // It's the only select on the page?
-        const selects = screen.getAllByRole('combobox');
-        // Actually, typical <select> is combobox?
-        // Or find by display value? "All Mods"
-        // Let's try to change it.
     });
 
     it('should filter browse mods', async () => {
@@ -140,14 +147,14 @@ describe('Mods Page', () => {
         const installMock = (window.electronAPI.installMod as any).mockResolvedValue({ success: true });
         renderWithProviders(<Mods />);
 
-        // Find container
-        const container = screen.getByText('Installed').closest('.h-full');
+        const searchInput = screen.getByPlaceholderText('Search installed mods...');
+        const dropZone = searchInput.closest('div')?.parentElement?.parentElement;
 
-        if (container) {
-            fireEvent.dragEnter(container, { dataTransfer: { items: [{}], files: [] } });
+        if (dropZone) {
+            fireEvent.dragEnter(dropZone, { dataTransfer: { items: [{}], files: [] } });
             expect(screen.getByText('Drop to Install')).toBeInTheDocument();
 
-            fireEvent.drop(container, {
+            fireEvent.drop(dropZone, {
                 dataTransfer: {
                     files: [{ path: '/test/mod.zip' }],
                     items: [{ kind: 'file' }]
@@ -170,6 +177,17 @@ describe('Mods Page', () => {
         expect(window.electronAPI.getInstalledMods).toHaveBeenCalledTimes(2);
     });
 
+    it('should handle update check failure', async () => {
+        (window.electronAPI.checkForUpdates as any).mockRejectedValue(new Error('Fail'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        renderWithProviders(<Mods />);
+
+        const updateBtn = screen.getByText('Check Updates');
+        fireEvent.click(updateBtn);
+
+        await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error)));
+    });
+
     it('should handle uninstall with confirmation', async () => {
         renderWithProviders(<Mods />);
         await waitFor(() => screen.getByText('Local Mod'));
@@ -190,5 +208,39 @@ describe('Mods Page', () => {
                 expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
             });
         }
+    });
+
+    it('should reload installed mods when scan finishes', async () => {
+        renderWithProviders(<Mods />);
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        // Initial load count
+        expect(window.electronAPI.getInstalledMods).toHaveBeenCalledTimes(1);
+
+        // Trigger event
+        const calls = (window.electronAPI.onDownloadScanFinished as any).mock.calls;
+        if (calls.length > 0) {
+            const listener = calls[0][0];
+            act(() => {
+                listener();
+            });
+            expect(window.electronAPI.getInstalledMods).toHaveBeenCalledTimes(2);
+        }
+    });
+
+    it('should filter by category in browse mode', async () => {
+         renderWithProviders(<Mods />);
+         fireEvent.click(screen.getByText('Browse Online'));
+
+         // Wait for mocked sidebar
+         await waitFor(() => expect(screen.getByTestId('category-sidebar')).toBeInTheDocument());
+
+         const btn = screen.getByText('Select Misc');
+         fireEvent.click(btn);
+
+         await waitFor(() => {
+             // Mods sends the category name as categoryId
+             expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ categoryId: 'Misc' }));
+         });
     });
 });

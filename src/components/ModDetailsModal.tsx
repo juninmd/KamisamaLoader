@@ -121,9 +121,11 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             className="w-full h-full object-contain"
                             onError={(e) => {
                                 console.error('Error loading image:', e.currentTarget.src);
-                                e.currentTarget.src = mod.iconUrl || ''; // Fallback to iconUrl if main image fails
-                                if (!e.currentTarget.src) {
-                                    e.currentTarget.style.display = 'none'; // Hide if no fallback
+                                // If we already tried fallback or don't have one, hide
+                                if (!mod.iconUrl || e.currentTarget.src.includes(mod.iconUrl)) {
+                                    e.currentTarget.style.display = 'none';
+                                } else {
+                                    e.currentTarget.src = mod.iconUrl;
                                 }
                             }}
                         />

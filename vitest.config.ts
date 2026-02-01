@@ -33,14 +33,16 @@ export default defineConfig({
             'postcss.config.js',
             'tailwind.config.js',
             'eslint.config.js',
-            'src/types.ts'
+            'src/types.ts',
+            'electron/shared-types.ts',
+            'src/pages/**'
         ],
         all: true,
         thresholds: {
-            lines: 75,
-            functions: 70, // Slightly lower as some functional components/helpers might be missed
-            branches: 65,
-            statements: 75
+            lines: 80,
+            functions: 80,
+            branches: 70,
+            statements: 80
         }
     }
   },

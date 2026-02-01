@@ -32,9 +32,16 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const updateSettings = async (newSettings: Partial<Settings>) => {
-        const merged = { ...settings, ...newSettings };
-        setSettings(merged);
-        await window.electronAPI.saveSettings(merged);
+        try {
+            const merged = { ...settings, ...newSettings };
+            setSettings(merged);
+            const success = await window.electronAPI.saveSettings(merged);
+            if (!success) {
+                console.error('Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+        }
     };
 
     const selectGameDirectory = async () => {
