@@ -1,12 +1,12 @@
 import React from 'react';
 import { ModCard } from './ModCard';
-import type { Mod } from '../../types';
+import type { Mod, LocalMod } from '../../types';
 import { cn } from '../../lib/utils';
 
 
 interface ModGridProps {
     mods: Mod[];
-    installedMods?: Mod[];
+    installedMods?: LocalMod[];
     loading?: boolean;
     onInstall?: (mod: Mod) => void;
     onToggle?: (id: string) => void;

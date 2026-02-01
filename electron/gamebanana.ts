@@ -1,5 +1,6 @@
 import { getAPICache } from './api-cache.js';
 import pLimit from 'p-limit';
+import { OnlineMod as Mod } from './shared-types.js';
 
 // Rate limiting - max 60 requests per minute
 const apiLimit = pLimit(10);
@@ -60,26 +61,7 @@ function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchO
     return newUrl;
 }
 
-export interface Mod {
-    id: string;
-    name: string;
-    author: string;
-    version: string;
-    description: string;
-    isEnabled: boolean;
-    iconUrl: string;
-    gameBananaId: number;
-    latestVersion: string;
-    viewCount?: number;
-    likeCount?: number;
-    downloadCount?: number;
-    dateAdded?: number;
-    images?: string[];
-    category?: string;
-    fileSize?: number;
-    license?: string;
-    submitter?: string;
-}
+export { Mod };
 
 export interface ModUpdateInfo {
     hasUpdate: boolean;

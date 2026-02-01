@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderWithProviders, screen, waitFor, act } from '../test-utils';
-import { useSettings } from '../../../src/components/SettingsContext';
+import { render, screen, waitFor, act } from '../test-utils';
+import { useSettings, SettingsProvider } from '../../../src/components/SettingsContext';
 import { useEffect } from 'react';
 
 const TestComponent = () => {
@@ -24,14 +24,22 @@ describe('SettingsContext', () => {
     });
 
     it('should load settings on mount', async () => {
-        renderWithProviders(<TestComponent />);
+        render(
+            <SettingsProvider>
+                <TestComponent />
+            </SettingsProvider>
+        );
         await waitFor(() => {
             expect(screen.getByTestId('gamePath')).toHaveTextContent('/initial/path');
         });
     });
 
     it('should update settings', async () => {
-        renderWithProviders(<TestComponent />);
+        render(
+            <SettingsProvider>
+                <TestComponent />
+            </SettingsProvider>
+        );
         await waitFor(() => screen.getByTestId('gamePath'));
 
         act(() => {
@@ -45,7 +53,11 @@ describe('SettingsContext', () => {
     });
 
     it('should select game directory', async () => {
-        renderWithProviders(<TestComponent />);
+        render(
+            <SettingsProvider>
+                <TestComponent />
+            </SettingsProvider>
+        );
         await waitFor(() => screen.getByTestId('gamePath'));
 
         act(() => {

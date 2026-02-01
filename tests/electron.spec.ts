@@ -11,7 +11,7 @@ let electronApp: ElectronApplication;
 test.beforeAll(async () => {
     // Launch Electron app.
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.js'), '--no-sandbox'],
+        args: [mainScriptPath, '--no-sandbox'],
         // Add debugging environment variable if needed
         env: {
             ...process.env,

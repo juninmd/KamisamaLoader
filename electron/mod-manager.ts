@@ -7,29 +7,9 @@ import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
 import { fetchModProfile, searchOnlineMods, Mod as OnlineMod, getModChangelog, fetchModDetails } from './gamebanana.js';
 import { fetchLatestRelease } from './github.js';
+import { LocalMod, Profile, Settings, OnlineMod as SharedOnlineMod } from './shared-types.js';
 
 import { DownloadManager } from './download-manager.js';
-
-export interface LocalMod {
-    id: string;
-    name: string;
-    author: string;
-    version: string;
-    description: string;
-    isEnabled: boolean;
-    folderPath: string;
-    priority: number;
-    fileSize: number;
-    gameBananaId?: number;
-    latestVersion?: string;
-    latestFileId?: number;
-    latestFileUrl?: string;
-    hasUpdate?: boolean;
-    iconUrl?: string;
-    deployedFiles?: string[];
-    ue4ssModName?: string;
-    category?: string;
-}
 
 export class ModManager {
     private modsDir: string;
@@ -73,8 +53,8 @@ export class ModManager {
             const mods = await this.getInstalledMods();
             const enabledModIds = mods.filter((m: LocalMod) => m.isEnabled).map((m: LocalMod) => m.id);
 
-            const profiles = await this.getProfiles();
-            const newProfile = {
+            const profiles: Profile[] = await this.getProfiles();
+            const newProfile: Profile = {
                 id: Date.now().toString(),
                 name,
                 modIds: enabledModIds
@@ -93,18 +73,21 @@ export class ModManager {
 
     async deleteProfile(id: string) {
         try {
-            let profiles = await this.getProfiles();
-            profiles = profiles.filter((p: any) => p.id !== id);
+            let profiles: Profile[] = await this.getProfiles();
+            profiles = profiles.filter((p: Profile) => p.id !== id);
             const file = await this.getProfilesFilePath();
             await fs.writeFile(file, JSON.stringify(profiles, null, 2));
             return true;
-        } catch { return false; }
+        } catch (e) {
+            console.error('Failed to delete profile', e);
+            return false;
+        }
     }
 
     async loadProfile(id: string) {
         try {
-            const profiles = await this.getProfiles();
-            const profile = profiles.find((p: any) => p.id === id);
+            const profiles: Profile[] = await this.getProfiles();
+            const profile = profiles.find((p: Profile) => p.id === id);
             if (!profile) return { success: false, message: 'Profile not found' };
 
             const modsFile = await this.getModsFilePath();
@@ -148,8 +131,8 @@ export class ModManager {
             const settings = await this.getSettings();
             if (!settings.activeProfileId) return;
 
-            const profiles = await this.getProfiles();
-            const profileIndex = profiles.findIndex((p: any) => p.id === settings.activeProfileId);
+            const profiles: Profile[] = await this.getProfiles();
+            const profileIndex = profiles.findIndex((p: Profile) => p.id === settings.activeProfileId);
 
             if (profileIndex !== -1) {
                 const profile = profiles[profileIndex];
@@ -195,7 +178,7 @@ export class ModManager {
         return path.join(this.modsDir, 'mods.json');
     }
 
-    async getSettings(): Promise<{ gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string; backgroundOpacity?: number }> {
+    async getSettings(): Promise<Settings> {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
@@ -210,7 +193,7 @@ export class ModManager {
         }
     }
 
-    async saveSettings(settings: { gamePath: string; modDownloadPath?: string; backgroundImage?: string; activeProfileId?: string; launchArgs?: string; backgroundOpacity?: number }) {
+    async saveSettings(settings: Settings) {
         try {
             if (settings.modDownloadPath && settings.modDownloadPath !== this.modsDir) {
                 // Changing mod directory
@@ -392,6 +375,22 @@ export class ModManager {
             console.error(`Failed to deploy file ${src} to ${dest}`, error);
             return false;
         }
+    }
+
+    private async extractZip(zipPath: string, dest: string): Promise<void> {
+        // Read file async to avoid blocking main thread
+        const buffer = await fs.readFile(zipPath);
+        const zip = new AdmZip(buffer);
+
+        return new Promise((resolve, reject) => {
+            zip.extractAllToAsync(dest, true, false, (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     private async updateUE4SSModsTxt(binariesDir: string, modName: string, enabled: boolean) {
@@ -585,8 +584,7 @@ export class ModManager {
 
             // Check if zip
             if (filePath.endsWith('.zip')) {
-                const zip = new AdmZip(filePath);
-                zip.extractAllTo(modDestDir, true);
+                await this.extractZip(filePath, modDestDir);
             } else {
                 // Copy file directly (e.g. .pak)
                 await fs.mkdir(modDestDir, { recursive: true });
@@ -829,6 +827,33 @@ export class ModManager {
         }
     }
 
+    async updateAllMods(modIds: string[]) {
+        console.log(`[ModManager] Updating ${modIds.length} mods...`);
+        const limit = pLimit(3); // Limit concurrency to 3 downloads at a time
+        const results: { id: string, success: boolean }[] = [];
+        let successCount = 0;
+        let failCount = 0;
+
+        const promises = modIds.map(id => limit(async () => {
+            try {
+                // updateMod returns Promise<boolean> (mostly)
+                const result = await this.updateMod(id);
+                const success = !!result;
+                results.push({ id, success });
+                if (success) successCount++;
+                else failCount++;
+            } catch (e) {
+                console.error(`Failed to update mod ${id}`, e);
+                results.push({ id, success: false });
+                failCount++;
+            }
+        }));
+
+        await Promise.all(promises);
+
+        return { successCount, failCount, results };
+    }
+
     // Helper to finalize update after download
     private async finalizeUpdate(mod: LocalMod, tempFile: string, mods: LocalMod[], modsFile: string) {
         try {
@@ -836,8 +861,7 @@ export class ModManager {
             const modDestDir = mod.folderPath || path.join(this.modsDir, mod.name);
             await fs.mkdir(modDestDir, { recursive: true });
 
-            const zip = new AdmZip(tempFile);
-            zip.extractAllTo(modDestDir, true);
+            await this.extractZip(tempFile, modDestDir);
 
             await fs.unlink(tempFile);
 
@@ -858,6 +882,9 @@ export class ModManager {
     }
 
     async searchBySection(options: any) {
+        // Options usually come from frontend and are typed there, but here we can't easily enforce strict interface
+        // without importing SearchOptions from gamebanana which might be circular or complex.
+        // We will leave it as any for flexible IPC but documented.
         const { searchBySection } = await import('./gamebanana.js');
         return await searchBySection(options);
     }
@@ -963,8 +990,7 @@ export class ModManager {
                             await fs.mkdir(modDestDir, { recursive: true });
 
                             try {
-                                const zip = new AdmZip(tempFile);
-                                zip.extractAllTo(modDestDir, true);
+                                await this.extractZip(tempFile, modDestDir);
                             } catch (e) {
                                 console.error('Zip extraction failed', e);
                                 // could emit an error event to UI via DownloadManager?
@@ -1161,13 +1187,12 @@ export class ModManager {
 
     private async finalizeUE4SSInstall(zipPath: string, destDir: string) {
         try {
-            const zip = new AdmZip(zipPath);
             // Extract to temp folder first to check structure
             const extractTemp = path.join(path.dirname(zipPath), 'ue4ss_extract');
             // Clean previous extract
             try { await fs.rm(extractTemp, { recursive: true, force: true }); } catch { }
 
-            zip.extractAllTo(extractTemp, true);
+            await this.extractZip(zipPath, extractTemp);
 
             // Check if it has a root folder
             const files = await fs.readdir(extractTemp);

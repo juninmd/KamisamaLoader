@@ -6,12 +6,12 @@ import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { cn } from '../../lib/utils';
-import type { Mod } from '../../types';
+import type { Mod, LocalMod } from '../../types';
 
 interface ModCardProps {
     mod: Mod;
     isInstalled?: boolean;
-    localMod?: Mod; // Reference to the installed version if available
+    localMod?: LocalMod; // Reference to the installed version if available
     onInstall?: (mod: Mod) => void;
     onToggle?: (id: string) => void;
     onUninstall?: (id: string) => void;

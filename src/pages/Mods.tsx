@@ -10,7 +10,7 @@ import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
 import { ModGrid } from '../components/mods/ModGrid';
-import type { Mod } from '../types';
+import type { Mod, LocalMod } from '../types';
 
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';
@@ -24,7 +24,7 @@ function formatBytes(bytes: number, decimals = 2) {
 const Mods: React.FC = () => {
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<'installed' | 'browse' | 'downloads'>('installed');
-    const [installedMods, setInstalledMods] = useState<Mod[]>([]);
+    const [installedMods, setInstalledMods] = useState<LocalMod[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'enabled' | 'disabled' | 'updates'>('all');
 
@@ -284,8 +284,39 @@ const Mods: React.FC = () => {
 
     const handleUpdateAll = async () => {
         const modsToUpdate = installedMods.filter(m => m.hasUpdate);
-        for (const mod of modsToUpdate) {
-            await handlePerformUpdate(mod.id);
+        const ids = modsToUpdate.map(m => m.id);
+
+        if (ids.length === 0) return;
+
+        setUpdatingMods(prev => [...new Set([...prev, ...ids])]);
+        showToast(`Starting batch update for ${ids.length} mods...`, 'info');
+
+        try {
+            const result = await window.electronAPI.updateAllMods(ids);
+
+            setInstalledMods(prev => prev.map(m => {
+                const updateResult = result.results.find(r => r.id === m.id);
+                if (updateResult && updateResult.success) {
+                    return {
+                        ...m,
+                        hasUpdate: false,
+                        version: m.latestVersion || m.version
+                    };
+                }
+                return m;
+            }));
+
+            if (result.failCount > 0) {
+                showToast(`Batch update finished. Success: ${result.successCount}, Failed: ${result.failCount}`, 'info');
+            } else {
+                showToast(`All ${result.successCount} mods updated successfully!`, 'success');
+            }
+
+        } catch (e) {
+            console.error('Batch update failed', e);
+            showToast('Batch update failed', 'error');
+        } finally {
+            setUpdatingMods(prev => prev.filter(id => !ids.includes(id)));
         }
     };
 
@@ -351,7 +382,9 @@ const Mods: React.FC = () => {
     const handleInstall = async (mod: Mod) => {
         showToast(`Requesting download for ${mod.name}...`, 'info');
         try {
-            const result = await window.electronAPI.installOnlineMod(mod);
+            // Cast to any to bypass strict union check against OnlineMod
+            // The backend handles validation of gameBananaId
+            const result = await window.electronAPI.installOnlineMod(mod as any);
             if (result.success) {
                 if (result.downloadId) {
                     showToast('Download started! Added to queue.', 'success');
