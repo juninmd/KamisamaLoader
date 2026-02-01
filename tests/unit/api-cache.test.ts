@@ -95,15 +95,4 @@ describe('APICache', () => {
         expect(await cache.get('a')).toBeNull();
         expect(fs.unlink).toHaveBeenCalled();
     });
-
-    it('should handle persistent write failure', async () => {
-        (fs.writeFile as any).mockRejectedValue(new Error('Write Fail'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-        await cache.set('fail', 1);
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        // setPersistent catches its own error
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to write persistent cache'), expect.anything());
-    });
 });

@@ -480,7 +480,6 @@ const Mods: React.FC = () => {
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            data-testid="mods-drop-zone"
         >
             {isDragging && (
                 <div className="absolute inset-0 z-50 bg-blue-600/90 backdrop-blur-md rounded-xl flex flex-col items-center justify-center border-4 border-white/20 border-dashed animate-in fade-in duration-200">

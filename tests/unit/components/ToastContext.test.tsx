@@ -13,31 +13,27 @@ const TestComponent = () => {
 
 describe('ToastContext', () => {
     it('should show toast', async () => {
-        await act(async () => {
-             renderWithProviders(<TestComponent />);
-        });
+        renderWithProviders(<TestComponent />);
 
-        await act(async () => {
+        act(() => {
             screen.getByText('Show').click();
         });
 
         expect(await screen.findByText('Test Message')).toBeInTheDocument();
     });
 
-    it('should auto dismiss', async () => {
+    it('should auto dismiss', () => {
         vi.useFakeTimers();
-        await act(async () => {
-             renderWithProviders(<TestComponent />);
-        });
+        renderWithProviders(<TestComponent />);
 
-        await act(async () => {
+        act(() => {
             screen.getByText('Show').click();
         });
 
         // Use getBy instead of findBy to avoid async timer issues
         expect(screen.getByText('Test Message')).toBeInTheDocument();
 
-        await act(async () => {
+        act(() => {
             vi.advanceTimersByTime(5000);
         });
 
