@@ -285,9 +285,9 @@ test('07. Settings Page Navigation', async () => {
         await expect(window.getByText('Background Image', { exact: true })).toBeVisible({ timeout: 10000 });
         console.log('[07] Step 5: Background Image visible');
 
-        console.log('[07] Step 6: Checking Appearance...');
-        await expect(window.getByText('Appearance', { exact: true })).toBeVisible({ timeout: 10000 });
-        console.log('[07] Step 6: Appearance visible');
+        console.log('[07] Step 6: Checking Background Opacity...');
+        await expect(window.getByText('Background Opacity', { exact: true })).toBeVisible({ timeout: 10000 });
+        console.log('[07] Step 6: Background Opacity visible');
 
         await window.screenshot({ path: 'tests/evidence/08-settings-page.png' });
         console.log('[07] Test completed successfully');
