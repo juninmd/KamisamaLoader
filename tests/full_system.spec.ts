@@ -198,6 +198,28 @@ test('05. Search and Filter (Real API)', async () => {
 test('06. Mod Details Modal (Real API)', async () => {
     console.log('Testing Mod Details Modal...');
 
+    // Ensure we have results to click. Test 05 might have left us with "No mods found".
+    // Clear search input to revert to Subfeed (default view)
+    const searchInput = window.locator('input[placeholder="Search online mods..."]');
+    if (await searchInput.isVisible()) {
+        const value = await searchInput.inputValue();
+        if (value) {
+            console.log('Clearing search input to reset grid...');
+            await searchInput.fill('');
+            // Wait for grid to refresh
+            await window.waitForTimeout(2000);
+        }
+    }
+
+    // Wait for at least one mod card to be visible
+    const modCard = window.locator('.glass-card, .grid.grid-cols-2 h3').first();
+    try {
+        await modCard.waitFor({ state: 'visible', timeout: 20000 });
+    } catch (e) {
+        console.log('Failed to load any mods for details test. API might be down.');
+        throw e;
+    }
+
     // Click the first mod in the search results (h3 in mod grid, not sidebar)
     const firstMod = window.locator('.grid.grid-cols-2 h3').first();
     await firstMod.click({ timeout: 60000 });

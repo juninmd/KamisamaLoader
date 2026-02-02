@@ -110,7 +110,7 @@ describe('SettingsContext', () => {
         await waitFor(() => screen.getByTestId('gamePath'));
 
         act(() => {
-            screen.getByText('Select Game').click();
+            screen.getByText('Select').click();
         });
 
         await waitFor(() => {

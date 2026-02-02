@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { within } from '@testing-library/react';
 import { renderWithProviders, screen, fireEvent, waitFor } from '../test-utils';
 import ProfileManager from '../../../src/components/ProfileManager';
 
