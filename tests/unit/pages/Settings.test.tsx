@@ -19,6 +19,7 @@ describe('Settings Page', () => {
         (window.electronAPI.selectGameDirectory as any).mockResolvedValue('/new/game/path');
         (window.electronAPI.selectModDirectory as any).mockResolvedValue(undefined); // Canceled
         (window.electronAPI.saveSettings as any).mockResolvedValue(true);
+        (window.electronAPI.selectBackgroundImage as any).mockResolvedValue('new-bg.jpg');
     });
 
     it('should render settings', async () => {
@@ -44,13 +45,10 @@ describe('Settings Page', () => {
     it('should select game directory', async () => {
         renderWithProviders(<Settings />, { initialSettings: mockSettings });
         const buttons = screen.getAllByText('Browse');
-        // 0: Game, 1: Mod, 2: BG
         fireEvent.click(buttons[0]);
 
         await waitFor(() => {
              expect(window.electronAPI.selectGameDirectory).toHaveBeenCalled();
-             // Since mock returns /new/game/path, and SettingsContext updates:
-             // We can check if saveSettings called with new path
              expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ gamePath: '/new/game/path' }));
         });
     });
@@ -63,11 +61,32 @@ describe('Settings Page', () => {
         expect(window.electronAPI.selectModDirectory).toHaveBeenCalled();
     });
 
+    it('should select background image', async () => {
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
+        const buttons = screen.getAllByText('Browse');
+        fireEvent.click(buttons[2]); // 3rd browse button
+
+        await waitFor(() => {
+             expect(window.electronAPI.selectBackgroundImage).toHaveBeenCalled();
+             expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundImage: 'new-bg.jpg' }));
+        });
+    });
+
+    it('should update background image text manually', async () => {
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
+        await waitFor(() => screen.getByDisplayValue('bg.jpg'));
+
+        const input = screen.getByDisplayValue('bg.jpg');
+        fireEvent.change(input, { target: { value: 'manual.jpg' } });
+
+        expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundImage: 'manual.jpg' }));
+    });
+
     it('should update background opacity', async () => {
         renderWithProviders(<Settings />, { initialSettings: mockSettings });
         await waitFor(() => screen.getByText('50%'));
 
-        const slider = screen.getByRole('slider'); // range input
+        const slider = screen.getByRole('slider');
         fireEvent.change(slider, { target: { value: '0.8' } });
 
         expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundOpacity: 0.8 }));
@@ -88,7 +107,15 @@ describe('Settings Page', () => {
          renderWithProviders(<Settings />, { initialSettings: mockSettings });
          fireEvent.click(screen.getByText('Install / Update UE4SS'));
          await waitFor(() => {
-             // Toast check logic implied by finding failure message if rendered or just call
+             expect(window.electronAPI.installUE4SS).toHaveBeenCalled();
+         });
+    });
+
+    it('should handle UE4SS exception', async () => {
+         (window.electronAPI.installUE4SS as any).mockRejectedValue(new Error('Crash'));
+         renderWithProviders(<Settings />, { initialSettings: mockSettings });
+         fireEvent.click(screen.getByText('Install / Update UE4SS'));
+         await waitFor(() => {
              expect(window.electronAPI.installUE4SS).toHaveBeenCalled();
          });
     });

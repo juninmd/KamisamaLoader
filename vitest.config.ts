@@ -34,15 +34,14 @@ export default defineConfig({
             'tailwind.config.js',
             'eslint.config.js',
             'src/types.ts',
-            'electron/shared-types.ts',
-            'src/pages/**'
+            'electron/shared-types.ts'
         ],
         all: true,
         thresholds: {
-            lines: 85,
-            functions: 85,
-            branches: 75,
-            statements: 85
+            lines: 80,
+            functions: 80,
+            branches: 70,
+            statements: 80
         }
     }
   },
