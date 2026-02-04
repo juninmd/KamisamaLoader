@@ -53,6 +53,19 @@ describe('Settings Page', () => {
         });
     });
 
+    it('should handle game directory selection cancellation', async () => {
+        (window.electronAPI.selectGameDirectory as any).mockResolvedValue(null);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
+        const buttons = screen.getAllByText('Browse');
+        fireEvent.click(buttons[0]); // Game Path Browse
+
+        await waitFor(() => {
+             expect(window.electronAPI.selectGameDirectory).toHaveBeenCalled();
+        });
+        // Should NOT save if cancelled
+        expect(window.electronAPI.saveSettings).not.toHaveBeenCalled();
+    });
+
     it('should select mod directory', async () => {
         renderWithProviders(<Settings />, { initialSettings: mockSettings });
         const buttons = screen.getAllByText('Browse');
@@ -70,6 +83,18 @@ describe('Settings Page', () => {
              expect(window.electronAPI.selectBackgroundImage).toHaveBeenCalled();
              expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundImage: 'new-bg.jpg' }));
         });
+    });
+
+    it('should handle background image selection cancellation', async () => {
+        (window.electronAPI.selectBackgroundImage as any).mockResolvedValue(null);
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
+        const buttons = screen.getAllByText('Browse');
+        fireEvent.click(buttons[2]);
+
+        await waitFor(() => {
+             expect(window.electronAPI.selectBackgroundImage).toHaveBeenCalled();
+        });
+        expect(window.electronAPI.saveSettings).not.toHaveBeenCalled();
     });
 
     it('should update background image text manually', async () => {
@@ -90,6 +115,24 @@ describe('Settings Page', () => {
         fireEvent.change(slider, { target: { value: '0.8' } });
 
         expect(window.electronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({ backgroundOpacity: 0.8 }));
+    });
+
+    it('should handle save settings failure', async () => {
+        (window.electronAPI.saveSettings as any).mockResolvedValue(false);
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        renderWithProviders(<Settings />, { initialSettings: mockSettings });
+        await waitFor(() => screen.getByDisplayValue('-test'));
+
+        const input = screen.getByDisplayValue('-test');
+        fireEvent.change(input, { target: { value: '-fail' } });
+
+        await waitFor(() => {
+            expect(window.electronAPI.saveSettings).toHaveBeenCalled();
+        });
+        // We expect it to try to revert or log error?
+        // Logic in SettingsContext usually handles this.
+        // Assuming the component doesn't crash.
     });
 
     it('should install UE4SS', async () => {

@@ -32,6 +32,21 @@ describe('UpdateDialog', () => {
         expect(screen.getByText('New feature')).toBeInTheDocument();
     });
 
+    it('should handle missing changelog', () => {
+        renderWithProviders(
+            <UpdateDialog
+                mod={mockMod}
+                changelog={null}
+                isUpdating={false}
+                onUpdate={mockUpdate}
+                onClose={mockClose}
+            />
+        );
+
+        expect(screen.getByText('New: v2.0')).toBeInTheDocument();
+        expect(screen.getByText('No detailed changelog available.')).toBeInTheDocument();
+    });
+
     it('should trigger update', () => {
         renderWithProviders(
             <UpdateDialog
