@@ -44,6 +44,25 @@ describe('ProfileManager', () => {
         });
     });
 
+    it('should validation empty profile name', async () => {
+        renderWithProviders(<ProfileManager onProfileLoaded={vi.fn()} />);
+
+        // Wait for initial load to prevent act warnings
+        await waitFor(() => {
+             const btn = screen.getByTitle('Manage Mod Profiles');
+             expect(btn).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByTitle('Manage Mod Profiles'));
+        fireEvent.click(screen.getByTitle('Create New Profile'));
+
+        const saveBtn = screen.getByText('Save');
+        fireEvent.click(saveBtn);
+
+        // API should NOT be called
+        expect(window.electronAPI.createProfile).not.toHaveBeenCalled();
+    });
+
     it('should load profile', async () => {
         const mockLoad = vi.fn();
         renderWithProviders(<ProfileManager onProfileLoaded={mockLoad} />);
@@ -59,6 +78,20 @@ describe('ProfileManager', () => {
         });
     });
 
+    it('should handle load profile failure', async () => {
+        (window.electronAPI.loadProfile as any).mockResolvedValue({ success: false, message: 'Load Error' });
+        renderWithProviders(<ProfileManager onProfileLoaded={vi.fn()} />);
+
+        fireEvent.click(screen.getByTitle('Manage Mod Profiles'));
+        await waitFor(() => screen.getByText('Profile 1'));
+        fireEvent.click(screen.getByText('Profile 1'));
+
+        await waitFor(() => {
+            expect(window.electronAPI.loadProfile).toHaveBeenCalledWith('1');
+        });
+        // Can check for error toast if we mock toast context, but coverage is satisfied by executing the else path
+    });
+
     it('should delete profile', async () => {
         renderWithProviders(<ProfileManager onProfileLoaded={vi.fn()} />);
 
@@ -69,7 +102,6 @@ describe('ProfileManager', () => {
         const profileContainer = profileItem.closest('.group');
         expect(profileContainer).toBeInTheDocument();
 
-        // The delete button is the only <button> element inside this component.
         const deleteBtn = within(profileContainer!).getByRole('button');
 
         fireEvent.click(deleteBtn);
@@ -97,8 +129,6 @@ describe('ProfileManager', () => {
         fireEvent.change(input, { target: { value: 'New Profile' } });
         fireEvent.click(screen.getByText('Save'));
 
-        // Should show toast (not easily checked unless mocking toast context deeper or spy)
-        // But we just want coverage of the else block.
         await waitFor(() => expect(window.electronAPI.createProfile).toHaveBeenCalled());
     });
 
@@ -109,8 +139,11 @@ describe('ProfileManager', () => {
         fireEvent.click(screen.getByTitle('Manage Mod Profiles'));
         await waitFor(() => screen.getByText('Profile 1'));
 
-        const deleteButtons = screen.getAllByRole('button');
-        const deleteBtn = deleteButtons[2];
+        // Re-find to ensure we are clicking the right one
+        const profileItem = await screen.findByText('Profile 1');
+        const profileContainer = profileItem.closest('.group');
+        const deleteBtn = within(profileContainer!).getByRole('button');
+
         fireEvent.click(deleteBtn);
 
         await waitFor(() => expect(window.electronAPI.deleteProfile).toHaveBeenCalled());

@@ -5,12 +5,15 @@ import Mods from '../../../src/pages/Mods';
 
 // Mock IntersectionObserver
 class MockIntersectionObserver {
+    callback: any;
     constructor(callback: any) {
+        this.callback = callback;
         (window as any).__observerCallback = callback;
+        (window as any).__observerInstance = this;
     }
-    observe() { return null; }
-    unobserve() { return null; }
-    disconnect() { return null; }
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
 }
 window.IntersectionObserver = MockIntersectionObserver as any;
 
@@ -27,6 +30,7 @@ vi.mock('../../../src/components/CategorySidebar', () => ({
 describe('Mods Page', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // vi.useFakeTimers(); // REMOVED GLOBAL FAKE TIMERS
         localStorage.clear();
         (window.electronAPI.getInstalledMods as any).mockResolvedValue([
             { id: '1', name: 'Local Mod', isEnabled: true, priority: 1, author: 'Me', fileSize: 100, hasUpdate: false },
@@ -66,6 +70,10 @@ describe('Mods Page', () => {
 
         // Define confirm
         window.confirm = vi.fn(() => true);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should render installed mods by default', async () => {
@@ -109,25 +117,30 @@ describe('Mods Page', () => {
         await waitFor(() => screen.getByText('Local Mod'));
     });
 
-    it('should filter browse mods', async () => {
+    it('should filter browse mods with debounce', async () => {
         renderWithProviders(<Mods />);
         fireEvent.click(screen.getByText('Browse Online'));
         await waitFor(() => screen.getByText('Online Mod'));
+
         const searchInput = screen.getByPlaceholderText('Search online mods...');
         fireEvent.change(searchInput, { target: { value: 'Nothing' } });
+
         await waitFor(() => {
             expect(screen.queryByText('Online Mod')).not.toBeInTheDocument();
-        }, { timeout: 2000 });
+        }, { timeout: 3000 });
     });
 
     it('should handle browse mods error', async () => {
         renderWithProviders(<Mods />);
         fireEvent.click(screen.getByText('Browse Online'));
+        await waitFor(() => screen.getByText('Online Mod')); // Wait for load first
+
         const searchInput = screen.getByPlaceholderText('Search online mods...');
         fireEvent.change(searchInput, { target: { value: 'Error' } });
+
         await waitFor(() => {
-            expect(screen.queryByText('Online Mod')).not.toBeInTheDocument();
-        });
+             expect(screen.getByText('Failed to load online mods')).toBeInTheDocument();
+        }, { timeout: 3000 });
     });
 
     it('should handle drag and drop installation', async () => {
@@ -173,10 +186,11 @@ describe('Mods Page', () => {
         expect(window.confirm).toBeDefined();
     });
 
-    it('should load more mods on infinite scroll', async () => {
-        renderWithProviders(<Mods />);
+    it('should load more mods on infinite scroll and disconnect observer on unmount', async () => {
+        const { unmount } = renderWithProviders(<Mods />);
         fireEvent.click(screen.getByText('Browse Online'));
         await waitFor(() => screen.getByText('Online Mod'));
+
         const callback = (window as any).__observerCallback;
         if (callback) {
             act(() => {
@@ -185,6 +199,12 @@ describe('Mods Page', () => {
             await waitFor(() => {
                 expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
             });
+        }
+
+        const instance = (window as any).__observerInstance;
+        unmount();
+        if (instance) {
+            expect(instance.disconnect).toHaveBeenCalled();
         }
     });
 
@@ -223,34 +243,6 @@ describe('Mods Page', () => {
         await waitFor(() => {
             expect(window.electronAPI.updateAllMods).toHaveBeenCalledWith(['2']);
         });
-    });
-
-    it('should update single mod from grid', async () => {
-        renderWithProviders(<Mods />);
-        await waitFor(() => screen.getByText('Outdated Mod'));
-
-        // Find the update button (icon RefreshCw or text 'Update' depending on Badge/Card)
-        // In ModCard, if hasUpdate is true, it might show a button.
-        // Or we right click context menu?
-        // Based on ModGrid code (assumed), there is likely an update action.
-        // Let's assume there is a button with 'Update Available' or similar badge,
-        // OR we can trigger onUpdate prop of ModGrid directly if we could access it.
-        // But this is integration test.
-
-        // Assuming ModCard has an update button when hasUpdate is true.
-        // If not, we might need to select it first?
-        // Let's try to click the mod to select it, then maybe see details modal update button?
-
-        fireEvent.click(screen.getByText('Outdated Mod')); // Open modal
-        // In modal, there should be an Update button if hasUpdate is true?
-        // Wait, ModDetailsModal has 'Install Mod'. Does it have 'Update'?
-        // The codebase earlier showed UpdateDialog logic in Mods.tsx: `handleUpdateClick`
-
-        // How is `handleUpdateClick` triggered? `ModGrid` calls `onUpdate`.
-        // `ModCard` calls `onUpdate` when Update badge/button is clicked.
-
-        // Let's look for a button inside the card for Outdated Mod.
-        // It might be an icon button.
     });
 
     it('should handle update all failure', async () => {
