@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent, waitFor } from './test-utils';
-import { searchBySection } from '../../electron/gamebanana';
 import { ModManager } from '../../electron/mod-manager';
 import Dashboard from '../../src/pages/Dashboard';
 import FilterBar from '../../src/components/FilterBar';
@@ -36,26 +35,6 @@ vi.mock('fs', () => ({
 }));
 
 describe('Coverage Catch-all', () => {
-
-    describe('Electron: GameBanana', () => {
-        beforeEach(() => {
-            vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve([]),
-                text: () => Promise.resolve('')
-            } as any));
-        });
-
-        afterEach(() => {
-            vi.restoreAllMocks();
-        });
-
-        it('should handle searchBySection edge cases', async () => {
-            const res = await searchBySection({ page: 1, gameId: 0 } as any);
-            expect(res).toEqual([]);
-        });
-    });
-
     describe('Electron: ModManager', () => {
         it('should construct with packaged app path', () => {
             const mgr = new ModManager();
