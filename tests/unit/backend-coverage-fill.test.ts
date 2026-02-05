@@ -122,7 +122,7 @@ describe('Backend Coverage Fill', () => {
             vi.spyOn(modManager, 'getModsFilePath').mockResolvedValue('invalid/path');
             vi.mocked(fs.readFile).mockRejectedValue(new Error('Read Fail'));
 
-            const result = await modManager.getModChangelog('1');
+            const result = await modManager.getModChangelog('invalid-id');
             expect(result).toBeNull();
         });
     });
