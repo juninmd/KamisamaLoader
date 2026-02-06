@@ -101,4 +101,4 @@ const customRender = (
 };
 
 export * from '@testing-library/react';
-export { customRender as renderWithProviders, MockSettingsProvider };
+export { customRender as renderWithProviders, MockSettingsProvider, ToastProvider as MockToastProvider };
