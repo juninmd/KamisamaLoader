@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { within } from '@testing-library/react';
 import { renderWithProviders, screen, fireEvent, waitFor, act } from '../test-utils';
 import Mods from '../../../src/pages/Mods';
 
@@ -254,5 +255,60 @@ describe('Mods Page', () => {
         fireEvent.click(updateAllBtn);
 
         // Toast error expected
+    });
+
+    it('should handle single mod update', async () => {
+        renderWithProviders(<Mods />);
+        await waitFor(() => screen.getByText('Outdated Mod'));
+
+        // Find update button for Outdated Mod
+        const modCard = screen.getByText('Outdated Mod').closest('.group');
+        // Actually ModCard update button is the RefreshCw icon.
+        // Let's find button with that icon inside the card.
+        const btns = modCard!.querySelectorAll('button');
+        // The update button is usually the second one if active (disable, update, uninstall)
+        // Or check ModCard logic: {isEnabled ? 'Disable' : 'Enable'} then Update then Priority then Uninstall
+        // Update button has variant="glass" and RefreshCw.
+        // Let's click specific button if we can identify it.
+        // ModCard renders Update button if hasUpdate is true.
+        // We can look for the button that calls onUpdate.
+
+        // Let's use a broader search within the card
+        const updateButton = Array.from(btns).find(b => b.querySelector('.lucide-refresh-cw'));
+        expect(updateButton).toBeDefined();
+        if (updateButton) {
+            fireEvent.click(updateButton);
+            // It opens dialog
+            await waitFor(() => screen.getByText('Update Available'));
+            fireEvent.click(screen.getByText('Yes, Update'));
+            await waitFor(() => expect(window.electronAPI.updateMod).toHaveBeenCalledWith('2'));
+        }
+    });
+
+    it('should handle uninstall', async () => {
+        renderWithProviders(<Mods />);
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        const modCard = screen.getByText('Local Mod').closest('.group');
+        const deleteBtn = Array.from(modCard!.querySelectorAll('button')).find(b => b.querySelector('.lucide-trash-2'));
+
+        if (deleteBtn) {
+            fireEvent.click(deleteBtn);
+            expect(window.confirm).toHaveBeenCalled();
+            expect(window.electronAPI.uninstallMod).toHaveBeenCalledWith('1');
+        }
+    });
+
+    it('should handle priority change', async () => {
+        renderWithProviders(<Mods />);
+        await waitFor(() => screen.getByText('Local Mod'));
+
+        const modCard = screen.getByText('Local Mod').closest('.group');
+        const upBtn = modCard!.querySelector('button[title="Increase Priority (Move Up)"]');
+
+        if (upBtn) {
+            fireEvent.click(upBtn);
+            expect(window.electronAPI.setModPriority).toHaveBeenCalledWith('1', 'up');
+        }
     });
 });

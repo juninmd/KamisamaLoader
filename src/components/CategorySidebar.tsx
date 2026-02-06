@@ -70,7 +70,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         return 'text-gray-400 border-gray-500/30 bg-gray-600/10';
     };
 
-    const filteredCategories = categories.filter(cat =>
+    const filteredCategories = (categories || []).filter(cat =>
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
