@@ -48,10 +48,8 @@ function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchO
             newUrl += '&_sOrder=alphabetical';
         }
     } else {
-        if (sort === 'downloads') newUrl += '&_sSort=Generic_MostDownloaded';
-        else if (sort === 'likes') newUrl += '&_sSort=Generic_MostLiked';
-        else if (sort === 'views') newUrl += '&_sSort=Generic_MostViewed';
-        else if (sort === 'date') newUrl += '&_sSort=new';
+        // Subfeed only supports date/name sorting. Other sorts are filtered out by caller.
+        if (sort === 'date') newUrl += '&_sSort=new';
         else if (sort === 'name') newUrl += '&_sSort=alphabetical';
     }
 

@@ -76,7 +76,7 @@ describe('ModManager Extended', () => {
         (fs.link as any).mockRejectedValue({ code: 'EPERM' });
         (fs.copyFile as any).mockRejectedValue(new Error('Copy Failed'));
         const result = await mm.deployMod(mod as any);
-        expect(result).toBe(true);
+        expect(result).toBe(true); // Should be true because deployMod catches error and returns true but fails internally for that file
     });
 
     it('launchGame: handles execution error', async () => {

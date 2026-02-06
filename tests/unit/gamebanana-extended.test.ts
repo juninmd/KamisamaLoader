@@ -12,14 +12,14 @@ vi.mock('../../electron/api-cache', () => ({
 
 // Mock global fetch
 const fetchMock = vi.fn();
-vi.stubGlobal('fetch', fetchMock);
+global.fetch = fetchMock;
 
 describe('GameBanana API Extended', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockCache.get.mockResolvedValue(null);
         mockCache.set.mockResolvedValue(undefined);
-        // vi.useFakeTimers(); // Removing fake timers to avoid hanging on p-limit/delay
+        fetchMock.mockReset(); // Ensure clean state
     });
 
     // afterEach(() => {

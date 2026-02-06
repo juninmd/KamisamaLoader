@@ -198,6 +198,8 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 size="icon"
                                 className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                 onClick={(e) => { e.stopPropagation(); onUninstall?.(localMod.id); }}
+                                aria-label="Uninstall"
+                                title="Uninstall"
                             >
                                 <Trash2 size={14} />
                             </Button>
