@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Mods from '../../src/pages/Mods';
 import { SettingsContext } from '../../src/components/SettingsContext';
@@ -17,7 +17,15 @@ const mockElectron = {
     getSettings: vi.fn().mockResolvedValue({}),
     onDownloadScanFinished: vi.fn(() => () => { }),
     onDownloadProgress: vi.fn(() => () => { }),
-    onDownloadComplete: vi.fn(() => () => { })
+    onDownloadComplete: vi.fn(() => () => { }),
+    checkForUpdates: vi.fn().mockResolvedValue([]),
+    getModChangelog: vi.fn().mockResolvedValue([]),
+    updateAllMods: vi.fn().mockResolvedValue({ successCount: 0, failCount: 0, results: [] }),
+    updateMod: vi.fn().mockResolvedValue(true),
+    toggleMod: vi.fn().mockResolvedValue({ success: true }),
+    uninstallMod: vi.fn().mockResolvedValue({ success: true }),
+    setModPriority: vi.fn().mockResolvedValue(true),
+    installOnlineMod: vi.fn().mockResolvedValue({ success: true })
 };
 
 Object.defineProperty(window, 'electronAPI', {
@@ -55,40 +63,54 @@ describe('Frontend Drag & Drop', () => {
     });
 
     it('should show overlay on drag enter', async () => {
-        renderWithProviders(<Mods />);
+        await act(async () => {
+            renderWithProviders(<Mods />);
+        });
         const container = screen.getByPlaceholderText('Search installed mods...').closest('div')?.parentElement?.parentElement?.parentElement;
 
-        fireEvent.dragEnter(container!, {
-            dataTransfer: { items: [{ kind: 'file' }] }
+        await act(async () => {
+            fireEvent.dragEnter(container!, {
+                dataTransfer: { items: [{ kind: 'file' }] }
+            });
         });
 
         expect(screen.getByText('Drop to Install')).toBeInTheDocument();
     });
 
     it('should hide overlay on drag leave', async () => {
-        renderWithProviders(<Mods />);
+        await act(async () => {
+            renderWithProviders(<Mods />);
+        });
         const container = screen.getByPlaceholderText('Search installed mods...').closest('div')?.parentElement?.parentElement?.parentElement;
 
-        fireEvent.dragEnter(container!, {
-            dataTransfer: { items: [{ kind: 'file' }] }
+        await act(async () => {
+            fireEvent.dragEnter(container!, {
+                dataTransfer: { items: [{ kind: 'file' }] }
+            });
         });
         expect(screen.getByText('Drop to Install')).toBeInTheDocument();
 
-        fireEvent.dragLeave(container!);
+        await act(async () => {
+            fireEvent.dragLeave(container!);
+        });
         expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
     });
 
     it('should handle drop success', async () => {
         mockElectron.installMod.mockResolvedValue({ success: true });
-        renderWithProviders(<Mods />);
+        await act(async () => {
+            renderWithProviders(<Mods />);
+        });
         const container = screen.getByPlaceholderText('Search installed mods...').closest('div')?.parentElement?.parentElement?.parentElement;
 
         const file = new File([''], 'mod.zip', { type: 'application/zip' });
         // Add path property manually as it's Electron specific
         Object.defineProperty(file, 'path', { value: '/path/mod.zip' });
 
-        fireEvent.drop(container!, {
-            dataTransfer: { files: [file] }
+        await act(async () => {
+            fireEvent.drop(container!, {
+                dataTransfer: { files: [file] }
+            });
         });
 
         await waitFor(() => expect(mockElectron.installMod).toHaveBeenCalledWith('/path/mod.zip'));
