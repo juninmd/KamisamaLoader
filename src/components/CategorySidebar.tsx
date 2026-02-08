@@ -24,13 +24,13 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
     // Load favorites from localStorage
     useEffect(() => {
-        const saved = localStorage.getItem('favoriteCategories');
-        if (saved) {
-            try {
+        try {
+            const saved = localStorage.getItem('favoriteCategories');
+            if (saved) {
                 setFavorites(JSON.parse(saved));
-            } catch (e) {
-                console.error('Failed to load favorite categories:', e);
             }
+        } catch (e) {
+            console.error('Failed to load favorite categories:', e);
         }
     }, []);
 
