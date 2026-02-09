@@ -18,7 +18,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     const loadDashboardData = async () => {
         try {
             // Load Stats
-            const mods = await window.electronAPI.getInstalledMods();
+            const mods = await window.electronAPI.getInstalledMods() || [];
             const activeCount = mods.filter((m: any) => m.isEnabled).length;
             const updates = await window.electronAPI.checkForUpdates();
 
