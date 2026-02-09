@@ -179,7 +179,7 @@ describe('Frontend Sweep', () => {
          expect(screen.getByText('All Categories')).toBeInTheDocument();
     });
 
-    it('ModDetailsModal - should handle image loading error fallback', async () => {
+    it('ModDetailsModal - should handle image loading error fallback', () => {
         const mod = { id: '1', name: 'Test', gameBananaId: 123, iconUrl: 'fallback.jpg' };
         render(
             <ModDetailsModal
@@ -192,17 +192,12 @@ describe('Frontend Sweep', () => {
 
         // Find main image
         const img = screen.getAllByRole('img')[0];
-
-        await act(async () => {
-            fireEvent.error(img);
-        });
+        fireEvent.error(img);
         // Expect src to change to fallback (iconUrl)
         expect(img).toHaveAttribute('src', 'fallback.jpg');
 
         // Fire error again (fallback fails)
-        await act(async () => {
-            fireEvent.error(img);
-        });
+        fireEvent.error(img);
         // Expect display to be none (hidden)
         expect(img).not.toBeVisible();
     });

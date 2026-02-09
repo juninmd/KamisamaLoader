@@ -41,7 +41,7 @@ export const ModGrid: React.FC<ModGridProps> = ({
         return (
             <div className={cn("grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 p-4", className)}>
                 {Array(10).fill(0).map((_, i) => (
-                    <div key={`skeleton-${i}`} className="h-[280px] w-full bg-white/5 rounded-xl animate-pulse" />
+                    <div key={i} className="h-[280px] w-full bg-white/5 rounded-xl animate-pulse" />
                 ))}
             </div>
         );
@@ -60,15 +60,21 @@ export const ModGrid: React.FC<ModGridProps> = ({
         <div className={cn("grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 p-4", className)}>
             {mods.map((mod) => {
                 const localMod = mod.gameBananaId ? getLocalMod(mod.gameBananaId) : undefined;
+                // If we are in "Installed" tab, the mod itself IS the local mod
+                // Check if the passed mod object looks like an installed mod (has ID not strictly number, etc - relying on logic)
+                // Actually safer: ModCard logic handles localMod || mod.
+                // If we are passing Installed Mods, `localMod` lookup might fail if gameBananaId is missing, but `mod` is the installed one.
+
+                // Refinment:
+                // Case 1: Browser. `mod` is online mod. `localMod` is found via ID.
+                // Case 2: Installed. `mod` ***IS*** the local mod. `localMod` check is redundant or returns itself.
+
                 const effectiveLocalMod = localMod || (installedMods.find(m => m.id === mod.id));
                 const isInstalled = !!effectiveLocalMod;
 
-                // Ensure unique key. Fallback to index if needed, but prefer ID.
-                const uniqueKey = mod.id || `mod-${mod.gameBananaId}` || Math.random().toString();
-
                 return (
                     <ModCard
-                        key={uniqueKey}
+                        key={mod.id}
                         mod={mod}
                         localMod={effectiveLocalMod}
                         isInstalled={isInstalled}

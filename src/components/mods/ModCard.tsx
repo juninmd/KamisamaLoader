@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { Switch } from '../ui/Switch';
 import { cn } from '../../lib/utils';
 import type { Mod, LocalMod } from '../../types';
 
@@ -150,17 +151,13 @@ export const ModCard: React.FC<ModCardProps> = ({
                 <CardFooter className="p-3 pt-0 gap-2">
                     {isInstalled && localMod ? (
                         <>
-                            <Button
-                                variant={isEnabled ? "destructive" : "default"}
-                                size="sm"
-                                className={cn(
-                                    "flex-1 h-8 text-xs font-bold shadow-lg",
-                                    isEnabled ? "bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white" : "bg-primary hover:bg-primary/90"
-                                )}
-                                onClick={(e) => { e.stopPropagation(); onToggle?.(localMod.id); }}
-                            >
-                                {isEnabled ? 'Disable' : 'Enable'}
-                            </Button>
+                            <div className="flex-1 flex items-center justify-start" onClick={(e) => e.stopPropagation()}>
+                                <Switch
+                                    checked={isEnabled}
+                                    onChange={() => onToggle?.(localMod.id)}
+                                    label={isEnabled ? "Enabled" : "Disabled"}
+                                />
+                            </div>
 
                             {hasUpdate && onUpdate && (
                                 <Button
