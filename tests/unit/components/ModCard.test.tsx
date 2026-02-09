@@ -46,21 +46,22 @@ describe('ModCard', () => {
         const localMod = { ...mockMod, isEnabled: true };
         render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} />);
         expect(screen.getByText('Active')).toBeDefined();
-        expect(screen.getByText('Disable')).toBeDefined();
     });
 
     it('shows installed badge when installed and disabled', () => {
         const localMod = { ...mockMod, isEnabled: false };
         render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} />);
         expect(screen.getByText('Installed')).toBeDefined();
-        expect(screen.getByText('Enable')).toBeDefined();
     });
 
-    it('calls onToggle when enable/disable clicked', () => {
+    it('calls onToggle when switch clicked', () => {
         const onToggle = vi.fn();
         const localMod = { ...mockMod, isEnabled: false };
         render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} onToggle={onToggle} />);
-        fireEvent.click(screen.getByText('Enable'));
+
+        // Use Switch component interaction (checkbox)
+        const switchEl = screen.getByRole('checkbox');
+        fireEvent.click(switchEl);
         expect(onToggle).toHaveBeenCalledWith(mockMod.id);
     });
 
@@ -74,15 +75,27 @@ describe('ModCard', () => {
          const onUpdate = vi.fn();
          const localMod = { ...mockMod, hasUpdate: true };
          render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} onUpdate={onUpdate} />);
-         // Find button by class or hierarchy.
-         // Logic: It's the only button with glassy variant green color logic?
-         // Or finding button containing RefreshCw not easy via text.
-         // Let's rely on finding all buttons.
-         // 1. Enable/Disable
-         // 2. Update
-         // 3. Trash
+
+         // Buttons: Update, Up, Down, Trash
+         // Or just Update, Trash depending on context.
+         // With Switch, there is no "Enable/Disable" button anymore.
+         // The structure is: Switch (div), Update (Button), Priority (div > buttons), Trash (Button)
+
+         // Find button by icon or order. The update button is the first *button* element if update is avail.
          const buttons = screen.getAllByRole('button');
-         fireEvent.click(buttons[1]);
+         // But "Up/Down" are also buttons.
+
+         // Let's assume Update is first button rendered in Footer (after Switch which is label/input).
+         // Update button has class containing 'text-green-400' (from code inspection) or we can just try clicking.
+         // Or look for svg.
+
+         // Update button is rendered if hasUpdate && onUpdate.
+         // Priority buttons are rendered if onPriorityChange.
+         // Trash is always rendered.
+
+         // In this test, onPriorityChange is undefined.
+         // So: Switch, Update Button, Trash Button.
+         fireEvent.click(buttons[0]); // First button should be Update
          expect(onUpdate).toHaveBeenCalledWith(localMod);
     });
 
@@ -90,7 +103,10 @@ describe('ModCard', () => {
          const onSelect = vi.fn();
          render(<ModCard mod={mockMod} onSelect={onSelect} />);
          const card = screen.getByText('Test Mod').closest('div');
-         fireEvent.click(card!);
+         // We need to click the motion.div or the Card itself.
+         // Text 'Test Mod' is inside h3 -> div -> div -> CardContent -> Card -> motion.div
+         // The click handler is on Card.
+         fireEvent.click(screen.getByText('Test Mod'));
          expect(onSelect).toHaveBeenCalledWith(mockMod);
     });
 
@@ -101,20 +117,16 @@ describe('ModCard', () => {
 
          expect(screen.getByText('Prio: 5')).toBeInTheDocument();
 
-         const buttons = screen.getAllByRole('button');
-         // Enable, Up, Down, Trash
-         // If update not present.
-         // 0: Disable
-         // 1: Up
-         // 2: Down
-         // 3: Trash
+         // Find buttons by title
+         const upBtn = screen.getByTitle('Increase Priority (Move Up)');
+         const downBtn = screen.getByTitle('Decrease Priority (Move Down)');
 
          // Click Up
-         fireEvent.click(buttons[1]);
+         fireEvent.click(upBtn);
          expect(onPriorityChange).toHaveBeenCalledWith('1', 'up');
 
          // Click Down
-         fireEvent.click(buttons[2]);
+         fireEvent.click(downBtn);
          expect(onPriorityChange).toHaveBeenCalledWith('1', 'down');
     });
 
@@ -123,9 +135,7 @@ describe('ModCard', () => {
          const localMod = { ...mockMod, isEnabled: false };
          render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} onUninstall={onUninstall} />);
 
-         const buttons = screen.getAllByRole('button');
-         // Enable, Trash (last)
-         const trashBtn = buttons[buttons.length - 1];
+         const trashBtn = screen.getByTitle('Uninstall');
          fireEvent.click(trashBtn);
          expect(onUninstall).toHaveBeenCalledWith('1');
     });

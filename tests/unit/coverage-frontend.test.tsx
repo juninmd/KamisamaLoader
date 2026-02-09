@@ -92,8 +92,9 @@ describe('Frontend Coverage Fill', () => {
             renderWithProviders(<Mods />);
             await waitFor(() => expect(screen.getByText('M')).toBeInTheDocument());
 
-            const toggle = screen.getByText('Enable');
-            fireEvent.click(toggle);
+            // Use switch (role checkbox) instead of text "Enable"
+            const switchEl = screen.getByRole('checkbox');
+            fireEvent.click(switchEl);
 
             await waitFor(() => {
                 expect(mockElectron.toggleMod).toHaveBeenCalled();
