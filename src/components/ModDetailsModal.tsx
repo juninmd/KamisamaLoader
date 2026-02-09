@@ -2,29 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Download, ChevronLeft, ChevronRight, Eye, Heart, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-
-interface Mod {
-    id: string;
-    name: string;
-    author: string;
-    version: string;
-    description?: string;
-    iconUrl?: string;
-    images?: string[];
-    viewCount?: number;
-    likeCount?: number;
-    downloadCount?: number;
-    dateAdded?: number;
-    category?: string;
-    fileSize?: number;
-    license?: string;
-    submitter?: string;
-    isEnabled?: boolean; // Added optional property
-    submitterUrl?: string;
-    modPageUrl?: string;
-    credits?: any[];
-}
-
+import type { Mod } from '../../shared/types';
 
 interface ModDetailsModalProps {
     mod: Mod;

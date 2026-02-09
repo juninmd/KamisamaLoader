@@ -10,7 +10,7 @@ import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
 import { ModGrid } from '../components/mods/ModGrid';
-import type { Mod, LocalMod } from '../types';
+import type { Mod, LocalMod } from '../../shared/types';
 
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';
@@ -468,7 +468,7 @@ const Mods: React.FC = () => {
                 loadInstalledMods();
                 showToast('Mod installed successfully', 'success');
             } else {
-                showToast(result.message, 'error');
+                showToast(result.message || 'Installation failed', 'error');
             }
         }
     };
@@ -682,7 +682,7 @@ const Mods: React.FC = () => {
                     mod={updateDialogMod}
                     changelog={updateChangelog}
                     isUpdating={updatingMods.includes(updateDialogMod.id)}
-                    onUpdate={() => handlePerformUpdate(updateDialogMod.id)}
+                    onUpdate={() => handlePerformUpdate(updateDialogMod.id || '')}
                     onClose={() => setUpdateDialogMod(null)}
                 />
             )}

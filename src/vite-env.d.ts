@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { LocalMod, OnlineMod, Profile, Settings } from './types';
+import { LocalMod, OnlineMod, Profile, Settings, Download, SearchOptions, ModChangelog } from '../shared/types';
 
 declare global {
   interface Window {
@@ -10,8 +10,8 @@ declare global {
 
       // Mod Management
       getInstalledMods: () => Promise<LocalMod[]>;
-      installMod: (filePath: string) => Promise<{ success: boolean; message: string }>;
-      uninstallMod: (modId: string) => Promise<{ success: boolean; message: string }>;
+      installMod: (filePath: string) => Promise<{ success: boolean; message?: string }>;
+      uninstallMod: (modId: string) => Promise<{ success: boolean; message?: string }>;
       toggleMod: (modId: string, isEnabled: boolean) => Promise<{ success: boolean; conflict?: string }>;
       getSettings: () => Promise<Settings>;
       saveSettings: (settings: Settings) => Promise<boolean>;
@@ -25,11 +25,11 @@ declare global {
       checkForUpdates: () => Promise<string[]>;
       updateMod: (modId: string) => Promise<boolean>;
       updateAllMods: (modIds: string[]) => Promise<{ successCount: number; failCount: number; results: { id: string; success: boolean }[] }>;
-      getModChangelog: (modId: string) => Promise<{ version: string; date: number; changes: { cat: string; text: string }[]; title?: string } | null>;
+      getModChangelog: (modId: string) => Promise<ModChangelog | null>;
 
       // Online Mods & Search
       searchOnlineMods: (page: number, search?: string) => Promise<OnlineMod[]>;
-      searchBySection: (options: any) => Promise<OnlineMod[]>;
+      searchBySection: (options: SearchOptions) => Promise<OnlineMod[]>;
       fetchCategories: (gameId?: number) => Promise<any[]>;
       fetchNewMods: (page?: number) => Promise<OnlineMod[]>;
       getAllOnlineMods: (forceRefresh?: boolean) => Promise<OnlineMod[]>;
@@ -44,13 +44,13 @@ declare global {
       loadProfile: (id: string) => Promise<{ success: boolean; message?: string }>;
 
       // Downloads
-      getDownloads: () => Promise<any[]>;
+      getDownloads: () => Promise<Download[]>;
       pauseDownload: (id: string) => Promise<void>;
       resumeDownload: (id: string) => Promise<void>;
       cancelDownload: (id: string) => Promise<void>;
       openDownloadFolder: (id: string) => Promise<void>;
       clearCompletedDownloads: () => Promise<void>;
-      onDownloadUpdate: (callback: (downloads: any[]) => void) => () => void;
+      onDownloadUpdate: (callback: (downloads: Download[]) => void) => () => void;
       onDownloadScanFinished: (callback: () => void) => () => void;
 
       // Game
