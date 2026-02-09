@@ -19,6 +19,7 @@ const mockElectronAPI = {
   setModPriority: vi.fn(),
   installMod: vi.fn(),
   getModChangelog: vi.fn(),
+  getProfiles: vi.fn(), // Added this
 };
 
 // Safely extend window
@@ -38,6 +39,7 @@ describe('Mods Page Final Coverage', () => {
     mockElectronAPI.fetchCategories.mockResolvedValue([]);
     mockElectronAPI.toggleMod.mockResolvedValue({ success: true });
     mockElectronAPI.updateMod.mockResolvedValue(true);
+    mockElectronAPI.getProfiles.mockResolvedValue([]); // Mock return value
   });
 
   it('should handle drag and drop interactions correctly', async () => {
