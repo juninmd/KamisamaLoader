@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Trash2, ChevronDown, Folder, Plus } from 'lucide-react';
 import { useToast } from './ToastContext';
-
-interface Profile {
-    id: string;
-    name: string;
-    modIds: string[];
-}
+import { Profile } from '../../shared/types';
 
 interface ProfileManagerProps {
     onProfileLoaded: () => void;

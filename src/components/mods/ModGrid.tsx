@@ -1,6 +1,6 @@
 import React from 'react';
 import { ModCard } from './ModCard';
-import type { Mod, LocalMod } from '../../types';
+import type { Mod, LocalMod } from '../../../shared/types';
 import { cn } from '../../lib/utils';
 
 
