@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { Settings, OnlineMod } from './shared-types.js';
+import { Settings, OnlineMod, Download } from '../shared/types.js';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('minimize-window'),
@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cancelDownload: (id: string) => ipcRenderer.invoke('cancel-download', id),
   openDownloadFolder: (id: string) => ipcRenderer.invoke('open-download-folder', id),
   clearCompletedDownloads: () => ipcRenderer.invoke('clear-completed-downloads'),
-  onDownloadUpdate: (callback: (downloads: any[]) => void) => {
+  onDownloadUpdate: (callback: (downloads: Download[]) => void) => {
     const subscription = (_event: any, value: any) => callback(value);
     ipcRenderer.on('downloads-update', subscription);
     return () => ipcRenderer.removeListener('downloads-update', subscription);

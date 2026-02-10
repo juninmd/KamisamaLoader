@@ -5,9 +5,9 @@ import { execFile } from 'child_process';
 import { app, net, shell } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, Mod as OnlineMod, getModChangelog, fetchModDetails } from './gamebanana.js';
+import { fetchModProfile, searchOnlineMods, getModChangelog, fetchModDetails } from './gamebanana.js';
 import { fetchLatestRelease } from './github.js';
-import { LocalMod, Profile, Settings, OnlineMod as SharedOnlineMod } from './shared-types.js';
+import { LocalMod, Profile, Settings, OnlineMod } from '../shared/types.js';
 
 import { DownloadManager } from './download-manager.js';
 

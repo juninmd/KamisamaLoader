@@ -1,6 +1,6 @@
 import { getAPICache } from './api-cache.js';
 import pLimit from 'p-limit';
-import { OnlineMod as Mod } from './shared-types.js';
+import { OnlineMod, SearchOptions, ModChangelog } from '../shared/types.js';
 
 // Rate limiting - max 60 requests per minute
 const apiLimit = pLimit(10);
@@ -20,19 +20,6 @@ function checkRateLimit() {
     }
     requestCount++;
     return Promise.resolve();
-}
-
-export interface SearchOptions {
-    itemType?: 'Mod' | 'Sound' | 'WiP' | 'Skin';
-    gameId?: number;
-    page?: number;
-    perPage?: number;
-    sort?: 'downloads' | 'views' | 'likes' | 'date' | 'name';
-    order?: 'asc' | 'desc';
-    categoryId?: number;
-    search?: string;
-    dateRange?: '24h' | 'week' | 'month' | 'year' | 'all';
-    filters?: Record<string, any>;
 }
 
 function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchOptions['order']): string {
@@ -59,23 +46,7 @@ function applySorting(url: string, sort?: SearchOptions['sort'], order?: SearchO
     return newUrl;
 }
 
-export { Mod };
-
-export interface ModUpdateInfo {
-    hasUpdate: boolean;
-    latestVersion: string;
-    latestFileId: number;
-    latestFileUrl: string;
-}
-
-export interface ModChangelog {
-    version: string;
-    date: number;
-    changes: { cat: string; text: string }[];
-    title?: string;
-}
-
-export async function searchOnlineMods(page: number = 1, search: string = ''): Promise<Mod[]> {
+export async function searchOnlineMods(page: number = 1, search: string = ''): Promise<OnlineMod[]> {
     return searchBySection({
         page,
         search
@@ -127,7 +98,7 @@ export async function fetchItemData(itemType: string, itemId: number, fields: st
  * - If date range present: Use /Util/Search/Results (Subfeed doesn't support complex range filtering easily)
  * - Else: Use /Game/Subfeed (Most reliable for browsing)
  */
-export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
+export async function searchBySection(options: SearchOptions): Promise<OnlineMod[]> {
     const cache = getAPICache();
     const cacheKey = `search_${JSON.stringify(options)}`;
 
@@ -248,9 +219,9 @@ export async function searchBySection(options: SearchOptions): Promise<Mod[]> {
  * Fetch ALL mods from the Subfeed (up to a limit)
  * This is for client-side filtering/sorting
  */
-export async function fetchAllMods(gameId: number = 21179, maxPages: number = 50): Promise<Mod[]> {
+export async function fetchAllMods(gameId: number = 21179, maxPages: number = 50): Promise<OnlineMod[]> {
     console.log(`[API] Starting Fetch All Mods (Limit: ${maxPages} pages)`);
-    const allMods: Mod[] = [];
+    const allMods: OnlineMod[] = [];
     const limit = pLimit(5); // Concurrency for pages
 
     // Create array of page numbers
@@ -351,7 +322,7 @@ export async function fetchAllMods(gameId: number = 21179, maxPages: number = 50
  * Fetch newest mods
  * Endpoint: /Core/List/New
  */
-export async function fetchNewMods(page: number = 1, gameId: number = 21179): Promise<Mod[]> {
+export async function fetchNewMods(page: number = 1, gameId: number = 21179): Promise<OnlineMod[]> {
     return searchBySection({
         gameId,
         page,
@@ -365,7 +336,7 @@ export async function fetchNewMods(page: number = 1, gameId: number = 21179): Pr
  * Fetch featured mods
  * Endpoint: /Rss/Featured (adapted)
  */
-export async function fetchFeaturedMods(gameId: number = 21179): Promise<Mod[]> {
+export async function fetchFeaturedMods(gameId: number = 21179): Promise<OnlineMod[]> {
     const cache = getAPICache();
     const cacheKey = `featured_${gameId}`;
 

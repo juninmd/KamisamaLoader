@@ -2,24 +2,10 @@ import { net, BrowserWindow, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import EventEmitter from 'events';
-
-export interface DownloadItem {
-    id: string;
-    url: string;
-    filename: string;
-    savePath: string;
-    totalBytes: number;
-    receivedBytes: number;
-    state: 'progressing' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'queued';
-    speed: number; // bytes per second
-    progress: number; // 0-100
-    startTime: number;
-    error?: string;
-    context?: any; // Extra data (type: 'install' | 'update', modId, etc.)
-}
+import { Download } from '../shared/types.js';
 
 export class DownloadManager extends EventEmitter {
-    private downloads: Map<string, DownloadItem> = new Map();
+    private downloads: Map<string, Download> = new Map();
     private activeRequests: Map<string, any> = new Map(); // Store net.ClientRequest
     private mainWindow: BrowserWindow | null = null;
 
@@ -45,7 +31,7 @@ export class DownloadManager extends EventEmitter {
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
         const savePath = path.join(saveFolder, filename);
 
-        const item: DownloadItem = {
+        const item: Download = {
             id,
             url,
             filename,

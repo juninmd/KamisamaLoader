@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Pause, Play, X, Download, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
-
-interface DownloadItem {
-    id: string;
-    url: string;
-    filename: string;
-    state: 'progressing' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'queued';
-    speed: number;
-    progress: number;
-    error?: string;
-    context?: any;
-}
+import { Pause, Play, X, Download as DownloadIcon, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
+import { Download } from '../../shared/types';
 
 export const DownloadsList: React.FC = () => {
-    const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+    const [downloads, setDownloads] = useState<Download[]>([]);
 
     useEffect(() => {
         // Initial fetch
@@ -91,7 +81,7 @@ export const DownloadsList: React.FC = () => {
                     <div className="p-3 bg-white/5 rounded-full">
                         {dl.state === 'completed' ? <CheckCircle className="w-6 h-6 text-green-400" /> :
                             dl.state === 'failed' ? <AlertCircle className="w-6 h-6 text-red-400" /> :
-                                <Download className="w-6 h-6 text-blue-400" />}
+                                <DownloadIcon className="w-6 h-6 text-blue-400" />}
                     </div>
 
                     <div className="flex-1 min-w-0">
