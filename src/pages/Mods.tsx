@@ -10,7 +10,7 @@ import type { FilterState } from '../components/FilterBar';
 import CategorySidebar from '../components/CategorySidebar';
 import type { Category } from '../components/CategorySidebar';
 import { ModGrid } from '../components/mods/ModGrid';
-import type { Mod, LocalMod } from '../types';
+import type { Mod, LocalMod } from '../../shared/types';
 
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 Bytes';

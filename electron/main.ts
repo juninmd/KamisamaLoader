@@ -192,7 +192,16 @@ function createWindow() {
 
   // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        shell.openExternal(url);
+      } else {
+        console.warn(`Blocked attempt to open external URL with unsafe protocol: ${url}`);
+      }
+    } catch (e) {
+      console.error('Invalid URL in setWindowOpenHandler:', url);
+    }
     return { action: 'deny' };
   });
 
@@ -213,23 +222,24 @@ function handleProtocolUrl(url: string) {
       let gameBananaId = 0;
 
       const idParam = urlObj.searchParams.get('id');
-      if (idParam) {
-        gameBananaId = parseInt(idParam);
+      if (idParam && /^\d+$/.test(idParam)) {
+        gameBananaId = parseInt(idParam, 10);
       } else {
         // Parse path: /21179/12345
         const parts = urlObj.pathname.split('/').filter(p => p.length > 0);
-        if (parts.length >= 2) {
+        if (parts.length >= 2 && /^\d+$/.test(parts[1])) {
            // parts[0] is likely GameId, parts[1] is ModId
-           gameBananaId = parseInt(parts[1]);
-        } else if (parts.length === 1) {
-           gameBananaId = parseInt(parts[0]);
+           gameBananaId = parseInt(parts[1], 10);
+        } else if (parts.length === 1 && /^\d+$/.test(parts[0])) {
+           gameBananaId = parseInt(parts[0], 10);
         }
       }
 
       if (gameBananaId > 0) {
         console.log(`Deep link install triggered for ID: ${gameBananaId}`);
-        // Basic stub
-        const modStub = {
+
+        // Basic stub matching OnlineMod interface
+        const modStub: any = {
           id: Date.now().toString(),
           name: 'Unknown',
           author: 'Unknown',
@@ -238,10 +248,12 @@ function handleProtocolUrl(url: string) {
           isEnabled: true,
           iconUrl: '',
           gameBananaId: gameBananaId,
-          latestVersion: '1.0'
+          latestVersion: '1.0',
+          // Add missing required fields if any, strictly complying with OnlineMod
+          // However, installOnlineMod mostly needs gameBananaId.
         };
 
-        modManager.installOnlineMod(modStub as any).then((result) => {
+        modManager.installOnlineMod(modStub).then((result) => {
           console.log('Deep link install result:', result);
           if (mainWindow) {
             mainWindow.webContents.send('download-scan-finished');

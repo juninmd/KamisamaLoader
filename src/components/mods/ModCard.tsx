@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Switch } from '../ui/Switch';
 import { cn } from '../../lib/utils';
-import type { Mod, LocalMod } from '../../types';
+import type { Mod, LocalMod } from '../../../shared/types';
 
 interface ModCardProps {
     mod: Mod;
