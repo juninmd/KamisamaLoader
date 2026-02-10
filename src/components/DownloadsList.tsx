@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pause, Play, X, Download as DownloadIcon, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
-import { Download } from '../../shared/types';
+import type { Download } from '../../shared/types';
 
 export const DownloadsList: React.FC = () => {
     const [downloads, setDownloads] = useState<Download[]>([]);
