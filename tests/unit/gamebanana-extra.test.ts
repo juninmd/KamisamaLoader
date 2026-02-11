@@ -1,10 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('electron', () => ({
-    app: {
-        getPath: vi.fn().mockReturnValue('/tmp'),
-    }
-}));
+// Mock electron before importing anything that uses it
+vi.mock('electron', () => {
+    return {
+        default: {
+            app: {
+                getPath: vi.fn().mockReturnValue('/tmp'),
+            },
+            net: {
+                request: vi.fn()
+            }
+        },
+        app: {
+            getPath: vi.fn().mockReturnValue('/tmp'),
+        },
+        net: {
+            request: vi.fn()
+        }
+    };
+});
 
 import { fetchItemData, fetchAllMods, fetchFeaturedMods } from '../../electron/gamebanana.js';
 
