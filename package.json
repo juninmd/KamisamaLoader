@@ -9,7 +9,7 @@
     "url": "https://github.com/owner/repo.git"
   },
   "type": "module",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:electron\" \"npm run dev:vite\"",
     "dev:vite": "vite",

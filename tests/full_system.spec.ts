@@ -15,7 +15,7 @@ test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
     console.log('Launching Electron...');
     electronApp = await electron.launch({
-        args: [path.join(__dirname, '../dist-electron/main.js'), '--no-sandbox'],
+        args: [path.join(__dirname, '../dist-electron/electron/main.js'), '--no-sandbox'],
         env: { ...process.env, NODE_ENV: 'test' }
     });
     window = await electronApp.firstWindow();

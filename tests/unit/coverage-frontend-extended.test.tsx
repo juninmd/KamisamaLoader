@@ -20,6 +20,7 @@ const mockElectronAPI = {
   installMod: vi.fn(),
   getModChangelog: vi.fn(),
   getProfiles: vi.fn(),
+  getSettings: vi.fn(),
 };
 
 Object.defineProperty(window, 'electronAPI', {

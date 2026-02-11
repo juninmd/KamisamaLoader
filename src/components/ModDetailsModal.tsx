@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Download, ChevronLeft, ChevronRight, Eye, Heart, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Mod } from '../../shared/types';
+import type { Mod, OnlineMod } from '../../shared/types';
 
 interface ModDetailsModalProps {
     mod: Mod;
@@ -171,23 +171,23 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">Submitter</span>
-                                {mod.submitterUrl ? (
+                                {(mod as any).submitterUrl ? (
                                     <a
-                                        href={mod.submitterUrl}
+                                        href={(mod as any).submitterUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-white break-words hover:text-blue-400 hover:underline transition-colors"
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        {mod.submitter || mod.author}
+                                        {(mod as OnlineMod).submitter || mod.author}
                                     </a>
                                 ) : (
-                                    <span className="text-white break-words">{mod.submitter || mod.author}</span>
+                                    <span className="text-white break-words">{(mod as OnlineMod).submitter || mod.author}</span>
                                 )}
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">License</span>
-                                <span className="text-white break-words">{mod.license || 'All Rights Reserved'}</span>
+                                <span className="text-white break-words">{(mod as OnlineMod).license || 'All Rights Reserved'}</span>
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">Version</span>
