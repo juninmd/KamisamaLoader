@@ -42,10 +42,12 @@ vi.mock('electron', () => ({
 // Use hoisted mock variable
 const mockAdmZip = vi.hoisted(() => {
     return {
-        default: vi.fn().mockImplementation(() => ({
-            extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(null)),
-            getEntries: vi.fn().mockReturnValue([])
-        }))
+        default: vi.fn().mockImplementation(function() {
+            return {
+                extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(null)),
+                getEntries: vi.fn().mockReturnValue([])
+            };
+        })
     };
 });
 
@@ -143,9 +145,12 @@ describe('ModManager Edge Cases Extended', () => {
   describe('finalizeUpdate', () => {
       it('should handle extraction errors', async () => {
           // Use the hoisted mock variable to override implementation
-          mockAdmZip.default.mockImplementationOnce(() => ({
-              extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(new Error('Zip Error')))
-          }));
+          mockAdmZip.default.mockImplementationOnce(function() {
+              return {
+                  extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(new Error('Zip Error'))),
+                  getEntries: vi.fn().mockReturnValue([])
+              };
+          });
 
           const mod = { id: '1', name: 'Mod', folderPath: '/path' };
           const result = await (modManager as any).finalizeUpdate(mod, '/temp', [], '/mods.json');

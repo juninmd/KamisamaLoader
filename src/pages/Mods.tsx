@@ -390,11 +390,11 @@ const Mods: React.FC = () => {
                     showToast('Download started! Added to queue.', 'success');
                     setActiveTab('downloads');
                 } else {
-                    showToast(result.message, 'success');
+                    showToast(result.message || 'Installed successfully', 'success');
                     loadInstalledMods();
                 }
             } else {
-                showToast(result.message, 'error');
+                showToast(result.message || 'Installation failed', 'error');
             }
         } catch (_e) {
             showToast('Installation request failed', 'error');
@@ -468,7 +468,7 @@ const Mods: React.FC = () => {
                 loadInstalledMods();
                 showToast('Mod installed successfully', 'success');
             } else {
-                showToast(result.message, 'error');
+                showToast(result.message || 'Installation failed', 'error');
             }
         }
     };
