@@ -218,6 +218,35 @@ export class ModManager {
         }
     }
 
+    private isPosixLikePath(value: string) {
+        return value.includes('/') && !value.includes('\\');
+    }
+
+    private joinPath(base: string, ...segments: string[]) {
+        return this.isPosixLikePath(base)
+            ? path.posix.join(base, ...segments)
+            : path.join(base, ...segments);
+    }
+
+    private relativePath(from: string, to: string) {
+        if (this.isPosixLikePath(from) || this.isPosixLikePath(to)) {
+            return path.posix.relative(from.replace(/\\/g, '/'), to.replace(/\\/g, '/'));
+        }
+        return path.relative(from, to);
+    }
+
+    private isInsidePath(target: string, container: string) {
+        const normalize = (value: string) => {
+            const unified = value.replace(/\\/g, '/').replace(/\/+$/, '');
+            return process.platform === 'win32' ? unified.toLowerCase() : unified;
+        };
+
+        const normalizedTarget = normalize(target);
+        const normalizedContainer = normalize(container);
+
+        return normalizedTarget === normalizedContainer || normalizedTarget.startsWith(`${normalizedContainer}/`);
+    }
+
     async getInstalledMods(): Promise<LocalMod[]> {
         try {
             const modsFile = await this.getModsFilePath();
@@ -250,7 +279,7 @@ export class ModManager {
         try {
             const files = await fs.readdir(dirPath);
             for (const file of files) {
-                const filePath = path.join(dirPath, file);
+                const filePath = this.joinPath(dirPath, file);
                 const stats = await fs.stat(filePath);
                 if (stats.isDirectory()) {
                     size += await this.calculateFolderSize(filePath);
@@ -436,7 +465,7 @@ export class ModManager {
     private async getAllFiles(dir: string, fileList: string[] = []) {
         const files = await fs.readdir(dir);
         for (const file of files) {
-            const filePath = path.join(dir, file);
+            const filePath = this.joinPath(dir, file);
             const stat = await fs.stat(filePath);
             if (stat.isDirectory()) {
                 await this.getAllFiles(filePath, fileList);
@@ -453,27 +482,27 @@ export class ModManager {
 
         try {
             const files = await this.getAllFiles(mod.folderPath);
-            const ue4ssDir = path.join(mod.folderPath, 'ue4ss');
+            const ue4ssDir = this.joinPath(mod.folderPath, 'ue4ss');
             let isUe4ss = false;
             try { isUe4ss = (await fs.stat(ue4ssDir)).isDirectory(); } catch { }
 
-            const logicModsSrcDir = path.join(mod.folderPath, 'LogicMods');
+            const logicModsSrcDir = this.joinPath(mod.folderPath, 'LogicMods');
             let isLogicMod = false;
             try { isLogicMod = (await fs.stat(logicModsSrcDir)).isDirectory(); } catch { }
 
-            const moviesSrcDir = path.join(mod.folderPath, 'Movies');
+            const moviesSrcDir = this.joinPath(mod.folderPath, 'Movies');
             let isMovies = false;
             try { isMovies = (await fs.stat(moviesSrcDir)).isDirectory(); } catch { }
 
             for (const src of files) {
                 // If it is inside ue4ss dir
-                if (isUe4ss && src.startsWith(ue4ssDir)) {
-                    const relativePath = path.relative(ue4ssDir, src);
+                if (isUe4ss && this.isInsidePath(src, ue4ssDir)) {
+                    const relativePath = this.relativePath(ue4ssDir, src);
                     const dest = path.join(binariesDir, relativePath);
 
                     // Try to identify ModName from "Mods/ModName/..."
                     // relativePath matches "Mods\ModName\..." on Windows
-                    const parts = relativePath.split(path.sep);
+                    const parts = relativePath.split(/[\\/]/);
                     if (parts[0] === 'Mods' && parts.length >= 2) {
                         ue4ssModName = parts[1];
                     }
@@ -485,8 +514,8 @@ export class ModManager {
                 }
 
                 // If it is inside LogicMods dir
-                if (isLogicMod && src.startsWith(logicModsSrcDir)) {
-                    const relativePath = path.relative(logicModsSrcDir, src);
+                if (isLogicMod && this.isInsidePath(src, logicModsSrcDir)) {
+                    const relativePath = this.relativePath(logicModsSrcDir, src);
                     const dest = path.join(logicModsDir, relativePath);
                     if (await this.deployFile(src, dest)) {
                         deployedFiles.push(dest);
@@ -495,8 +524,8 @@ export class ModManager {
                 }
 
                 // If it is inside Movies dir (Audio/Video loose files)
-                if (isMovies && src.startsWith(moviesSrcDir)) {
-                    const relativePath = path.relative(moviesSrcDir, src);
+                if (isMovies && this.isInsidePath(src, moviesSrcDir)) {
+                    const relativePath = this.relativePath(moviesSrcDir, src);
                     const dest = path.join(contentDir, 'Movies', relativePath);
                     if (await this.deployFile(src, dest)) {
                         deployedFiles.push(dest);

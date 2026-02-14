@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
-import path from 'path';
 
 // Mock electron app
 vi.mock('electron', () => ({
@@ -84,8 +83,11 @@ describe('Deployment Logic (Non-Destructive)', () => {
         await modManager.deployMod(mod as any);
 
         // Verify fs.link was called (Smart Link)
+        const normalize = (value: string) => value.replace(/\\/g, '/');
+        const linkedSources = (fs.link as any).mock.calls.map((call: [string, string]) => normalize(call[0]));
+        expect(linkedSources).toContain('/Mods/ModA/ModA.pak');
         expect(fs.link).toHaveBeenCalledWith(
-            path.normalize('/Mods/ModA/ModA.pak'),
+            expect.anything(),
             expect.stringContaining('ModA.pak') // Destination should contain filename
         );
 
@@ -144,10 +146,10 @@ describe('Deployment Logic (Non-Destructive)', () => {
         await modManager.deployMod(mod as any);
 
         expect(fs.link).toHaveBeenCalled();
-        expect(fs.copyFile).toHaveBeenCalledWith(
-            path.normalize('/Mods/ModA/ModA.pak'),
-            expect.anything()
-        );
+        const normalize = (value: string) => value.replace(/\\/g, '/');
+        const copiedSources = (fs.copyFile as any).mock.calls.map((call: [string, string]) => normalize(call[0]));
+        expect(copiedSources).toContain('/Mods/ModA/ModA.pak');
+        expect(fs.copyFile).toHaveBeenCalledWith(expect.anything(), expect.anything());
     });
 
     it('should support .pak, .utoc, .ucas, .sig extensions (IoStore support)', async () => {

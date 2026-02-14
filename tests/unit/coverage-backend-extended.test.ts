@@ -68,7 +68,7 @@ describe('ModManager Edge Cases Extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     modManager = new ModManager();
-    // @ts-ignore
+    // @ts-expect-error test intentionally overrides internal field
     modManager.modsDir = '/mock/mods';
   });
 
@@ -78,9 +78,9 @@ describe('ModManager Edge Cases Extended', () => {
               { id: '1', name: 'Mod A', category: 'Skin', isEnabled: true },
               { id: '2', name: 'Mod B', category: 'Skin', isEnabled: false }
           ];
-          // @ts-ignore
+          // @ts-expect-error mocked fs method
           fsPromises.readFile.mockResolvedValue(JSON.stringify(mods));
-          // @ts-ignore
+          // @ts-expect-error mocked fs method
           fsPromises.writeFile.mockResolvedValue(undefined);
           (modManager as any).deployMod = vi.fn().mockResolvedValue(true);
           (modManager as any).syncActiveProfile = vi.fn();
@@ -97,7 +97,7 @@ describe('ModManager Edge Cases Extended', () => {
               { id: '1', name: 'Mod A', category: 'UI', isEnabled: true },
               { id: '2', name: 'Mod B', category: 'UI', isEnabled: false }
           ];
-          // @ts-ignore
+          // @ts-expect-error mocked fs method
           fsPromises.readFile.mockResolvedValue(JSON.stringify(mods));
           (modManager as any).deployMod = vi.fn().mockResolvedValue(true);
           (modManager as any).syncActiveProfile = vi.fn();
@@ -113,7 +113,7 @@ describe('ModManager Edge Cases Extended', () => {
       it('should return false if download manager not initialized', async () => {
           modManager = new ModManager();
           const mods = [{ id: '1', name: 'Mod', latestFileUrl: 'http://url' }];
-          // @ts-ignore
+          // @ts-expect-error mocked fs method
           fsPromises.readFile.mockResolvedValue(JSON.stringify(mods));
 
           const result = await modManager.updateMod('1');

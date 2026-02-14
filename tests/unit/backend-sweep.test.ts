@@ -3,7 +3,6 @@ import { ModManager } from '../../electron/mod-manager.js';
 import { DownloadManager } from '../../electron/download-manager.js';
 import fs from 'fs/promises';
 import { app, net } from 'electron';
-import path from 'path';
 import { EventEmitter } from 'events';
 import * as gamebanana from '../../electron/gamebanana.js';
 import * as github from '../../electron/github.js';
@@ -310,20 +309,16 @@ describe('Backend Sweep - ModManager', () => {
             '/game/content'
         );
 
+        const normalize = (value: string) => value.replace(/\\/g, '/');
+        const deployedSources = ((modManager as any).deployFile as ReturnType<typeof vi.fn>)
+            .mock.calls
+            .map((call: [string, string]) => normalize(call[0]));
+
         // .pak should be deployed
-        expect((modManager as any).deployFile).toHaveBeenCalledWith(
-            path.join('/mods/M', 'mod.pak'),
-            expect.stringContaining('mod.pak')
-        );
+        expect(deployedSources).toContain('/mods/M/mod.pak');
 
         // .txt and .png should NOT be deployed
-        expect((modManager as any).deployFile).not.toHaveBeenCalledWith(
-            path.join('/mods/M', 'readme.txt'),
-            expect.anything()
-        );
-        expect((modManager as any).deployFile).not.toHaveBeenCalledWith(
-            path.join('/mods/M', 'ignored.png'),
-            expect.anything()
-        );
+        expect(deployedSources).not.toContain('/mods/M/readme.txt');
+        expect(deployedSources).not.toContain('/mods/M/ignored.png');
     });
 });

@@ -11,7 +11,7 @@ vi.mock('child_process', () => {
             cb = opts;
             opts = {};
         }
-        cb && cb(null);
+        if (cb) cb(null);
     });
     return {
         execFile: execFileMock,
