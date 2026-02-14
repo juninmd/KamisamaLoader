@@ -77,7 +77,7 @@ export interface Download {
     progress: number; // 0-100
     startTime: number;
     error?: string;
-    context?: any; // Extra data (type: 'install' | 'update', modId, etc.)
+    context?: Record<string, unknown>; // Extra data (type: 'install' | 'update', modId, etc.)
 }
 
 export interface SearchOptions {
@@ -90,7 +90,7 @@ export interface SearchOptions {
     categoryId?: number;
     search?: string;
     dateRange?: '24h' | 'week' | 'month' | 'year' | 'all';
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
 }
 
 export interface ModUpdateInfo {

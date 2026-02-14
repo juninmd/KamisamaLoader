@@ -43,18 +43,18 @@ describe('ModManager Final Coverage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         modManager = new ModManager();
-        // @ts-ignore
+        // @ts-expect-error test intentionally overrides internal field
         modManager.modsDir = '/mock/mods';
     });
 
     it('should log error when launchGame fails via execFile', async () => {
         // Setup settings
         const settings = { gamePath: '/game/exe.exe' };
-        // @ts-ignore
+        // @ts-expect-error mocked fs method
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
-        // @ts-ignore
+        // @ts-expect-error mocked fs method
         vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => false });
-        // @ts-ignore
+        // @ts-expect-error mocked fs method
         vi.mocked(fs.access).mockResolvedValue(undefined);
 
         // Spy on console.error
@@ -72,7 +72,7 @@ describe('ModManager Final Coverage', () => {
     });
 
     it('should return empty list if getInstalledMods fails', async () => {
-        // @ts-ignore
+        // @ts-expect-error mocked fs method
         vi.mocked(fs.readFile).mockRejectedValue(new Error('Read Error'));
 
         const mods = await modManager.getInstalledMods();
@@ -80,7 +80,7 @@ describe('ModManager Final Coverage', () => {
     });
 
     it('should handle calculateFolderSize error gracefully', async () => {
-        // @ts-ignore
+        // @ts-expect-error mocked fs method
         vi.mocked(fs.readdir).mockRejectedValue(new Error('Access Denied'));
 
         const size = await modManager.calculateFolderSize('/path');
@@ -88,7 +88,7 @@ describe('ModManager Final Coverage', () => {
     });
 
     it('should handle fixPriorities read error', async () => {
-         // @ts-ignore
+         // @ts-expect-error mocked fs method
         vi.mocked(fs.readFile).mockRejectedValue(new Error('Read Error'));
         // Should not throw
         await modManager.fixPriorities();

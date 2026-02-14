@@ -44,6 +44,7 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-unsafe-function-type': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   },
   // Context/provider files often export helpers; don't block dev with react-refresh rule.

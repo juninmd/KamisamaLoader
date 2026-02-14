@@ -11,50 +11,68 @@ interface ModDetailsModalProps {
     onInstall: (mod: Mod) => void;
 }
 
+type ModWithGameBanana = Mod & { gameBananaId?: number; submitterUrl?: string };
+type ModDetailsResponse = {
+    description?: string;
+    images?: string[];
+    modPageUrl?: string;
+};
+
+type ChangelogEntry = {
+    version?: string;
+    date?: number;
+    text?: string;
+};
+
 const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose, onInstall }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [changelog, setChangelog] = useState<any[]>([]);
+    const [changelog, setChangelog] = useState<ChangelogEntry[]>([]);
     const [fullDescription, setFullDescription] = useState<string>('');
     const [modImages, setModImages] = useState<string[]>([]);
     const [modPageUrl, setModPageUrl] = useState<string>('');
+    const gameBananaId = (mod as ModWithGameBanana).gameBananaId || Number(mod.id);
 
     // Derived images: prioritize fetched images, fallback to prop images
     const displayImages = modImages.length > 0 ? modImages : (mod.images && mod.images.length > 0 ? mod.images : (mod.iconUrl ? [mod.iconUrl] : []));
 
     useEffect(() => {
-        if (isOpen && (mod.id || (mod as any).gameBananaId)) {
-            const gbId = (mod as any).gameBananaId || Number(mod.id);
-            // Validate that we have a valid GameBanana ID (positive number)
-            if (gbId && !isNaN(gbId) && gbId > 0) {
-                // 1. Fetch Changelog
-                window.electronAPI.getModChangelog(String(gbId)).then((logs: any) => {
-                    if (Array.isArray(logs)) setChangelog(logs);
-                }).catch(error => {
-                    console.error('Failed to get mod changelog:', error);
-                });
-
-                // 2. Fetch Full Details
-                window.electronAPI.getModDetails(Number(gbId)).then((details: any) => {
-                    if (details) {
-                        if (details.description) setFullDescription(details.description);
-                        if (details.images && details.images.length > 0) setModImages(details.images);
-                        if (details.modPageUrl) setModPageUrl(details.modPageUrl);
-                    }
-                }).catch(error => {
-                    console.error('Failed to get mod details:', error);
-                });
-            } else {
-                console.log('Skipping API calls for invalid or local mod ID:', gbId);
-            }
-        } else {
-            // Reset
+        if (!isOpen) {
             setFullDescription('');
+            setChangelog([]);
             setModImages([]);
             setModPageUrl('');
+            setCurrentImageIndex(0);
+            return;
         }
-    }, [mod.id, isOpen]);
 
-    if (!isOpen) return null;
+        // Validate that we have a valid GameBanana ID (positive number)
+        if (!gameBananaId || Number.isNaN(gameBananaId) || gameBananaId <= 0) {
+            console.log('Skipping API calls for invalid or local mod ID:', gameBananaId);
+            return;
+        }
+
+        // 1. Fetch Changelog
+        window.electronAPI.getModChangelog(String(gameBananaId)).then((logs: unknown) => {
+            if (Array.isArray(logs)) {
+                setChangelog(logs as ChangelogEntry[]);
+            } else {
+                setChangelog([]);
+            }
+        }).catch(error => {
+            console.error('Failed to get mod changelog:', error);
+        });
+
+        // 2. Fetch Full Details
+        window.electronAPI.getModDetails(Number(gameBananaId)).then((details: ModDetailsResponse | null | undefined) => {
+            if (details) {
+                if (details.description) setFullDescription(details.description);
+                if (details.images && details.images.length > 0) setModImages(details.images);
+                if (details.modPageUrl) setModPageUrl(details.modPageUrl);
+            }
+        }).catch(error => {
+            console.error('Failed to get mod details:', error);
+        });
+    }, [gameBananaId, isOpen]);
 
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
@@ -74,6 +92,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
         }
         return () => document.removeEventListener('keydown', handleEsc);
     }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
 
     return ReactDOM.createPortal(
         <div
@@ -171,9 +191,9 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             </div>
                             <div className="bg-white/5 p-3 rounded-lg">
                                 <span className="block text-gray-500 text-xs uppercase font-bold mb-1">Submitter</span>
-                                {(mod as any).submitterUrl ? (
+                                {(mod as ModWithGameBanana).submitterUrl ? (
                                     <a
-                                        href={(mod as any).submitterUrl}
+                                        href={(mod as ModWithGameBanana).submitterUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-white break-words hover:text-blue-400 hover:underline transition-colors"
