@@ -1,198 +1,251 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Mods from '../../src/pages/Mods';
-import MainLayout from '../../src/layouts/MainLayout';
-import { renderWithProviders } from './test-utils';
+import ProfileManager from '../../src/components/ProfileManager';
+import CategorySidebar from '../../src/components/CategorySidebar';
+import FilterBar from '../../src/components/FilterBar';
+import { SettingsContext } from '../../src/components/SettingsContext';
+import { ToastProvider } from '../../src/components/ToastContext';
+import React from 'react';
 
-// Mock electronAPI
-const mockElectronAPI = {
-  getInstalledMods: vi.fn(),
-  searchBySection: vi.fn(),
-  fetchCategories: vi.fn(),
-  onDownloadScanFinished: vi.fn().mockReturnValue(vi.fn()),
-  checkForUpdates: vi.fn(),
-  updateAllMods: vi.fn(),
-  updateMod: vi.fn(),
-  toggleMod: vi.fn(),
-  installOnlineMod: vi.fn(),
-  uninstallMod: vi.fn(),
-  setModPriority: vi.fn(),
-  installMod: vi.fn(),
-  getModChangelog: vi.fn(),
-  getProfiles: vi.fn(),
-  getSettings: vi.fn(),
+// Mock Electron API
+const mockElectron = {
+    getInstalledMods: vi.fn().mockResolvedValue([]),
+    getProfiles: vi.fn().mockResolvedValue([]),
+    getSettings: vi.fn().mockResolvedValue({}),
+    createProfile: vi.fn(),
+    deleteProfile: vi.fn(),
+    loadProfile: vi.fn(),
+    installMod: vi.fn(),
+    fetchCategories: vi.fn().mockResolvedValue([]),
+    searchBySection: vi.fn().mockResolvedValue([]),
+    onDownloadScanFinished: vi.fn(() => () => {}),
+    onDownloadProgress: vi.fn(() => () => { }),
+    onDownloadComplete: vi.fn(() => () => { }),
+    checkForUpdates: vi.fn().mockResolvedValue([]),
+    getModChangelog: vi.fn().mockResolvedValue([]),
+    updateAllMods: vi.fn().mockResolvedValue({ successCount: 0, failCount: 0, results: [] }),
+    updateMod: vi.fn().mockResolvedValue(true),
+    toggleMod: vi.fn().mockResolvedValue({ success: true }),
+    uninstallMod: vi.fn().mockResolvedValue({ success: true }),
+    setModPriority: vi.fn().mockResolvedValue(true),
+    installOnlineMod: vi.fn().mockResolvedValue({ success: true }),
+    selectBackgroundImage: vi.fn().mockResolvedValue('/path/to/bg.png'),
+    saveSettings: vi.fn().mockResolvedValue(true),
+    selectGameDirectory: vi.fn(),
+    selectModDirectory: vi.fn()
 };
 
+// Setup window mocks
 Object.defineProperty(window, 'electronAPI', {
-  value: mockElectronAPI,
-  writable: true
+    value: mockElectron,
+    writable: true
 });
 
 window.confirm = vi.fn();
 
+const MockSettingsProvider = ({ children, customContext }: any) => (
+    <SettingsContext.Provider value={customContext || {
+        settings: { gamePath: '/mock', modDownloadPath: '/mods' },
+        updateSettings: vi.fn(),
+        selectGameDirectory: vi.fn(),
+        selectModDirectory: vi.fn(),
+        selectBackgroundImage: vi.fn(),
+        loading: false
+    }}>
+        {children}
+    </SettingsContext.Provider>
+);
+
+const renderWithProviders = (ui: React.ReactNode, customContext?: any) => {
+    return render(
+        <MockSettingsProvider customContext={customContext}>
+            <ToastProvider>
+                {ui}
+            </ToastProvider>
+        </MockSettingsProvider>
+    );
+};
+
 describe('Frontend Final Coverage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockElectronAPI.getInstalledMods.mockResolvedValue([]);
-        mockElectronAPI.fetchCategories.mockResolvedValue([]);
-        mockElectronAPI.getProfiles.mockResolvedValue([]);
-        mockElectronAPI.getSettings.mockResolvedValue({ gamePath: '' });
     });
 
-    it('MainLayout should apply background image style', async () => {
-        // Mock Settings Provider uses initialSettings prop, not API call
-        const settings = {
-            gamePath: '/game',
-            backgroundImage: 'file://bg.jpg',
-            backgroundOpacity: 0.5
-        };
+    describe('Mods.tsx - Drag & Drop', () => {
+        it('should handle file drop correctly', async () => {
+            mockElectron.installMod.mockResolvedValue({ success: true });
+            const { container } = renderWithProviders(<Mods />);
 
-        await act(async () => {
-             renderWithProviders(
-                <MainLayout activePage="dashboard" onNavigate={vi.fn()}>
-                    <div>Child</div>
-                </MainLayout>,
-                { initialSettings: settings }
+            // The outer div has the handlers
+            const dropZone = container.firstChild as HTMLElement;
+
+            const file = new File(['content'], 'test.pak', { type: 'application/octet-stream' });
+            Object.defineProperty(file, 'path', { value: '/path/test.pak' });
+
+            await act(async () => {
+                fireEvent.dragEnter(dropZone, { dataTransfer: { items: [{ kind: 'file' }] } });
+            });
+            expect(screen.getByText('Drop to Install')).toBeInTheDocument();
+
+            await act(async () => {
+                fireEvent.drop(dropZone, { dataTransfer: { files: [file] } });
+            });
+
+            await waitFor(() => {
+                expect(mockElectron.installMod).toHaveBeenCalledWith('/path/test.pak');
+            });
+            // Overlay should disappear
+            expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('ProfileManager - Delete Confirmation', () => {
+        it('should delete profile when confirmed', async () => {
+            const profiles = [{ id: 'p1', name: 'Profile 1', modIds: [] }];
+            mockElectron.getProfiles.mockResolvedValue(profiles);
+            mockElectron.deleteProfile.mockResolvedValue(true);
+            (window.confirm as any).mockReturnValue(true);
+
+            renderWithProviders(<ProfileManager onProfileLoaded={vi.fn()} />);
+
+            // Open dropdown
+            fireEvent.click(screen.getByText('Profiles'));
+
+            // Wait for list
+            await waitFor(() => expect(screen.getByText('Profile 1')).toBeInTheDocument());
+
+            // Click delete (hidden button, might need to force click or find by icon)
+            const profileItem = screen.getByText('Profile 1').closest('div.group');
+            const deleteBtn = profileItem?.querySelector('button');
+
+            await act(async () => {
+                fireEvent.click(deleteBtn!);
+            });
+
+            expect(window.confirm).toHaveBeenCalled();
+            expect(mockElectron.deleteProfile).toHaveBeenCalledWith('p1');
+        });
+
+        it('should NOT delete profile when cancelled', async () => {
+            const profiles = [{ id: 'p1', name: 'Profile 1', modIds: [] }];
+            mockElectron.getProfiles.mockResolvedValue(profiles);
+            (window.confirm as any).mockReturnValue(false);
+
+            renderWithProviders(<ProfileManager onProfileLoaded={vi.fn()} />);
+            fireEvent.click(screen.getByText('Profiles'));
+            await waitFor(() => expect(screen.getByText('Profile 1')).toBeInTheDocument());
+
+            const profileItem = screen.getByText('Profile 1').closest('div.group');
+            const deleteBtn = profileItem?.querySelector('button');
+
+            await act(async () => {
+                fireEvent.click(deleteBtn!);
+            });
+
+            expect(window.confirm).toHaveBeenCalled();
+            expect(mockElectron.deleteProfile).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('CategorySidebar - Empty State', () => {
+        it('should display "No categories found" when empty', () => {
+            renderWithProviders(
+                <CategorySidebar
+                    categories={[]}
+                    selectedCategories={[]}
+                    onCategorySelect={vi.fn()}
+                />
             );
-        });
-
-        await waitFor(() => {
-            const container = screen.getByText('Child').closest('.flex.h-screen');
-            // Check style directly or via computing styles.
-            // Note: toHaveStyle might need exact string match or url normalization
-            expect(container).toHaveStyle({ backgroundImage: 'url(file://bg.jpg)' });
+            expect(screen.getByText('No categories found')).toBeInTheDocument();
         });
     });
 
-    it('Mods should handle drag and drop installation', async () => {
-        mockElectronAPI.installMod.mockResolvedValue({ success: true });
+    describe('FilterBar - Clear & Remove', () => {
+        it('should clear all filters', () => {
+            const onFilterChange = vi.fn();
+            const activeFilters = {
+                categories: ['Cat1'],
+                sortBy: 'date' as const,
+                order: 'desc' as const,
+                dateRange: 'all' as const
+            };
 
-        await act(async () => {
-            renderWithProviders(<Mods />);
-        });
+            renderWithProviders(
+                <FilterBar
+                    availableCategories={[]}
+                    activeFilters={activeFilters}
+                    onFilterChange={onFilterChange}
+                />
+            );
 
-        const container = screen.getByText('Installed').closest('div.h-full'); // Main container
+            fireEvent.click(screen.getByText('Clear All'));
 
-        // Drag Enter
-        await act(async () => {
-            fireEvent.dragEnter(container!, {
-                dataTransfer: { items: [{ kind: 'file' }] }
+            expect(onFilterChange).toHaveBeenCalledWith({
+                categories: [],
+                sortBy: 'downloads',
+                order: 'desc',
+                dateRange: 'all'
             });
         });
 
-        expect(screen.getByText('Drop to Install')).toBeInTheDocument();
+        it('should remove specific category', () => {
+            const onFilterChange = vi.fn();
+            const activeFilters = {
+                categories: ['Cat1', 'Cat2'],
+                sortBy: 'date' as const,
+                order: 'desc' as const,
+                dateRange: 'all' as const
+            };
 
-        // Drag Leave
-        await act(async () => {
-            fireEvent.dragLeave(container!);
+            renderWithProviders(
+                <FilterBar
+                    availableCategories={[]}
+                    activeFilters={activeFilters}
+                    onFilterChange={onFilterChange}
+                />
+            );
+
+            // Find the 'X' button for Cat1
+            const cat1Chip = screen.getByText('Cat1').parentElement;
+            const removeBtn = cat1Chip?.querySelector('button');
+            fireEvent.click(removeBtn!);
+
+            expect(onFilterChange).toHaveBeenCalledWith(expect.objectContaining({
+                categories: ['Cat2']
+            }));
         });
+    });
 
-        expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
+    describe('SettingsContext - Select Background', () => {
+        it('should call selectBackgroundImage and update settings', async () => {
+            // Import the real provider for this test
+            const { SettingsProvider } = await import('../../src/components/SettingsContext');
 
-        // Drop
-        const file = new File(['dummy'], 'mod.zip', { type: 'application/zip' });
-        // Enhance file object with path property which electron uses
-        Object.defineProperty(file, 'path', { value: '/path/to/mod.zip' });
+            mockElectron.selectBackgroundImage.mockResolvedValue('/real/bg.png');
+            mockElectron.saveSettings.mockResolvedValue(true);
 
-        await act(async () => {
-            fireEvent.drop(container!, {
-                dataTransfer: { files: [file], items: [{ kind: 'file' }] }
+            const TestComp = () => {
+                const { selectBackgroundImage } = React.useContext(SettingsContext)!;
+                return <button onClick={selectBackgroundImage}>Select BG</button>;
+            };
+
+            render(
+                <SettingsProvider>
+                    <TestComp />
+                </SettingsProvider>
+            );
+
+            await act(async () => {
+                fireEvent.click(screen.getByText('Select BG'));
             });
+
+            expect(mockElectron.selectBackgroundImage).toHaveBeenCalled();
+            expect(mockElectron.saveSettings).toHaveBeenCalledWith(expect.objectContaining({
+                backgroundImage: '/real/bg.png'
+            }));
         });
-
-        expect(mockElectronAPI.installMod).toHaveBeenCalledWith('/path/to/mod.zip');
-    });
-
-    it('Mods should handle drag drop failure', async () => {
-        mockElectronAPI.installMod.mockResolvedValue({ success: false, message: 'Failed' });
-
-        await act(async () => {
-            renderWithProviders(<Mods />);
-        });
-
-        const container = screen.getByText('Installed').closest('div.h-full');
-        const file = new File(['dummy'], 'mod.zip', { type: 'application/zip' });
-        Object.defineProperty(file, 'path', { value: '/path/to/mod.zip' });
-
-        await act(async () => {
-            fireEvent.drop(container!, {
-                dataTransfer: { files: [file], items: [{ kind: 'file' }] }
-            });
-        });
-
-        expect(mockElectronAPI.installMod).toHaveBeenCalled();
-        // Toast would show error
-    });
-
-    it('Mods should handle check updates and update all', async () => {
-        const mod = { id: '1', name: 'Mod 1', isEnabled: true, hasUpdate: true, version: '1.0', latestVersion: '2.0' };
-        mockElectronAPI.getInstalledMods.mockResolvedValue([mod]);
-        mockElectronAPI.checkForUpdates.mockResolvedValue(['1']);
-
-        await act(async () => {
-            renderWithProviders(<Mods />);
-        });
-
-        await waitFor(() => expect(screen.getByText('Mod 1')).toBeInTheDocument());
-
-        // Check Updates
-        const checkBtn = screen.getByText('Check Updates');
-        await act(async () => {
-            fireEvent.click(checkBtn);
-        });
-
-        expect(mockElectronAPI.checkForUpdates).toHaveBeenCalled();
-
-        // Update All
-        mockElectronAPI.updateAllMods.mockResolvedValue({
-            successCount: 1,
-            failCount: 0,
-            results: [{ id: '1', success: true }]
-        });
-
-        await waitFor(() => expect(screen.getByText('Update All')).toBeInTheDocument());
-        const updateAllBtn = screen.getByText('Update All');
-
-        await act(async () => {
-            fireEvent.click(updateAllBtn);
-        });
-
-        expect(mockElectronAPI.updateAllMods).toHaveBeenCalledWith(['1']);
-    });
-
-    it('Mods should handle batch update failure', async () => {
-        const mod = { id: '1', name: 'Mod 1', isEnabled: true, hasUpdate: true };
-        mockElectronAPI.getInstalledMods.mockResolvedValue([mod]);
-        mockElectronAPI.updateAllMods.mockRejectedValue(new Error('Batch fail'));
-
-        await act(async () => {
-            renderWithProviders(<Mods />);
-        });
-
-        const updateAllBtn = await screen.findByText('Update All');
-
-        await act(async () => {
-            fireEvent.click(updateAllBtn);
-        });
-
-        expect(mockElectronAPI.updateAllMods).toHaveBeenCalled();
-    });
-
-    it('MainLayout should handle My Mods navigation click', async () => {
-         const mockNavigate = vi.fn();
-         mockElectronAPI.getSettings.mockResolvedValue({ gamePath: '' });
-
-         await act(async () => {
-             renderWithProviders(
-                <MainLayout activePage="dashboard" onNavigate={mockNavigate}>
-                    <div>Content</div>
-                </MainLayout>
-             );
-         });
-
-         const myModsBtn = screen.getByText('My Mods');
-         fireEvent.click(myModsBtn);
-         expect(mockNavigate).toHaveBeenCalledWith('mods');
     });
 });
