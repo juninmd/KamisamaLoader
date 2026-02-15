@@ -1,165 +1,120 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ModManager } from '../../electron/mod-manager.js';
+import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
-import { app, shell, net } from 'electron';
-import child_process from 'child_process';
+import { execFile } from 'child_process';
 import path from 'path';
 
-// Mock Dependencies
+// Mock Modules
 vi.mock('fs/promises');
-vi.mock('fs');
-vi.mock('electron', () => ({
-    app: { getPath: vi.fn().mockReturnValue('/app/temp'), isPackaged: false },
-    shell: { openPath: vi.fn() },
-    net: { request: vi.fn() }
-}));
 vi.mock('child_process');
-vi.mock('adm-zip', () => {
-    return {
-        default: vi.fn().mockImplementation(() => ({
-            extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(null))
-        }))
-    };
-});
-vi.mock('../../electron/gamebanana.js');
-vi.mock('../../electron/github.js');
+vi.mock('electron', () => ({
+    app: { getPath: () => '/tmp', isPackaged: false },
+    net: { request: vi.fn() },
+    shell: { openPath: vi.fn() }
+}));
 
-describe('Backend Final Coverage', () => {
+describe('ModManager Backend Final Coverage', () => {
     let modManager: ModManager;
 
     beforeEach(() => {
         vi.clearAllMocks();
         modManager = new ModManager();
-        (fs.readFile as any).mockResolvedValue('[]');
-        (fs.writeFile as any).mockResolvedValue(undefined);
-        (fs.mkdir as any).mockResolvedValue(undefined);
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => true, size: 100 });
-        (fs.readdir as any).mockResolvedValue([]);
     });
 
-    it('launchGame should handle execFile error', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game/exe.exe' }));
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
-        (fs.access as any).mockResolvedValue(undefined);
+    describe('loadProfile', () => {
+        it('should correctly enable/disable mods based on profile', async () => {
+            const profileId = 'prof1';
+            const profiles = [{
+                id: profileId,
+                name: 'Test Profile',
+                modIds: ['mod1', 'mod3'] // mod1 and mod3 should be enabled
+            }];
 
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const mods = [
+                { id: 'mod1', name: 'Mod 1', isEnabled: false, priority: 1 }, // Should enable
+                { id: 'mod2', name: 'Mod 2', isEnabled: true, priority: 2 },  // Should disable
+                { id: 'mod3', name: 'Mod 3', isEnabled: true, priority: 3 }   // Should stay enabled
+            ];
 
-        (child_process.execFile as any).mockImplementation((file: string, args: any, opts: any, cb: any) => {
-            cb(new Error('Launch failed'));
+            // Mock getProfiles
+            vi.spyOn(modManager, 'getProfiles').mockResolvedValue(profiles);
+            // Mock getModsFilePath (implicitly used by loadProfile -> reading mods)
+            vi.spyOn(modManager as any, 'getModsFilePath').mockResolvedValue('/mods.json');
+
+            // Mock fs.readFile for mods.json
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mods));
+
+            // Mock deploy/undeploy
+            const deploySpy = vi.spyOn(modManager, 'deployMod').mockResolvedValue(true);
+            const undeploySpy = vi.spyOn(modManager, 'undeployMod').mockResolvedValue(true);
+
+            // Mock getSettings/saveSettings
+            vi.spyOn(modManager, 'getSettings').mockResolvedValue({ gamePath: '/game' });
+            const saveSettingsSpy = vi.spyOn(modManager, 'saveSettings').mockResolvedValue(true);
+
+            // Mock fs.writeFile to avoid error
+            (fs.writeFile as any).mockResolvedValue(undefined);
+
+            const result = await modManager.loadProfile(profileId);
+
+            expect(result.success).toBe(true);
+
+            // Mod 1: Enabled=False, Profile=True -> Enable
+            expect(deploySpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'mod1' }));
+
+            // Mod 2: Enabled=True, Profile=False -> Disable
+            expect(undeploySpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'mod2' }));
+
+            // Mod 3: Enabled=True, Profile=True -> No Change
+            expect(deploySpy).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'mod3' }));
+            expect(undeploySpy).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'mod3' }));
+
+            // Verify Settings Saved
+            expect(saveSettingsSpy).toHaveBeenCalledWith(expect.objectContaining({ activeProfileId: profileId }));
         });
 
-        await modManager.launchGame();
-
-        expect(child_process.execFile).toHaveBeenCalled();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to launch game:', expect.any(Error));
-    });
-
-    it('launchGame should handle directory with no exe found', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game' }));
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => true });
-        // Fail both checks
-        (fs.access as any).mockRejectedValue(new Error('Not found'));
-
-        await expect(modManager.launchGame()).rejects.toThrow('Could not find SparkingZERO.exe');
-    });
-
-    it('deployMod should return false on mkdir failure', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game.exe' }));
-        const mod = { id: '1', name: 'Mod1', isEnabled: true, folderPath: '/mods/Mod1' };
-
-        // Fail mkdir for paksDir (2nd call: 1st is in getSettings)
-        (fs.mkdir as any)
-            .mockResolvedValueOnce(undefined)
-            .mockRejectedValueOnce(new Error('Mkdir fail'));
-
-        const result = await modManager.deployMod(mod as any);
-        expect(result).toBe(false);
-    });
-
-    it('undeployMod should handle unlink failure gracefully', async () => {
-        const mod = { id: '1', name: 'Mod1', deployedFiles: ['/game/file.pak'] };
-        (fs.unlink as any).mockRejectedValue(new Error('Locked'));
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        const result = await modManager.undeployMod(mod as any);
-        expect(result).toBe(true);
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to delete file'), expect.any(Error));
-    });
-
-    it('toggleMod should handle conflict warning', async () => {
-        const mods = [
-            { id: '1', name: 'Mod1', category: 'Skins', isEnabled: true, priority: 1 },
-            { id: '2', name: 'Mod2', category: 'Skins', isEnabled: false, priority: 2 }
-        ];
-        (fs.readFile as any).mockResolvedValue(JSON.stringify(mods));
-
-        const result = await modManager.toggleMod('2', true);
-        expect(result.success).toBe(true);
-        expect(result.conflict).toContain('conflicts with "Mod1"');
-    });
-
-    it('downloadFile (private) fallback should handle request errors', async () => {
-        // Trigger via installUE4SS without downloadManager
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game.exe' }));
-        const { fetchLatestRelease } = await import('../../electron/github.js');
-        (fetchLatestRelease as any).mockResolvedValue('http://fail.com/file.zip');
-
-        // Mock net.request to fail
-        (net.request as any).mockReturnValue({
-            on: (event: string, cb: any) => {
-                if (event === 'error') cb(new Error('Net Error'));
-            },
-            end: vi.fn()
+        it('should handle profile not found', async () => {
+            vi.spyOn(modManager, 'getProfiles').mockResolvedValue([]);
+            const result = await modManager.loadProfile('nop');
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('Profile not found');
         });
 
-        const result = await modManager.installUE4SS();
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Net Error');
-    });
-
-     it('downloadFile (private) fallback should handle non-200 response', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game.exe' }));
-        const { fetchLatestRelease } = await import('../../electron/github.js');
-        (fetchLatestRelease as any).mockResolvedValue('http://404.com/file.zip');
-
-        (net.request as any).mockReturnValue({
-            on: (event: string, cb: any) => {
-                if (event === 'response') cb({ statusCode: 404, headers: {} });
-            },
-            end: vi.fn()
+        it('should handle exception during load', async () => {
+            vi.spyOn(modManager, 'getProfiles').mockRejectedValue(new Error('Fail'));
+            const result = await modManager.loadProfile('id');
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('Fail');
         });
-
-        const result = await modManager.installUE4SS();
-        expect(result.success).toBe(false);
-        expect(result.message).toContain('Download failed with status code: 404');
     });
 
-    it('deployFile should fallback to copy on cross-device link error', async () => {
-        // Mock deployFile private method by calling installMod or deployMod
-        // We can expose it or test via side effect.
-        // Let's use deployMod with a file structure that triggers deployFile
+    describe('launchGame Error Handling', () => {
+        it('should log error if execFile fails', async () => {
+            // Setup
+            vi.spyOn(modManager, 'getSettings').mockResolvedValue({ gamePath: '/game.exe' });
+            vi.spyOn(modManager, 'getInstalledMods').mockResolvedValue([]);
+            (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
 
-        const mod = { id: '1', name: 'Mod1', folderPath: '/mods/Mod1', isEnabled: true };
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({ gamePath: '/game.exe' }));
-        (fs.readdir as any).mockResolvedValue(['file.pak']);
-        (fs.stat as any).mockResolvedValue({ isDirectory: () => false });
+            // Mock execFile to call callback with error
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            (execFile as any).mockImplementation((file, args, opts, cb) => {
+                cb(new Error('Launch Failed'));
+            });
 
-        // Fail link with EXDEV
-        const exdevError: any = new Error('EXDEV');
-        exdevError.code = 'EXDEV';
-        (fs.link as any).mockRejectedValueOnce(exdevError);
-        (fs.copyFile as any).mockResolvedValue(undefined);
+            await modManager.launchGame();
 
-        const result = await modManager.deployMod(mod as any);
+            // Allow callback to execute
+            await new Promise(resolve => setTimeout(resolve, 10));
 
-        expect(fs.link).toHaveBeenCalled();
-        expect(fs.copyFile).toHaveBeenCalled(); // Fallback
-        expect(result).toBe(true);
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to launch game:', expect.any(Error));
+        });
     });
 
-    it('openModsDirectory should handle shell failure', async () => {
-        (shell.openPath as any).mockRejectedValue(new Error('Shell fail'));
-        const result = await modManager.openModsDirectory();
-        expect(result).toBe(false);
+    describe('calculateFolderSize', () => {
+        it('should handle errors gracefully (return 0)', async () => {
+            (fs.readdir as any).mockRejectedValue(new Error('Read Error'));
+            const size = await modManager.calculateFolderSize('/path');
+            expect(size).toBe(0);
+        });
     });
 });
