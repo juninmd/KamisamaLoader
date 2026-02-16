@@ -220,7 +220,7 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             <h3 className="text-lg font-bold text-white mb-2">Description</h3>
                             <div
                                 className="text-gray-300 leading-relaxed whitespace-pre-wrap break-words prose prose-invert max-w-none [&>img]:rounded-lg [&>img]:max-w-full"
-                                dangerouslySetInnerHTML={{ __html: (fullDescription || mod.description || 'No description available.') as string }}
+                                dangerouslySetInnerHTML={{ __html: (fullDescription || mod.description || 'No description available.') as any }}
                             />
                         </div>
 
@@ -237,7 +237,7 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                                                     {log.date ? formatDistanceToNow(new Date(log.date * 1000), { addSuffix: true }) : ''}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-gray-300 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: log.text }}></div>
+                                            <div className="text-sm text-gray-300 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: (log.text || '') as any }}></div>
                                         </div>
                                     ))}
                                 </div>
