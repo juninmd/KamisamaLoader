@@ -11,6 +11,9 @@ export default defineConfig({
     environment: 'node', // Default to node for backend/integration
     environmentMatchGlobs: [
         ['tests/unit/components/**', 'happy-dom'],
+        ['tests/unit/pages/**', 'happy-dom'],
+        ['tests/unit/coverage-frontend*.test.tsx', 'happy-dom'],
+        ['tests/unit/final-push-frontend.test.tsx', 'happy-dom'],
         ['src/**', 'happy-dom']
     ],
     testTimeout: 20000,
@@ -38,10 +41,10 @@ export default defineConfig({
         ],
         all: true,
         thresholds: {
-            lines: 90,
+            lines: 92,
             functions: 90,
-            branches: 80,
-            statements: 90
+            branches: 85,
+            statements: 91
         }
     }
   },
