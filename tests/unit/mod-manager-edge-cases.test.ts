@@ -42,6 +42,8 @@ describe('ModManager Edge Cases', () => {
         (fs.mkdir as any).mockResolvedValue(undefined);
         (fs.writeFile as any).mockResolvedValue(undefined);
         (fs.unlink as any).mockResolvedValue(undefined);
+        (fs.readdir as any).mockResolvedValue([]);
+        (fs.stat as any).mockResolvedValue({ isDirectory: () => false, size: 0 });
     });
 
     describe('fixPriorities', () => {
