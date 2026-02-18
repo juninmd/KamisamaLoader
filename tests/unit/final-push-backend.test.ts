@@ -54,6 +54,7 @@ describe('Final Push Backend', () => {
                 { id: '1', name: 'A', priority: 100, isEnabled: true },
                 { id: '2', name: 'B', priority: 50, isEnabled: true }
             ];
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
             mockFs.writeFile.mockResolvedValue(undefined);
 
@@ -77,6 +78,7 @@ describe('Final Push Backend', () => {
                 { id: '1', name: 'Mod1', category: 'Skin', isEnabled: true },
                 { id: '2', name: 'Mod2', category: 'Skin', isEnabled: false }
             ];
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
 
             // Should warn when enabling Mod2
@@ -90,6 +92,7 @@ describe('Final Push Backend', () => {
                 { id: '1', name: 'Mod1', category: 'UI', isEnabled: true },
                 { id: '2', name: 'Mod2', category: 'UI', isEnabled: false }
             ];
+            modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
 
             const result = await modManager.toggleMod('2', true);
