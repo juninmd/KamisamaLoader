@@ -166,6 +166,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                     className="h-8 w-8 text-green-400 hover:bg-green-500/20 hover:text-green-300 border-green-500/30"
                                     onClick={(e) => { e.stopPropagation(); onUpdate(localMod); }}
                                     disabled={isUpdating}
+                                    aria-label="Update"
                                 >
                                     <RefreshCw size={14} className={isUpdating ? "animate-spin" : ""} />
                                 </Button>

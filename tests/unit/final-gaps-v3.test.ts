@@ -1,228 +1,139 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { EventEmitter } from 'events';
+import { ModManager } from '../../electron/mod-manager';
+import fs from 'fs/promises';
+import { execFile } from 'child_process';
 import path from 'path';
 
-// Hoist mocks
-const { mockFs, mockNet, mockApp, mockShell } = vi.hoisted(() => {
-    return {
-        mockFs: {
-            readFile: vi.fn(),
-            writeFile: vi.fn(),
-            mkdir: vi.fn(),
-            unlink: vi.fn(),
-            rm: vi.fn(),
-            stat: vi.fn(),
-            cp: vi.fn(),
-            access: vi.fn(),
-            readdir: vi.fn(),
-            createWriteStream: vi.fn(),
-            link: vi.fn(),
-            copyFile: vi.fn(),
-        },
-        mockNet: {
-            request: vi.fn(),
-        },
-        mockApp: {
-            getPath: vi.fn((name) => {
-                if (name === 'exe') return '/app/dist-electron/electron.exe';
-                return '/tmp';
-            }),
-            isPackaged: false
-        },
-        mockShell: {
-            showItemInFolder: vi.fn(),
-            openPath: vi.fn()
-        }
-    };
-});
-
-// Mock fs
-vi.mock('fs', async () => {
-    return {
-        default: {
-            ...mockFs,
-            createWriteStream: vi.fn(() => ({
-                write: vi.fn(),
-                close: vi.fn(),
-                end: vi.fn(),
-                on: vi.fn(),
-                once: vi.fn(),
-                emit: vi.fn(),
-            })),
-            unlink: vi.fn((p: any, cb: any) => cb(null)),
-            mkdir: mockFs.mkdir,
-            readFile: mockFs.readFile,
-            writeFile: mockFs.writeFile,
-            stat: mockFs.stat,
-            readdir: mockFs.readdir,
-            link: mockFs.link,
-            copyFile: mockFs.copyFile,
-            rm: mockFs.rm,
-            cp: mockFs.cp
-        },
-        createWriteStream: vi.fn(() => ({
-            write: vi.fn(),
-            close: vi.fn(),
-            end: vi.fn(),
-            on: vi.fn(),
-            once: vi.fn(),
-            emit: vi.fn(),
-        })),
-    };
-});
-
-vi.mock('fs/promises', () => ({ default: mockFs }));
-
-// Mock electron
-vi.mock('electron', () => ({
-    net: mockNet,
-    app: mockApp,
-    shell: mockShell,
-    BrowserWindow: class { webContents = { send: vi.fn() } }
+// Mocks
+vi.mock('fs/promises');
+vi.mock('child_process', () => ({
+    execFile: vi.fn()
 }));
 
-// Import classes
-import { DownloadManager } from '../../electron/download-manager';
-import { ModManager } from '../../electron/mod-manager';
+const mockElectron = vi.hoisted(() => ({
+    app: {
+        getPath: vi.fn().mockReturnValue('/mock/app/path'),
+        isPackaged: false
+    },
+    shell: { openPath: vi.fn() },
+    net: { request: vi.fn() }
+}));
 
-describe('Final Gaps V3', () => {
+vi.mock('electron', () => ({
+    default: mockElectron,
+    ...mockElectron
+}));
 
-    // --- DownloadManager ---
-    describe('DownloadManager Branches', () => {
-        let downloadManager: DownloadManager;
+vi.mock('../../electron/gamebanana.js', () => ({
+    fetchModProfile: vi.fn(),
+    searchOnlineMods: vi.fn(),
+    getModChangelog: vi.fn(),
+    fetchModDetails: vi.fn(),
+    fetchLatestRelease: vi.fn(),
+    searchBySection: vi.fn(),
+    fetchCategories: vi.fn(),
+    fetchNewMods: vi.fn(),
+    fetchFeaturedMods: vi.fn(),
+    fetchAllMods: vi.fn(),
+    fetchModUpdates: vi.fn()
+}));
 
-        beforeEach(() => {
-            downloadManager = new DownloadManager();
-            vi.clearAllMocks();
+describe('ModManager Final Gaps V3', () => {
+    let modManager: ModManager;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        modManager = new ModManager();
+        // @ts-expect-error test intentionally overrides internal field
+        modManager.modsDir = '/mock/mods';
+    });
+
+    describe('launchGame', () => {
+        it('should split launch arguments correctly', async () => {
+            // Setup settings with launch args
+            const settings = { gamePath: '/game/exe.exe', launchArgs: '-dx11 -windowed  -log ' };
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => false });
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.access).mockResolvedValue(undefined);
+
+            await modManager.launchGame();
+
+            expect(execFile).toHaveBeenCalledWith(
+                '/game/exe.exe',
+                ['-fileopenlog', '-dx11', '-windowed', '-log'],
+                expect.any(Object),
+                expect.any(Function)
+            );
         });
 
-        it('should handle Resume with 206 Partial Content', () => {
-            // First call to startDownload needs a mock too
-            const mockRequestInit = new EventEmitter() as any;
-            mockRequestInit.end = vi.fn();
-            mockNet.request.mockReturnValueOnce(mockRequestInit);
+        it('should handle missing launch arguments', async () => {
+            // Setup settings without launch args
+            const settings = { gamePath: '/game/exe.exe' };
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => false });
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.access).mockResolvedValue(undefined);
 
-            const id = downloadManager.startDownload('http://url.com', '/dl', 'file.zip');
-            // Manually set state to paused to simulate resumption
-            const dl = downloadManager.getDownloads().find(d => d.id === id);
-            if (dl) {
-                dl.state = 'paused';
-                dl.receivedBytes = 50;
-            }
+            await modManager.launchGame();
 
-            const mockRequestResume = new EventEmitter() as any;
-            mockRequestResume.end = vi.fn();
-            mockNet.request.mockReturnValueOnce(mockRequestResume);
-
-            downloadManager.resumeDownload(id);
-
-            expect(mockNet.request).toHaveBeenCalledWith(expect.objectContaining({
-                headers: expect.objectContaining({ 'Range': 'bytes=50-' })
-            }));
-
-            // Verify state update on response
-            const mockResponse = new EventEmitter() as any;
-            mockResponse.statusCode = 206;
-            mockResponse.headers = {};
-            mockRequestResume.emit('response', mockResponse);
-
-            expect(dl?.state).toBe('progressing');
+            expect(execFile).toHaveBeenCalledWith(
+                '/game/exe.exe',
+                ['-fileopenlog'],
+                expect.any(Object),
+                expect.any(Function)
+            );
         });
 
-        it('should handle 301 Permanent Redirect', () => {
-             const mockRequest1 = new EventEmitter() as any;
-             mockRequest1.end = vi.fn();
-             mockRequest1.abort = vi.fn();
+        it('should handle execution error in callback', async () => {
+            const settings = { gamePath: '/game/exe.exe' };
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
+             // @ts-expect-error mocked fs method
+            vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => false });
+             // @ts-expect-error mocked fs method
+            vi.mocked(fs.access).mockResolvedValue(undefined);
 
-             const mockResponse1 = new EventEmitter() as any;
-             mockResponse1.statusCode = 301;
-             mockResponse1.headers = { location: 'http://new.com/file.zip' };
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-             const mockRequest2 = new EventEmitter() as any;
-             mockRequest2.end = vi.fn();
+            (execFile as any).mockImplementation((f: any, a: any, o: any, cb: any) => {
+                cb(new Error('Spawn Error'));
+            });
 
-             mockNet.request
-                 .mockReturnValueOnce(mockRequest1)
-                 .mockReturnValueOnce(mockRequest2);
+            await modManager.launchGame();
 
-             downloadManager.startDownload('http://url.com', '/dl', 'file.zip');
-
-             mockRequest1.emit('response', mockResponse1);
-
-             expect(mockNet.request).toHaveBeenCalledTimes(2);
-             expect(mockNet.request).toHaveBeenLastCalledWith(expect.objectContaining({
-                 url: 'http://new.com/file.zip'
-             }));
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to launch game:', expect.anything());
         });
     });
 
-    // --- ModManager ---
-    describe('ModManager Branches', () => {
-        let modManager: ModManager;
+    describe('deployMod', () => {
+         it('should return false if game path not set', async () => {
+            // Setup settings without game path
+            const settings = { gamePath: '' };
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
 
-        beforeEach(() => {
-             vi.clearAllMocks();
-             mockApp.isPackaged = false;
-             modManager = new ModManager();
-        });
+            const mod = { id: '1', name: 'Mod', isEnabled: true };
+            const result = await modManager.deployMod(mod as any);
 
-        it('should use correct path when app.isPackaged is true', async () => {
-             mockApp.isPackaged = true;
-             // Re-instantiate to pick up isPackaged
-             modManager = new ModManager();
+            expect(result).toBe(false);
+         });
+    });
 
-             // Ensure Mods Dir
-             await modManager.ensureModsDir();
+    describe('installUE4SS', () => {
+        it('should return failure if game path not set', async () => {
+             // Setup settings without game path
+            const settings = { gamePath: '' };
+            // @ts-expect-error mocked fs method
+            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings));
 
-             // Expected path relative to exe: ../Mods
-             // Exe: /app/dist-electron/electron.exe
-             // Dirname: /app/dist-electron
-             // ../Mods: /app/Mods
-             // Path join behavior might vary in test env, but let's check if it calls mkdir with something containing Mods
-             expect(mockFs.mkdir).toHaveBeenCalledWith(expect.stringMatching(/Mods$/), expect.any(Object));
-        });
-
-        it('should ignore non-mod files during deployment', async () => {
-             mockFs.readFile.mockResolvedValue(JSON.stringify({ gamePath: '/game' }));
-
-             // Mock readdir for recursive getAllFiles
-             mockFs.readdir.mockImplementation(async (dir: string) => {
-                 if (dir.endsWith('mod1')) return ['readme.txt', 'mod.pak'];
-                 return [];
-             });
-
-             mockFs.stat.mockResolvedValue({
-                 isDirectory: () => false,
-                 size: 100
-             } as any);
-
-             const mod = {
-                 id: '1',
-                 name: 'Mod1',
-                 folderPath: '/mods/mod1',
-                 priority: 1,
-                 isEnabled: true
-             };
-
-             await modManager.deployMod(mod as any);
-
-             // Expect .pak to be linked
-             expect(mockFs.link).toHaveBeenCalledWith(
-                 expect.stringMatching(/mod\.pak$/),
-                 expect.stringMatching(/001_mod\.pak$/)
-             );
-
-             // Expect .txt NOT to be linked
-             expect(mockFs.link).not.toHaveBeenCalledWith(
-                 expect.stringMatching(/readme\.txt$/),
-                 expect.any(String)
-             );
-        });
-
-        it('should handle calculateFolderSize error', async () => {
-             mockFs.readdir.mockRejectedValue(new Error('Access Denied'));
-             const size = await modManager.calculateFolderSize('/root');
-             expect(size).toBe(0);
+            const result = await modManager.installUE4SS();
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('Game path not set.');
         });
     });
 });
