@@ -51,8 +51,8 @@ describe('Final Push Backend', () => {
     describe('Priority Normalization', () => {
         it('should normalize non-sequential priorities', async () => {
             const mods = [
-                { id: '1', name: 'A', priority: 100, isEnabled: true },
-                { id: '2', name: 'B', priority: 50, isEnabled: true }
+                { id: '1', name: 'A', priority: 100, isEnabled: true, folderPath: '/mods/A' },
+                { id: '2', name: 'B', priority: 50, isEnabled: true, folderPath: '/mods/B' }
             ];
             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
@@ -75,8 +75,8 @@ describe('Final Push Backend', () => {
     describe('Toggle Conflict Check', () => {
         it('should detect category conflict', async () => {
             const mods = [
-                { id: '1', name: 'Mod1', category: 'Skin', isEnabled: true },
-                { id: '2', name: 'Mod2', category: 'Skin', isEnabled: false }
+                { id: '1', name: 'Mod1', category: 'Skin', isEnabled: true, folderPath: '/mods/Mod1' },
+                { id: '2', name: 'Mod2', category: 'Skin', isEnabled: false, folderPath: '/mods/Mod2' }
             ];
             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
@@ -89,8 +89,8 @@ describe('Final Push Backend', () => {
 
         it('should ignore conflict for generic categories', async () => {
             const mods = [
-                { id: '1', name: 'Mod1', category: 'UI', isEnabled: true },
-                { id: '2', name: 'Mod2', category: 'UI', isEnabled: false }
+                { id: '1', name: 'Mod1', category: 'UI', isEnabled: true, folderPath: '/mods/Mod1' },
+                { id: '2', name: 'Mod2', category: 'UI', isEnabled: false, folderPath: '/mods/Mod2' }
             ];
             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/game/exe' });
             mockFs.readFile.mockResolvedValue(JSON.stringify(mods));
