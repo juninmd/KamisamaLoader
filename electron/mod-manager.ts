@@ -667,6 +667,9 @@ export class ModManager {
 
             await this.deployMod(newMod);
 
+            // Save again to persist deployedFiles and any other changes from deployMod
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+
             return { success: true, message: 'Mod installed successfully' };
         } catch (e) {
             console.error(e);
