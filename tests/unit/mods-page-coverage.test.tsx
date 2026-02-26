@@ -1,26 +1,25 @@
-// @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderWithProviders, screen, fireEvent, waitFor, act } from './test-utils';
+/**
+ * @vitest-environment happy-dom
+ */
+import React from 'react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Mods from '../../src/pages/Mods';
+import { ToastProvider } from '../../src/components/ToastContext';
+import { SettingsProvider } from '../../src/components/SettingsContext';
 
-// Mock electron API
+// Mock electronAPI
 const mockElectronAPI = {
     getInstalledMods: vi.fn(),
     searchBySection: vi.fn(),
     fetchCategories: vi.fn(),
-    installMod: vi.fn(),
-    installOnlineMod: vi.fn(),
-    updateAllMods: vi.fn(),
-    checkForUpdates: vi.fn(),
     onDownloadScanFinished: vi.fn(() => () => {}),
-    getProfiles: vi.fn().mockResolvedValue([]),
-    saveSettings: vi.fn().mockResolvedValue(true),
-    getSettings: vi.fn().mockResolvedValue({}),
-    getModChangelog: vi.fn(),
-    toggleMod: vi.fn(),
     uninstallMod: vi.fn(),
     setModPriority: vi.fn(),
-    updateMod: vi.fn(),
+    updateAllMods: vi.fn(),
+    getSettings: vi.fn().mockResolvedValue({}),
+    checkForUpdates: vi.fn().mockResolvedValue([]),
+    getDownloads: vi.fn().mockResolvedValue([])
 };
 
 Object.defineProperty(window, 'electronAPI', {
@@ -28,19 +27,22 @@ Object.defineProperty(window, 'electronAPI', {
     writable: true
 });
 
-// Mock IntersectionObserver
-const observe = vi.fn();
-const disconnect = vi.fn();
-window.IntersectionObserver = vi.fn(function() {
-    return {
-        observe,
-        disconnect,
-        unobserve: vi.fn(),
-        takeRecords: vi.fn()
-    };
-}) as any;
+// Mock confirm
+const originalConfirm = window.confirm;
+const confirmMock = vi.fn();
+window.confirm = confirmMock;
 
-describe('Mods Page Coverage', () => {
+const renderMods = () => {
+    return render(
+        <SettingsProvider>
+            <ToastProvider>
+                <Mods />
+            </ToastProvider>
+        </SettingsProvider>
+    );
+};
+
+describe('Mods Page Coverage Gaps', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockElectronAPI.getInstalledMods.mockResolvedValue([]);
@@ -48,77 +50,99 @@ describe('Mods Page Coverage', () => {
         mockElectronAPI.fetchCategories.mockResolvedValue([]);
     });
 
-    it('should handle drag and drop installation', async () => {
-        mockElectronAPI.installMod.mockResolvedValue({ success: true });
-
-        const { container } = renderWithProviders(<Mods />);
-        const dropZone = container.firstChild as HTMLElement;
-
-        // Simulate drag enter
-        fireEvent.dragEnter(dropZone, {
-            dataTransfer: { items: [{ kind: 'file' }] }
-        });
-
-        expect(screen.getByText('Drop to Install')).toBeInTheDocument();
-
-        // Simulate drop
-        await act(async () => {
-            fireEvent.drop(dropZone, {
-                dataTransfer: { files: [{ path: '/path/to/mod.zip' }] }
-            });
-        });
-
-        expect(mockElectronAPI.installMod).toHaveBeenCalledWith('/path/to/mod.zip');
-        // Drop overlay should disappear
-        expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
-    });
-
-    it('should handle install error during drag and drop', async () => {
-        mockElectronAPI.installMod.mockResolvedValue({ success: false, message: 'Install failed' });
-
-        const { container } = renderWithProviders(<Mods />);
-        const dropZone = container.firstChild as HTMLElement;
+    it('should not uninstall if user cancels confirmation', async () => {
+        const mod = { id: '1', name: 'Test Mod', isEnabled: true };
+        mockElectronAPI.getInstalledMods.mockResolvedValue([mod]);
 
         await act(async () => {
-            fireEvent.drop(dropZone, {
-                dataTransfer: { files: [{ path: '/path/to/mod.zip' }] }
-            });
+            renderMods();
         });
 
-        expect(await screen.findByText('Install failed')).toBeInTheDocument();
+        // Wait for loading to finish and mod to appear
+        await waitFor(() => expect(screen.getByText('Test Mod')).toBeInTheDocument());
+
+        const deleteBtn = await waitFor(() => screen.getByRole('button', { name: /Uninstall/i }));
+
+        confirmMock.mockReturnValue(false); // Cancel
+
+        await act(async () => {
+            fireEvent.click(deleteBtn);
+        });
+
+        expect(mockElectronAPI.uninstallMod).not.toHaveBeenCalled();
     });
 
-    it('should handle online install error', async () => {
-        mockElectronAPI.searchBySection.mockResolvedValue([
-            { gameBananaId: 1, name: 'Online Mod', author: 'Author' }
-        ]);
-        mockElectronAPI.installOnlineMod.mockResolvedValue({ success: false, message: 'Online Install Failed' });
+    it('should handle priority change failure', async () => {
+        const mod = { id: '1', name: 'Test Mod', isEnabled: true, priority: 1 };
+        mockElectronAPI.getInstalledMods.mockResolvedValue([mod]);
+        mockElectronAPI.setModPriority.mockResolvedValue(false); // Fail
 
-        renderWithProviders(<Mods />);
+        await act(async () => {
+            renderMods();
+        });
 
-        // Switch to Browse tab
-        fireEvent.click(screen.getByText('Browse Online'));
+        // Wait for loading to finish
+        await waitFor(() => expect(screen.getByText('Test Mod')).toBeInTheDocument());
 
-        await waitFor(() => expect(screen.getByText('Online Mod')).toBeInTheDocument());
+        const upBtn = await waitFor(() => screen.getByTitle(/Increase Priority/i));
 
-        const installBtn = screen.getByRole('button', { name: /^Download$/i });
-        fireEvent.click(installBtn);
+        await act(async () => {
+            fireEvent.click(upBtn);
+        });
 
-        expect(await screen.findByText('Online Install Failed')).toBeInTheDocument();
+        expect(screen.getByText('Failed to change priority')).toBeInTheDocument();
     });
 
-     it('should handle update all error', async () => {
-        mockElectronAPI.getInstalledMods.mockResolvedValue([
-            { id: '1', name: 'Mod1', hasUpdate: true, fileSize: 1024, author: 'A' }
-        ]);
-        mockElectronAPI.updateAllMods.mockRejectedValue(new Error('Update failed'));
+    it('should uninstall mod when user confirms', async () => {
+        const mod = { id: '1', name: 'Test Mod', isEnabled: true };
+        mockElectronAPI.getInstalledMods.mockResolvedValue([mod]);
+        mockElectronAPI.uninstallMod.mockResolvedValue({ success: true });
 
-        renderWithProviders(<Mods />);
+        confirmMock.mockReturnValue(true);
 
-        await waitFor(() => expect(screen.getByText('Update All')).toBeInTheDocument());
+        await act(async () => {
+            renderMods();
+        });
 
-        fireEvent.click(screen.getByText('Update All'));
+        await waitFor(() => expect(screen.getByText('Test Mod')).toBeInTheDocument());
 
-        expect(await screen.findByText('Batch update failed')).toBeInTheDocument();
+        const deleteBtn = await waitFor(() => screen.getByRole('button', { name: /Uninstall/i }));
+
+        await act(async () => {
+            fireEvent.click(deleteBtn);
+        });
+
+        expect(mockElectronAPI.uninstallMod).toHaveBeenCalledWith('1');
+        // Should trigger reload
+        expect(mockElectronAPI.getInstalledMods).toHaveBeenCalledTimes(2); // Initial + After uninstall
+    });
+
+    it('should handle mixed results in batch update', async () => {
+        const mods = [
+            { id: '1', name: 'Mod A', hasUpdate: true },
+            { id: '2', name: 'Mod B', hasUpdate: true }
+        ];
+        mockElectronAPI.getInstalledMods.mockResolvedValue(mods);
+
+        // Mock update result: 1 success, 1 fail
+        mockElectronAPI.updateAllMods.mockResolvedValue({
+            successCount: 1,
+            failCount: 1,
+            results: [{ id: '1', success: true }, { id: '2', success: false }]
+        });
+
+        await act(async () => {
+            renderMods();
+        });
+
+        const updateAllBtn = await waitFor(() => screen.getByText('Update All'));
+
+        await act(async () => {
+            fireEvent.click(updateAllBtn);
+        });
+
+        expect(await screen.findByText(/Batch update finished/)).toBeInTheDocument();
+        expect(screen.getByText(/Success: 1/)).toBeInTheDocument();
+        expect(screen.getByText(/Failed: 1/)).toBeInTheDocument();
     });
 });
