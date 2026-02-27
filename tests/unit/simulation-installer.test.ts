@@ -111,6 +111,20 @@ vi.mock('fs/promises', () => ({
                  if (d.startsWith(normalized)) virtualDirs.delete(d);
              });
         }),
+        cp: vi.fn(async (src, dest, opts) => {
+             // Recursive copy
+             const nSrc = normalizePath(src);
+             const nDest = normalizePath(dest);
+
+             // Find all files in src
+             Object.keys(virtualFS).forEach(k => {
+                 if (k.startsWith(nSrc)) {
+                     const relative = k.slice(nSrc.length);
+                     const target = nDest + relative;
+                     virtualFS[target] = virtualFS[k];
+                 }
+             });
+        }),
         access: vi.fn(async (p) => {
              const normalized = normalizePath(p);
              if (virtualFS[normalized] || virtualDirs.has(normalized)) return;
@@ -127,6 +141,10 @@ vi.mock('electron', () => ({
 
 vi.mock('child_process', () => ({
     execFile: vi.fn()
+}));
+
+vi.mock('../../electron/github', () => ({
+    fetchLatestRelease: vi.fn()
 }));
 
 // Mock AdmZip to just "explode" files into virtualFS
@@ -237,5 +255,54 @@ describe('Full Installer Lifecycle Simulation', () => {
 
         const finalMods = await modManager.getInstalledMods();
         expect(finalMods.length).toBe(0);
+    });
+
+    it('should install and manage UE4SS correctly', async () => {
+        // Setup paths
+        const gamePath = '/game';
+        await modManager.saveSettings({ gamePath });
+
+        // Mock download endpoint
+        const { fetchLatestRelease } = await import('../../electron/github');
+        (fetchLatestRelease as any).mockResolvedValue('http://mock.url/ue4ss.zip');
+
+        // Mock downloadFile to succeed (it's private, but we can bypass or let it use net.request if we mocked it properly)
+        // Since we didn't fully mock net.request stream events in this file (it uses a complex mock in download-manager.test.ts),
+        // we might fail if we rely on real downloadFile.
+        // Let's spy on downloadFile if possible or mock the entire download flow.
+
+        // Simpler: The ModManager.installUE4SS uses downloadManager if available.
+        // But here modManager is init without DM. So it falls back to downloadFile.
+        // We can just mock ModManager.downloadFile via prototype or instance cast.
+        // Also need to create the temp file that extractZip expects to read.
+
+        const tempPath = '/mock/app/path/ue4ss_latest.zip';
+        virtualFS[tempPath] = Buffer.from('dummy zip');
+
+        (modManager as any).downloadFile = vi.fn().mockResolvedValue(undefined);
+
+        // We also need to mock extractZip to put files in temp/ue4ss_extract
+        // The current adm-zip mock puts 'mod_file.pak' in dest.
+        // UE4SS needs specific files to be recognized?
+        // finalizeUE4SSInstall checks for root dir.
+
+        // Let's adjust AdmZip mock behavior for this test or generally.
+        // The current mock is: virtualFS[`${normalizedDest}/mod_file.pak`] = 'dummy content';
+
+        // We need it to extract something that finalizeUE4SSInstall sees as valid.
+        // It moves contents to binariesDir.
+
+        const result = await modManager.installUE4SS();
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('UE4SS installed');
+
+        // Verify files moved to Binaries/Win64
+        // binariesDir = /game/SparkingZERO/Binaries/Win64
+        // The mocked zip extract puts 'mod_file.pak'.
+        // So we expect /game/SparkingZERO/Binaries/Win64/mod_file.pak to exist.
+
+        const binariesFile = '/game/SparkingZERO/Binaries/Win64/mod_file.pak';
+        expect(virtualFS[binariesFile]).toBeDefined();
     });
 });
