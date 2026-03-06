@@ -5,9 +5,14 @@ import { searchBySection, fetchItemData, fetchAllMods } from '../../electron/gam
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
+const { os, path } = vi.hoisted(() => ({
+    os: require('os'),
+    path: require('path')
+}));
+
 vi.mock('electron', () => ({
     app: {
-        getPath: vi.fn().mockReturnValue('/userData')
+        getPath: vi.fn().mockReturnValue(path.join(os.tmpdir(), 'userData'))
     },
     net: { request: vi.fn() }
 }));
@@ -30,6 +35,10 @@ describe('GameBanana Coverage Gaps', () => {
             json: async () => ({ _aRecords: [] })
         });
 
+        // Clear cache so it fetches again
+        const { getAPICache } = await import('../../electron/api-cache.js');
+        await getAPICache().clear();
+
         await searchBySection({
             search: 'Goku',
             categoryId: 123,
@@ -46,9 +55,16 @@ describe('GameBanana Coverage Gaps', () => {
             json: async () => ({ _aRecords: [] })
         });
 
+        // Clear cache so it fetches again
+        const { getAPICache } = await import('../../electron/api-cache.js');
+        await getAPICache().clear();
+
         // Test date sort
         await searchBySection({ search: 'Goku', sort: 'date' });
         expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('_sOrder=newest'));
+
+        fetchMock.mockClear();
+        await getAPICache().clear();
 
         // Test downloads sort
         await searchBySection({ search: 'Goku', sort: 'downloads' });

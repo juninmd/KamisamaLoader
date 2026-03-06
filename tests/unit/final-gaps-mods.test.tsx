@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import Mods from '../../src/pages/Mods';
 import { vi, describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import React from 'react';
@@ -39,7 +39,10 @@ describe('Mods Page Gaps', () => {
     it('should handle drag and drop install failure', async () => {
         mockElectronAPI.installMod.mockResolvedValue({ success: false, message: 'Invalid file' });
 
-        const { container } = render(<Mods />);
+        let container: HTMLElement;
+        act(() => {
+            container = render(<Mods />).container;
+        });
 
         // Create drag event
         const dropEvent = {
@@ -52,10 +55,14 @@ describe('Mods Page Gaps', () => {
         };
 
         // Trigger drag enter to set state
-        fireEvent.dragEnter(container.firstChild as HTMLElement, dropEvent);
+        act(() => {
+            fireEvent.dragEnter(container.firstChild as HTMLElement, dropEvent);
+        });
 
         // Trigger drop
-        fireEvent.drop(container.firstChild as HTMLElement, dropEvent);
+        act(() => {
+            fireEvent.drop(container.firstChild as HTMLElement, dropEvent);
+        });
 
         await waitFor(() => {
             expect(mockElectronAPI.installMod).toHaveBeenCalledWith('/test/mod.zip');
@@ -63,18 +70,27 @@ describe('Mods Page Gaps', () => {
         });
     });
 
-    it('should handle drag leave', () => {
-         const { container } = render(<Mods />);
+    it('should handle drag leave', async () => {
+         let container: any;
+         act(() => {
+             container = render(<Mods />).container;
+         });
          const event = { preventDefault: vi.fn(), stopPropagation: vi.fn(), dataTransfer: { items: [{}] } };
 
-         fireEvent.dragEnter(container.firstChild as HTMLElement, event);
+         act(() => {
+             fireEvent.dragEnter(container.firstChild as HTMLElement, event);
+         });
 
          // Assert overlay is present
          expect(screen.getByText('Drop to Install')).toBeInTheDocument();
 
-         fireEvent.dragLeave(container.firstChild as HTMLElement, event);
+         act(() => {
+             fireEvent.dragLeave(container.firstChild as HTMLElement, event);
+         });
 
          // Assert overlay is gone
          expect(screen.queryByText('Drop to Install')).toBeNull();
+
+         await waitFor(() => expect(mockElectronAPI.getInstalledMods).toHaveBeenCalled());
     });
 });
