@@ -53,18 +53,27 @@ describe('Mods Page Final Gaps', () => {
     });
 
     it('should handle drag leave correctly', async () => {
-        const { container } = renderWithProviders(<Mods />);
+        let container: any;
+        act(() => {
+            container = renderWithProviders(<Mods />).container;
+        });
         const dropZone = container.firstChild as HTMLElement;
 
         // Enter
-        fireEvent.dragEnter(dropZone, {
-            dataTransfer: { items: [{ kind: 'file' }] }
+        act(() => {
+            fireEvent.dragEnter(dropZone, {
+                dataTransfer: { items: [{ kind: 'file' }] }
+            });
         });
         expect(screen.getByText('Drop to Install')).toBeInTheDocument();
 
         // Leave
-        fireEvent.dragLeave(dropZone);
+        act(() => {
+            fireEvent.dragLeave(dropZone);
+        });
         expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
+
+        await waitFor(() => expect(mockElectronAPI.getInstalledMods).toHaveBeenCalled());
     });
 
     it('should trigger infinite scroll when intersection occurs', async () => {
@@ -74,7 +83,9 @@ describe('Mods Page Final Gaps', () => {
             .mockResolvedValueOnce(page1) // Page 1
             .mockResolvedValueOnce([{ id: '21', name: 'Mod 21' }]); // Page 2
 
-        renderWithProviders(<Mods />);
+        act(() => {
+            renderWithProviders(<Mods />);
+        });
 
         // Switch to Browse tab
         fireEvent.click(screen.getByText('Browse Online'));
@@ -96,6 +107,9 @@ describe('Mods Page Final Gaps', () => {
         expect(mockElectronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({
             page: 2
         }));
+
+        // Ensure no pending updates are left
+        await waitFor(() => expect(screen.queryByText('Browse Online')).toBeInTheDocument());
     });
 
     it('should handle partial success in update all', async () => {
@@ -116,7 +130,9 @@ describe('Mods Page Final Gaps', () => {
             ]
         });
 
-        renderWithProviders(<Mods />);
+        act(() => {
+            renderWithProviders(<Mods />);
+        });
 
         // Wait for mods to load
         await waitFor(() => expect(screen.getByText('Mod1')).toBeInTheDocument());
@@ -126,6 +142,9 @@ describe('Mods Page Final Gaps', () => {
         await act(async () => {
              fireEvent.click(updateBtn);
         });
+
+        // Wait for update request to finish to avoid state updates leaking out of the test
+        await waitFor(() => expect(mockElectronAPI.updateAllMods).toHaveBeenCalledWith(['1', '2']));
 
         // Verify toast message for partial success
         // We can't easily check toast text without mocking the toast provider or querying for toast container text
