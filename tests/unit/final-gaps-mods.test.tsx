@@ -39,7 +39,7 @@ describe('Mods Page Gaps', () => {
     it('should handle drag and drop install failure', async () => {
         mockElectronAPI.installMod.mockResolvedValue({ success: false, message: 'Invalid file' });
 
-        let container: any;
+        let container: HTMLElement;
         act(() => {
             container = render(<Mods />).container;
         });
