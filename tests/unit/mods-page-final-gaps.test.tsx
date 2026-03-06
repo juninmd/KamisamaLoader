@@ -53,7 +53,7 @@ describe('Mods Page Final Gaps', () => {
     });
 
     it('should handle drag leave correctly', async () => {
-        let container: any;
+        let container: HTMLElement;
         act(() => {
             container = renderWithProviders(<Mods />).container;
         });
