@@ -1,51 +1,48 @@
-# KamisamaLoader — Dragon Ball: Sparking! ZERO Mod Manager
+# 🐉 Kamisama Mod Loader
 
-A modern, high-performance Mod Manager for **Dragon Ball: Sparking! ZERO**, inspired by Unverum but built with a modern stack (Electron, React, TypeScript).
+[![Electron](https://img.shields.io/badge/Electron-28.x-47848F?logo=electron)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-7.x-646CFF?logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
 
-## ✨ Key Features
+> A premium Mod Loader for **Dragon Ball: Sparking! ZERO**, built for speed, reliability, and a stunning user experience.
 
-### Unverum Parity & Enhancements
-- **Non-Destructive Installation**: Unlike some managers that wipe the `~mods` folder, KamisamaLoader uses smart linking/copying. Your mods are safe.
-- **Sparking! ZERO Specific**: Native support for `.pak`, `.sig`, `.utoc`, `.ucas` and `LogicMods`.
-- **UE4SS Support**: One-click install/update for UE4SS, required for advanced script mods.
-- **Priority Management**: Drag-and-drop load order (Higher priority overrides lower).
-- **Launch Arguments**: Configure custom flags like `-dx11` directly in Settings.
-- **1-Click Install**: Supports protocol handling for easy installation from websites.
+## ✨ Features
 
-### Modern UI/UX
-- **Glassmorphism Design**: Beautiful dark theme with glass effects and blur.
-- **Infinite Scroll**: Browse thousands of mods on GameBanana without pagination limits.
-- **Personalization**: Set your own background image in Settings.
-- **Profiles**: Create and switch between mod loadouts instantly.
+- **One-Click Installation**: Seamlessly install mods using custom protocols (`kamisama://`, `gb-modmanager://`).
+- **Mod Management**: Enable, disable, and organize your mod library with ease.
+- **Glassmorphism UI**: A modern, responsive interface built with React 19 and Framer Motion.
+- **Strict Separation**: Clean architecture separating UI (Renderer) from heavy I/O (Main Process).
+- **Data Integrity**: Automated validation for `mods.json` and profiles to prevent corruption.
 
-## 🛠 Tech Stack
-- **Electron** (Main Process, IPC, File System)
-- **React 18 + TypeScript** (Renderer, UI)
-- **Tailwind CSS** (Styling)
-- **Vite** (Build Tool)
+## 🛠️ Tech Stack
 
-## 🚀 Running Locally
+- **Framework**: Electron + Vite
+- **Frontend**: React 19 + TypeScript
+- **Styling**: TailwindCSS + Framer Motion
+- **I/O**: adm-zip for fast mod extraction
+- **Testing**: Vitest (Unit) + Playwright (E2E)
+
+## 🚀 Quick Start
 
 ```bash
 # Install dependencies
 pnpm install
 
-# Run development mode
-pnpm dev
+# Run development environment
+pnpm run dev
+
+# Build for distribution
+pnpm run dist
 ```
 
-## 📦 Build
+## 🛡️ Antigravity Protocol
 
-To create the installer (NSIS for Windows):
+This project follows the **Antigravity** engineering standards:
+- **150-Line Limit**: Modular code structure for maximum maintainability.
+- **Strict Types**: Full TypeScript coverage with zero `any`.
+- **Typed IPC**: All communication between processes is strictly typed and secure.
 
-```bash
-pnpm build
-```
+---
 
-## ✅ Quality Assurance
-
-Run the test suite to verify ModManager logic:
-
-```bash
-pnpm test:unit
-```
+*"Power comes in response to a need, not a desire."*
