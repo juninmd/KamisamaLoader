@@ -60,14 +60,18 @@ describe('GameBanana Coverage Gaps', () => {
         await getAPICache().clear();
 
         // Test date sort
-        await searchBySection({ search: 'Goku', sort: 'date' });
+        const p1 = searchBySection({ search: 'Goku', sort: 'date' });
+        await vi.runAllTimersAsync();
+        await p1;
         expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('_sOrder=newest'));
 
         fetchMock.mockClear();
         await getAPICache().clear();
 
         // Test downloads sort
-        await searchBySection({ search: 'Goku', sort: 'downloads' });
+        const p2 = searchBySection({ search: 'Goku', sort: 'downloads' });
+        await vi.runAllTimersAsync();
+        await p2;
         expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('_sOrder=popularity'));
     });
 
