@@ -33,7 +33,7 @@ describe('ProfileManager Gaps', () => {
         vi.clearAllMocks();
         mockElectronAPI.getProfiles.mockResolvedValue([]);
         mockElectronAPI.getSettings.mockResolvedValue({});
-        (window.confirm as any).mockReturnValue(true); // Default to true
+        (window.confirm as vi.Mock).mockReturnValue(true); // Default to true
     });
 
     it('should handle create profile empty name', async () => {
