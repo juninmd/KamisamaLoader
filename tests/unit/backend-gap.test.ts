@@ -36,10 +36,10 @@ describe('ModManager Backend Gaps', () => {
 
   it('should return false if deployMod fails (e.g. mkdir fails)', async () => {
     vi.spyOn(modManager, 'getSettings').mockResolvedValue({ gamePath: '/game/path' });
-    (fs.mkdir as any).mockRejectedValueOnce(new Error('mkdir failed'));
+vi.mocked(fs.mkdir).mockRejectedValueOnce(new Error('mkdir failed'));
 
-    const mod = { id: '1', name: 'Test', folderPath: '/mods/Test', isEnabled: false };
-    const result = await modManager.deployMod(mod as any);
+    const mod: import('../../shared/types').LocalMod = { id: '1', name: 'Test', folderPath: '/mods/Test', isEnabled: false, author: 'Test Author', version: '1.0', description: 'A test mod' };
+    const result = await modManager.deployMod(mod);
     expect(result).toBe(false);
   });
 
