@@ -18,7 +18,7 @@ vi.mock('../../src/components/SettingsContext', () => ({
 vi.mock('lucide-react', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual as any,
+    ...actual as Record<string, unknown>,
     LayoutDashboard: () => <div data-testid="LayoutDashboard" />,
     Package: () => <div data-testid="Package" />,
     Settings: () => <div data-testid="Settings" />,
@@ -34,7 +34,7 @@ describe('MainLayout Gaps', () => {
       </MainLayout>
     );
 
-    const settingsButton = screen.getByText('Settings').closest('button');
+    const settingsButton = screen.getByRole('button', { name: 'Settings' });
     expect(settingsButton).toBeTruthy();
 
     fireEvent.click(settingsButton!);
