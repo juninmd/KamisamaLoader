@@ -30,7 +30,7 @@ const electronAPI = {
   onDownloadUpdate: vi.fn().mockReturnValue(() => {}),
 };
 
-(window as any).electronAPI = electronAPI;
+(window as Window & { electronAPI: typeof electronAPI }).electronAPI = electronAPI;
 
 // Mock window.confirm
 const originalConfirm = window.confirm;
@@ -90,8 +90,8 @@ describe('Mods Page Final Gaps 2', () => {
   });
 
   it('should handle onDownloadScanFinished event', async () => {
-    let callback: any;
-    electronAPI.onDownloadScanFinished.mockImplementation((cb: any) => {
+    let callback: () => void;
+    electronAPI.onDownloadScanFinished.mockImplementation((cb: () => void) => {
         callback = cb;
         return () => {};
     });
