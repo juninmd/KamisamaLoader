@@ -8,7 +8,7 @@ import React from 'react';
 // Mock context
 vi.mock('../../src/components/SettingsContext', () => ({
     useSettings: vi.fn(),
-    SettingsProvider: ({ children }: any) => <div>{children}</div>
+    SettingsProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
 describe('MainLayout Gaps', () => {
