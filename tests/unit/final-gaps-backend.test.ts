@@ -60,7 +60,7 @@ describe('GameBanana API Final Gaps', () => {
             status: 400,
             text: vi.fn().mockResolvedValue('Bad Request')
         });
-        const result = await searchBySection({ page: 1 } as any);
+        const result = await searchBySection({ page: 1 });
         expect(result).toEqual([]);
     });
 });
