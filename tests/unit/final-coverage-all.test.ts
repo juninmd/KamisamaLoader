@@ -49,7 +49,7 @@ describe('Final Coverage Sweeper', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        modManager = new ModManager(mocks.downloadManager as any);
+        modManager = new ModManager(mocks.downloadManager as unknown as import('../../electron/download-manager').DownloadManager);
         mocks.fs.readFile.mockResolvedValue(JSON.stringify({ gamePath: '/game' }));
     });
 
