@@ -1,0 +1,219 @@
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in temp-test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["temp-test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
+
+[[allowlist]]
+description = "False positive: generic-api-key in test-data/api-cache.json"
+rules = ["generic-api-key"]
+paths = ["test-data/api-cache.json"]
