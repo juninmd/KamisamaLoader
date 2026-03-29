@@ -1270,9 +1270,9 @@ export class ModManager {
             const modsPath = await this.getModsFilePath();
             const settingsPath = this.settingsFile;
 
-            try { zip.addLocalFile(profilesPath); } catch (e) { console.warn('No profiles to export'); }
-            try { zip.addLocalFile(modsPath); } catch (e) { console.warn('No mods.json to export'); }
-            try { zip.addLocalFile(settingsPath); } catch (e) { console.warn('No settings.json to export'); }
+            try { zip.addLocalFile(profilesPath); } catch (e) { console.warn('Could not add profiles.json to export, skipping. Error:', e); }
+            try { zip.addLocalFile(modsPath); } catch (e) { console.warn('Could not add mods.json to export, skipping. Error:', e); }
+            try { zip.addLocalFile(settingsPath); } catch (e) { console.warn('Could not add settings.json to export, skipping. Error:', e); }
 
             return new Promise<{ success: boolean; message: string }>((resolve) => {
                 zip.writeZip(destZipPath, (error) => {
