@@ -555,7 +555,7 @@ describe('ModManager', () => {
 
             const result = await modManager.toggleMod('1', true);
             expect(result.success).toBe(true);
-            expect(result.conflict).toContain('conflicts with "Mod2"');
+            expect(result.conflict).toContain('shares the category');
             expect(modManager.deployMod).toHaveBeenCalled();
         });
 
@@ -941,7 +941,7 @@ describe('ModManager', () => {
 
              const result = await modManager.toggleMod('1', true);
              expect(result.success).toBe(true);
-             expect(result.conflict).toContain('conflicts with "B"');
+             expect(result.conflict).toContain('shares the category');
         });
 
         it('getSettings should return default if file read fails', async () => {

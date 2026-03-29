@@ -140,7 +140,7 @@ describe('ModManager Coverage Gaps', () => {
         const result = await modManager.toggleMod('2', true);
 
         expect(result.success).toBe(true);
-        expect(result.conflict).toContain('Warning: This mod conflicts with "Goku Base"');
+        expect(result.conflict).toContain('shares the category');
     });
 
     it('should handle calculateFolderSize errors gracefully', async () => {

@@ -163,6 +163,33 @@ function registerIpcHandlers() {
   ipcMain.handle('get-all-online-mods', async (_, forceRefresh) => {
     return await modManager.getAllOnlineMods(forceRefresh);
   });
+
+  // Cloud Sync
+  ipcMain.handle('export-cloud-sync', async () => {
+    if (!mainWindow) return { success: false, message: 'No main window' };
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Mod Data for Cloud Sync',
+      defaultPath: 'kamisama-cloud-sync.zip',
+      filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
+    });
+    if (!result.canceled && result.filePath) {
+      return await modManager.exportCloudSync(result.filePath);
+    }
+    return { success: false, message: 'Export cancelled' };
+  });
+
+  ipcMain.handle('import-cloud-sync', async () => {
+    if (!mainWindow) return { success: false, message: 'No main window' };
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Mod Data from Cloud Sync',
+      properties: ['openFile'],
+      filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return await modManager.importCloudSync(result.filePaths[0]);
+    }
+    return { success: false, message: 'Import cancelled' };
+  });
 }
 
 function createWindow() {

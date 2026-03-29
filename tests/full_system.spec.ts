@@ -285,9 +285,9 @@ test('07. Settings Page Navigation', async () => {
         await expect(window.getByText('Background Image', { exact: true })).toBeVisible({ timeout: 10000 });
         console.log('[07] Step 5: Background Image visible');
 
-        console.log('[07] Step 6: Checking Launch Arguments...');
-        await expect(window.getByText('Launch Arguments', { exact: true })).toBeVisible({ timeout: 10000 });
-        console.log('[07] Step 6: Launch Arguments visible');
+        console.log('[07] Step 6: Checking Cloud Sync & Backup...');
+        await expect(window.getByText('Cloud Sync & Backup', { exact: true })).toBeVisible({ timeout: 10000 });
+        console.log('[07] Step 6: Cloud Sync & Backup visible');
 
         await window.screenshot({ path: 'tests/evidence/08-settings-page.png' });
         console.log('[07] Test completed successfully');

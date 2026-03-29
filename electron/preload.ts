@@ -61,4 +61,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('download-scan-finished', subscription);
     return () => ipcRenderer.removeListener('download-scan-finished', subscription);
   },
+
+  // Cloud Sync
+  exportCloudSync: () => ipcRenderer.invoke('export-cloud-sync'),
+  importCloudSync: () => ipcRenderer.invoke('import-cloud-sync')
 });

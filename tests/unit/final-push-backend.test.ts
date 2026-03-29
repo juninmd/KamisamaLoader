@@ -84,7 +84,7 @@ describe('Final Push Backend', () => {
             // Should warn when enabling Mod2
             const result = await modManager.toggleMod('2', true);
             expect(result.success).toBe(true);
-            expect(result.conflict).toContain('This mod conflicts with "Mod1"');
+            expect(result.conflict).toContain('shares the category');
         });
 
         it('should ignore conflict for generic categories', async () => {

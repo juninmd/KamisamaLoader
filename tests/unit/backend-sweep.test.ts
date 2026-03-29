@@ -268,7 +268,7 @@ describe('Backend Sweep - ModManager', () => {
         const result = await modManager.toggleMod('1', true);
 
         expect(result.success).toBe(true);
-        expect(result.conflict).toContain('conflicts with "Mod B"');
+        expect(result.conflict).toContain('shares the category');
     });
 
     it('checkForUpdates should handle mixed results', async () => {

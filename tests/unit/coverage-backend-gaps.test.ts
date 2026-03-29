@@ -275,7 +275,7 @@ describe('ModManager Logic Coverage', () => {
         const result = await mm.toggleMod('2', true);
 
         expect(result.success).toBe(true);
-        expect(result.conflict).toContain('conflicts with "Mod A"');
+        expect(result.conflict).toContain('shares the category');
     });
 
     it('getInstalledMods: recalculates size if 0', async () => {

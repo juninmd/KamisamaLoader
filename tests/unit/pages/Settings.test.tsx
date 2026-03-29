@@ -28,12 +28,18 @@ describe('Settings Page', () => {
         await waitFor(() => {
             expect(screen.getByDisplayValue('/game/path')).toBeInTheDocument();
             expect(screen.getByDisplayValue('/mod/path')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('-test')).toBeInTheDocument();
+            // Launch args is hidden by default now
+            expect(screen.queryByDisplayValue('-test')).not.toBeInTheDocument();
         });
     });
 
     it('should update launch args', async () => {
         renderWithProviders(<Settings />, { initialSettings: mockSettings });
+
+        // Open Advanced Settings
+        const advBtn = screen.getByText('Show Advanced Settings');
+        fireEvent.click(advBtn);
+
         await waitFor(() => screen.getByDisplayValue('-test'));
 
         const input = screen.getByDisplayValue('-test');
@@ -122,6 +128,11 @@ describe('Settings Page', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
         renderWithProviders(<Settings />, { initialSettings: mockSettings });
+
+        // Open Advanced Settings
+        const advBtn = screen.getByText('Show Advanced Settings');
+        fireEvent.click(advBtn);
+
         await waitFor(() => screen.getByDisplayValue('-test'));
 
         const input = screen.getByDisplayValue('-test');

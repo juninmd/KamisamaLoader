@@ -56,6 +56,10 @@ declare global {
       // Game
       launchGame: () => Promise<boolean>;
       installUE4SS: () => Promise<{ success: boolean; message: string }>;
+
+      // Cloud Sync
+      exportCloudSync: () => Promise<{ success: boolean; message: string }>;
+      importCloudSync: () => Promise<{ success: boolean; message: string }>;
     }
   }
 }
