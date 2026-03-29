@@ -719,20 +719,21 @@ export class ModManager {
             if (modIndex !== -1) {
                 const targetMod = mods[modIndex];
 
-                // Conflict Check (Only when enabling)
+                // Advanced Conflict Check (Only when enabling)
                 let conflictMessage = null;
                 if (isEnabled) {
-                    const conflictingMod = mods.find((m: LocalMod) =>
+                    const conflictingMods = mods.filter((m: LocalMod) =>
                         m.isEnabled &&
                         m.id !== modId &&
                         m.category && targetMod.category &&
                         m.category === targetMod.category &&
-                        // Ignore generic categories
+                        // Ignore generic categories that usually don't conflict
                         !['UI', 'Misc', 'Sounds', 'Music', 'Other'].includes(targetMod.category!)
                     );
 
-                    if (conflictingMod) {
-                        conflictMessage = `Warning: This mod conflicts with "${conflictingMod.name}" (Same Category: ${targetMod.category}). Higher priority mod will take precedence.`;
+                    if (conflictingMods.length > 0) {
+                        const names = conflictingMods.map(m => m.name).join(', ');
+                        conflictMessage = `Conflict Warning: "${targetMod.name}" shares the category "${targetMod.category}" with ${names}. The mod with the highest priority will take precedence in-game.`;
                     }
                 }
 
@@ -1259,6 +1260,68 @@ export class ModManager {
         } catch (e) {
             console.error(e);
             return { success: false, message: 'Failed to extract/install UE4SS.' };
+        }
+    }
+
+    async exportCloudSync(destZipPath: string) {
+        try {
+            const zip = new AdmZip();
+            const profilesPath = await this.getProfilesFilePath();
+            const modsPath = await this.getModsFilePath();
+            const settingsPath = this.settingsFile;
+
+            try { zip.addLocalFile(profilesPath); } catch (e) { console.warn('No profiles to export'); }
+            try { zip.addLocalFile(modsPath); } catch (e) { console.warn('No mods.json to export'); }
+            try { zip.addLocalFile(settingsPath); } catch (e) { console.warn('No settings.json to export'); }
+
+            return new Promise<{ success: boolean; message: string }>((resolve) => {
+                zip.writeZip(destZipPath, (error) => {
+                    if (error) resolve({ success: false, message: error.message });
+                    else resolve({ success: true, message: 'Exported successfully.' });
+                });
+            });
+        } catch (error) {
+            console.error('Export failed:', error);
+            return { success: false, message: (error as Error).message };
+        }
+    }
+
+    async importCloudSync(zipPath: string) {
+        try {
+            const zip = new AdmZip(zipPath);
+            await this.ensureModsDir();
+
+            const zipEntries = zip.getEntries();
+            const allowedFiles = ['mods.json', 'profiles.json', 'settings.json'];
+
+            // Extract specific files safely to their respective directories
+            for (const entry of zipEntries) {
+                if (allowedFiles.includes(entry.name) && !entry.isDirectory) {
+                    const content = zip.readAsText(entry);
+                    if (!content) continue;
+
+                    let targetPath = '';
+                    if (entry.name === 'mods.json') {
+                        targetPath = await this.getModsFilePath();
+                    } else if (entry.name === 'profiles.json') {
+                        targetPath = await this.getProfilesFilePath();
+                    } else if (entry.name === 'settings.json') {
+                        targetPath = this.settingsFile;
+                    }
+
+                    if (targetPath) {
+                         await fs.writeFile(targetPath, content, 'utf-8');
+                    }
+                }
+            }
+
+            // Sync priorities just in case
+            await this.fixPriorities();
+
+            return { success: true, message: 'Imported successfully. Please restart or refresh the app to see changes.' };
+        } catch (error) {
+            console.error('Import failed:', error);
+            return { success: false, message: (error as Error).message };
         }
     }
 

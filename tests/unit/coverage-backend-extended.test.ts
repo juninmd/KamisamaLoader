@@ -89,7 +89,7 @@ describe('ModManager Edge Cases Extended', () => {
 
           expect(result.success).toBe(true);
           expect(result.conflict).toBeDefined();
-          expect(result.conflict).toContain('conflicts with "Mod A"');
+          expect(result.conflict).toContain('shares the category');
       });
 
       it('should not detect conflicts for generic categories', async () => {
