@@ -21,6 +21,7 @@ const mockElectronAPI = {
   getModChangelog: vi.fn(),
   getProfiles: vi.fn(),
   getSettings: vi.fn(),
+  saveSettings: vi.fn(),
   exportCloudSync: vi.fn(),
   importCloudSync: vi.fn(),
   installUE4SS: vi.fn()
@@ -203,8 +204,13 @@ describe('Mods and Settings Extended Coverage', () => {
 
       fireEvent.click(screen.getByText('Show Advanced Settings'));
 
+      const launchArgsInput = await screen.findByPlaceholderText('-dx11 -windowed');
+      fireEvent.change(launchArgsInput, { target: { value: '-newargs' } });
+
       await waitFor(() => {
-          expect(screen.getByPlaceholderText('-dx11 -windowed')).toBeInTheDocument();
+          expect(mockElectronAPI.saveSettings).toHaveBeenCalledWith(expect.objectContaining({
+              launchArgs: '-newargs'
+          }));
       });
   });
 
