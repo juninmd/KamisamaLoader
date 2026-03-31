@@ -230,19 +230,16 @@ describe('Mods Page', () => {
             });
         });
 
-        let defaultPrevented = false;
-        let propagationStopped = false;
-
-        const dragOverEvent = new MouseEvent('dragover', { bubbles: true }) as any;
-        dragOverEvent.preventDefault = () => { defaultPrevented = true; };
-        dragOverEvent.stopPropagation = () => { propagationStopped = true; };
+        const dragOverEvent = new MouseEvent('dragover', { bubbles: true });
+        const preventDefaultSpy = vi.spyOn(dragOverEvent, 'preventDefault');
+        const stopPropagationSpy = vi.spyOn(dragOverEvent, 'stopPropagation');
 
         await act(async () => {
             fireEvent(rootDiv, dragOverEvent);
         });
 
-        expect(defaultPrevented).toBe(true);
-        expect(propagationStopped).toBe(true);
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
     it('should handle drop without files gracefully', async () => {
