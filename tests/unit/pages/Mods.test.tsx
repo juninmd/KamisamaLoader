@@ -146,21 +146,121 @@ describe('Mods Page', () => {
 
     it('should handle drag and drop installation', async () => {
         const installMock = (window.electronAPI.installMod as any).mockResolvedValue({ success: true });
-        renderWithProviders(<Mods />);
-        const searchInput = screen.getByPlaceholderText('Search installed mods...');
-        const dropZone = searchInput.closest('div')?.parentElement?.parentElement;
-        if (dropZone) {
-            fireEvent.dragEnter(dropZone, { dataTransfer: { items: [{}], files: [] } });
-            expect(screen.getByText('Drop to Install')).toBeInTheDocument();
-            fireEvent.drop(dropZone, {
+        const { container } = renderWithProviders(<Mods />);
+
+        // The root div handles drag events
+        const rootDiv = container.firstChild as HTMLElement;
+
+        // Drag Enter
+        await act(async () => {
+            fireEvent.dragEnter(rootDiv, {
                 dataTransfer: {
-                    files: [{ path: '/test/mod.zip' }],
+                    items: [{ kind: 'file' }],
+                    files: [],
+                    types: ['Files']
+                }
+            });
+        });
+
+        expect(await screen.findByText('Drop to Install')).toBeInTheDocument();
+
+        // Drag Leave
+        await act(async () => {
+            fireEvent.dragLeave(rootDiv, {
+                dataTransfer: {
+                    items: [{ kind: 'file' }],
+                    files: [],
+                    types: ['Files']
+                }
+            });
+        });
+
+        await waitFor(() => expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument());
+
+        // Re-enter and Drop
+        await act(async () => {
+            fireEvent.dragEnter(rootDiv, {
+                dataTransfer: {
+                    items: [{ kind: 'file' }],
+                    files: [],
+                    types: ['Files']
+                }
+            });
+        });
+
+        const file = new File([''], 'test.pak', { type: 'application/octet-stream' });
+        Object.defineProperty(file, 'path', { value: '/test/mod.pak' });
+
+        await act(async () => {
+            fireEvent.drop(rootDiv, {
+                dataTransfer: {
+                    files: [file],
                     items: [{ kind: 'file' }]
                 }
             });
-            expect(installMock).toHaveBeenCalledWith('/test/mod.zip');
-            await waitFor(() => expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument());
-        }
+        });
+
+        expect(installMock).toHaveBeenCalledWith('/test/mod.pak');
+    });
+
+    it('should handle drag enter when not dragging files', async () => {
+        const { container } = renderWithProviders(<Mods />);
+        const rootDiv = container.firstChild as HTMLElement;
+
+        await act(async () => {
+            fireEvent.dragEnter(rootDiv, {
+                dataTransfer: {
+                    items: [], // Not a file
+                    types: ['text/plain']
+                }
+            });
+        });
+
+        expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
+    });
+
+    it('should handle drag over event', async () => {
+        const { container } = renderWithProviders(<Mods />);
+        const rootDiv = container.firstChild as HTMLElement;
+
+        // Force isDragging to true by triggering dragEnter
+        await act(async () => {
+            fireEvent.dragEnter(rootDiv, {
+                dataTransfer: { items: [{ kind: 'file' }] }
+            });
+        });
+
+        const dragOverEvent = new MouseEvent('dragover', { bubbles: true });
+        const preventDefaultSpy = vi.spyOn(dragOverEvent, 'preventDefault');
+        const stopPropagationSpy = vi.spyOn(dragOverEvent, 'stopPropagation');
+
+        await act(async () => {
+            fireEvent(rootDiv, dragOverEvent);
+        });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    it('should handle drop without files gracefully', async () => {
+        const { container } = renderWithProviders(<Mods />);
+        const rootDiv = container.firstChild as HTMLElement;
+
+        await act(async () => {
+            fireEvent.dragEnter(rootDiv, {
+                dataTransfer: { items: [{ kind: 'file' }] }
+            });
+        });
+
+        await act(async () => {
+            fireEvent.drop(rootDiv, {
+                dataTransfer: {
+                    files: []
+                }
+            });
+        });
+
+        expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
     });
 
     it('should check for updates', async () => {
