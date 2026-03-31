@@ -17,16 +17,19 @@ describe('Dashboard Final Gaps', () => {
         } as any;
     });
 
+    const setupDashboard = async () => {
+        const utils = render(<Dashboard onNavigate={mockNavigate} />);
+        await act(async () => { await Promise.resolve(); });
+        return utils;
+    };
+
     it('should handle navigation click on updates banner (Line 169)', async () => {
         window.electronAPI.checkForUpdates = vi.fn().mockResolvedValue(['mod1']);
         window.electronAPI.getInstalledMods = vi.fn().mockResolvedValue([
             { id: 'mod1', isEnabled: true, name: 'Test Mod', author: 'Tester' }
         ]);
 
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        // Flush initial effects
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         const updateBanner = await screen.findByText(/1 Updates Available/i);
         expect(updateBanner).toBeInTheDocument();
@@ -41,9 +44,7 @@ describe('Dashboard Final Gaps', () => {
             { id: '1', name: 'Featured 1', iconUrl: 'icon1.png', category: 'Char', author: 'Me', downloadCount: 10, viewCount: 20 }
         ]);
 
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         expect(await screen.findByText('Featured 1')).toBeInTheDocument();
         expect(screen.getByText('Char • by Me')).toBeInTheDocument();
@@ -52,9 +53,7 @@ describe('Dashboard Final Gaps', () => {
     });
 
     it('should handle navigation click on View All (Line 189)', async () => {
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         const viewAllBtn = screen.getByText('View All');
         fireEvent.click(viewAllBtn);
@@ -63,9 +62,7 @@ describe('Dashboard Final Gaps', () => {
     });
 
     it('should handle navigation click on Browse Mods (Line 169)', async () => {
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         const browseModsCard = screen.getByText('Browse Mods').closest('.glass-panel');
         fireEvent.click(browseModsCard!);
@@ -77,9 +74,7 @@ describe('Dashboard Final Gaps', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         window.electronAPI.getInstalledMods = vi.fn().mockRejectedValue(new Error('Load Error'));
 
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         expect(consoleSpy).toHaveBeenCalledWith("Dashboard data load error:", expect.any(Error));
     });
@@ -89,9 +84,7 @@ describe('Dashboard Final Gaps', () => {
         window.electronAPI.getInstalledMods = vi.fn().mockResolvedValue(null);
         window.electronAPI.checkForUpdates = vi.fn().mockResolvedValue(null);
 
-        render(<Dashboard onNavigate={mockNavigate} />);
-
-        await act(async () => { await Promise.resolve(); });
+        await setupDashboard();
 
         const zeros = screen.getAllByText('0');
         expect(zeros.length).toBeGreaterThan(0); // Total and Enabled should be 0

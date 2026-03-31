@@ -57,15 +57,14 @@ describe('Settings Gaps', () => {
         }));
     });
 
-    it('should handle export and import cloud sync (Lines 126-139)', async () => {
+    const testCloudSync = async (exportSuccess: boolean, importSuccess: boolean) => {
         const minimalSettings = {
             gamePath: '/game',
         };
         (window.electronAPI.getSettings as any).mockResolvedValue(minimalSettings);
 
-        // Mock the electronAPI functions for export/import
-        window.electronAPI.exportCloudSync = vi.fn().mockResolvedValue({ success: true, message: 'Exported' });
-        window.electronAPI.importCloudSync = vi.fn().mockResolvedValue({ success: false, message: 'Import Failed' });
+        window.electronAPI.exportCloudSync = vi.fn().mockResolvedValue({ success: exportSuccess, message: 'Export result' });
+        window.electronAPI.importCloudSync = vi.fn().mockResolvedValue({ success: importSuccess, message: 'Import result' });
 
         renderWithProviders(<Settings />, { initialSettings: minimalSettings });
 
@@ -73,7 +72,6 @@ describe('Settings Gaps', () => {
             expect(screen.getByText('Export to Cloud Zip')).toBeInTheDocument();
         });
 
-        // Test Export
         const exportBtn = screen.getByText('Export to Cloud Zip');
         await act(async () => {
             fireEvent.click(exportBtn);
@@ -83,7 +81,6 @@ describe('Settings Gaps', () => {
             expect(window.electronAPI.exportCloudSync).toHaveBeenCalled();
         });
 
-        // Test Import
         const importBtn = screen.getByText('Import from Cloud Zip');
         await act(async () => {
             fireEvent.click(importBtn);
@@ -92,42 +89,13 @@ describe('Settings Gaps', () => {
         await waitFor(() => {
             expect(window.electronAPI.importCloudSync).toHaveBeenCalled();
         });
+    };
+
+    it('should handle export and import cloud sync (Lines 126-139)', async () => {
+        await testCloudSync(true, false);
     });
 
     it('should handle export and import cloud sync failures (Lines 126-139)', async () => {
-        const minimalSettings = {
-            gamePath: '/game',
-        };
-        (window.electronAPI.getSettings as any).mockResolvedValue(minimalSettings);
-
-        // Mock the electronAPI functions for export/import to fail
-        window.electronAPI.exportCloudSync = vi.fn().mockResolvedValue({ success: false, message: 'Export Failed' });
-        window.electronAPI.importCloudSync = vi.fn().mockResolvedValue({ success: true, message: 'Imported' });
-
-        renderWithProviders(<Settings />, { initialSettings: minimalSettings });
-
-        await waitFor(() => {
-            expect(screen.getByText('Export to Cloud Zip')).toBeInTheDocument();
-        });
-
-        // Test Export
-        const exportBtn = screen.getByText('Export to Cloud Zip');
-        await act(async () => {
-            fireEvent.click(exportBtn);
-        });
-
-        await waitFor(() => {
-            expect(window.electronAPI.exportCloudSync).toHaveBeenCalled();
-        });
-
-        // Test Import
-        const importBtn = screen.getByText('Import from Cloud Zip');
-        await act(async () => {
-            fireEvent.click(importBtn);
-        });
-
-        await waitFor(() => {
-            expect(window.electronAPI.importCloudSync).toHaveBeenCalled();
-        });
+        await testCloudSync(false, true);
     });
 });
