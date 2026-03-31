@@ -34,7 +34,7 @@ describe('Settings Gaps', () => {
             gamePath: '/game',
             launchArgs: undefined
         };
-        (window.electronAPI.getSettings as any).mockResolvedValue(minimalSettings);
+        vi.mocked(window.electronAPI.getSettings).mockResolvedValue(minimalSettings as any);
 
         renderWithProviders(<Settings />, { initialSettings: minimalSettings });
 
