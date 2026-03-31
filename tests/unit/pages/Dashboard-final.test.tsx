@@ -23,7 +23,7 @@ describe('Dashboard Final Gaps', () => {
         return utils;
     };
 
-    it('should handle navigation click on updates banner (Line 169)', async () => {
+    it('should handle navigation click on updates banner', async () => {
         window.electronAPI.checkForUpdates = vi.fn().mockResolvedValue(['mod1']);
         window.electronAPI.getInstalledMods = vi.fn().mockResolvedValue([
             { id: 'mod1', isEnabled: true, name: 'Test Mod', author: 'Tester' }
@@ -65,7 +65,7 @@ describe('Dashboard Final Gaps', () => {
         await setupDashboard();
 
         const browseModsCard = screen.getByText('Browse Mods').closest('.glass-panel');
-        fireEvent.click(browseModsCard!);
+        fireEvent.click(browseModsCard as HTMLElement);
 
         expect(mockNavigate).toHaveBeenCalledWith('mods');
     });
