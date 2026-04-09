@@ -18,6 +18,7 @@ export default defineConfig({
         ['tests/unit/layout*.test.tsx', 'happy-dom'],
         ['tests/unit/background*.test.tsx', 'happy-dom'],
         ['tests/unit/final-gaps-layout*.test.tsx', 'happy-dom'],
+        ['tests/unit/coverage-sweeper.test.tsx', 'happy-dom'],
         ['src/**', 'happy-dom']
     ],
     testTimeout: 20000,
@@ -45,10 +46,10 @@ export default defineConfig({
         ],
         all: true,
         thresholds: {
-            lines: 94.5,
+            lines: 95.0,
             functions: 94.6,
-            branches: 86.75,
-            statements: 94.1
+            branches: 86.86,
+            statements: 94.2
         }
     }
   },
