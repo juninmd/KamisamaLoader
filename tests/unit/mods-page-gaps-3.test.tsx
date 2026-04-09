@@ -32,7 +32,7 @@ const electronAPI = {
 
 (window as any).electronAPI = electronAPI;
 
-describe('Mods Page Gaps 2', () => {
+describe('Mods Page Gaps 3', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         electronAPI.getInstalledMods.mockResolvedValue([]);
@@ -61,61 +61,43 @@ describe('Mods Page Gaps 2', () => {
         );
     };
 
-    it('should show checking updates text when loading', async () => {
-        electronAPI.checkForUpdates.mockImplementation(() => new Promise(() => {})); // Never resolves
-        const { container } = renderWithProviders(<Mods />);
-
-        await waitFor(() => expect(screen.getByText('Check Updates')).toBeInTheDocument());
-
-        await act(async () => {
-            fireEvent.click(screen.getByText('Check Updates'));
-        });
-
-        expect(screen.getByText('Checking...')).toBeInTheDocument();
-    });
-
-    it('should catch error when uninstalling mod', async () => {
-        const mod = { id: 'test-mod-id', name: 'Test Mod' };
-        electronAPI.getInstalledMods.mockResolvedValue([mod]);
-        electronAPI.uninstallMod.mockRejectedValue(new Error('Uninstall failed'));
-        const originalConfirm = window.confirm;
-        window.confirm = vi.fn(() => true);
-
-        renderWithProviders(<Mods />);
-
-        await waitFor(() => expect(screen.getByText('Test Mod')).toBeInTheDocument());
-
-        const trashIcons = document.querySelectorAll('.lucide-trash-2');
-        const trashBtn = Array.from(trashIcons)[0]?.parentElement;
-
-        if (trashBtn) {
-            await act(async () => {
-                fireEvent.click(trashBtn);
-            });
-
-            await waitFor(() => {
-                expect(electronAPI.uninstallMod).toHaveBeenCalledWith('test-mod-id');
-            });
-        }
-
-        window.confirm = originalConfirm;
-    });
-
-    it('should trigger update of all mods', async () => {
-        const mod1 = { id: 'test-mod-id', name: 'Test Mod', hasUpdate: true, version: '1.0', latestVersion: '2.0' };
+    it('should format bytes correctly in Mods page header', async () => {
+        const mod1 = { id: 'test-mod-1', name: 'Test Mod 1', fileSize: 1500000 };
         electronAPI.getInstalledMods.mockResolvedValue([mod1]);
 
         renderWithProviders(<Mods />);
 
         await waitFor(() => {
-            expect(screen.getByText('Update All')).toBeInTheDocument();
+            expect(screen.getByText('1.43 MB')).toBeInTheDocument();
         });
+    });
 
-        await act(async () => {
-            fireEvent.click(screen.getByText('Update All'));
+    it('should show 0 Bytes when mod has no fileSize', async () => {
+        const mod1 = { id: 'test-mod-1', name: 'Test Mod 1' };
+        electronAPI.getInstalledMods.mockResolvedValue([mod1]);
+
+        renderWithProviders(<Mods />);
+
+        await waitFor(() => {
+            expect(screen.getByText('0 Bytes')).toBeInTheDocument();
         });
+    });
 
-        expect(electronAPI.updateAllMods).toHaveBeenCalled();
+    it('should catch error when fetching categories fails', async () => {
+        electronAPI.fetchCategories.mockRejectedValue(new Error('Fetch Categories Failed'));
+        renderWithProviders(<Mods />);
+        // It should still mount without crashing
+        await waitFor(() => {
+            expect(screen.getByText('Installed')).toBeInTheDocument();
+        });
+    });
+
+    it('should catch error when loadInstalledMods fails', async () => {
+        electronAPI.getInstalledMods.mockRejectedValue(new Error('Get Installed Mods Failed'));
+        renderWithProviders(<Mods />);
+        await waitFor(() => {
+            expect(screen.getByText('Installed')).toBeInTheDocument();
+        });
     });
 
 });

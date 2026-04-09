@@ -31,8 +31,10 @@ const electronAPI = {
 };
 
 (window as any).electronAPI = electronAPI;
+const originalConfirm = window.confirm;
+window.confirm = vi.fn(() => true);
 
-describe('Mods Page Gaps 2', () => {
+describe('Mods Page Gaps 4', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         electronAPI.getInstalledMods.mockResolvedValue([]);
@@ -51,6 +53,10 @@ describe('Mods Page Gaps 2', () => {
         }) as any;
     });
 
+    afterEach(() => {
+        window.confirm = originalConfirm;
+    });
+
     const renderWithProviders = (component: React.ReactNode) => {
         return render(
             <MockSettingsProvider>
@@ -61,61 +67,39 @@ describe('Mods Page Gaps 2', () => {
         );
     };
 
-    it('should show checking updates text when loading', async () => {
-        electronAPI.checkForUpdates.mockImplementation(() => new Promise(() => {})); // Never resolves
-        const { container } = renderWithProviders(<Mods />);
-
-        await waitFor(() => expect(screen.getByText('Check Updates')).toBeInTheDocument());
-
-        await act(async () => {
-            fireEvent.click(screen.getByText('Check Updates'));
-        });
-
-        expect(screen.getByText('Checking...')).toBeInTheDocument();
-    });
-
-    it('should catch error when uninstalling mod', async () => {
-        const mod = { id: 'test-mod-id', name: 'Test Mod' };
-        electronAPI.getInstalledMods.mockResolvedValue([mod]);
-        electronAPI.uninstallMod.mockRejectedValue(new Error('Uninstall failed'));
-        const originalConfirm = window.confirm;
-        window.confirm = vi.fn(() => true);
-
-        renderWithProviders(<Mods />);
-
-        await waitFor(() => expect(screen.getByText('Test Mod')).toBeInTheDocument());
-
-        const trashIcons = document.querySelectorAll('.lucide-trash-2');
-        const trashBtn = Array.from(trashIcons)[0]?.parentElement;
-
-        if (trashBtn) {
-            await act(async () => {
-                fireEvent.click(trashBtn);
-            });
-
-            await waitFor(() => {
-                expect(electronAPI.uninstallMod).toHaveBeenCalledWith('test-mod-id');
-            });
-        }
-
-        window.confirm = originalConfirm;
-    });
-
-    it('should trigger update of all mods', async () => {
-        const mod1 = { id: 'test-mod-id', name: 'Test Mod', hasUpdate: true, version: '1.0', latestVersion: '2.0' };
+    it('should catch error in updateMod via handlePerformUpdate', async () => {
+        const mod1 = { id: 'test-mod-id', name: 'Test Mod', hasUpdate: true, version: '1.0', latestVersion: '2.0', gameBananaId: 123 };
         electronAPI.getInstalledMods.mockResolvedValue([mod1]);
+        electronAPI.getModChangelog.mockResolvedValue({ changes: [] });
+        electronAPI.updateMod.mockRejectedValue(new Error('Update Mock Failed'));
 
         renderWithProviders(<Mods />);
 
         await waitFor(() => {
-            expect(screen.getByText('Update All')).toBeInTheDocument();
+            expect(screen.getByText('Test Mod')).toBeInTheDocument();
         });
 
-        await act(async () => {
-            fireEvent.click(screen.getByText('Update All'));
-        });
+        // Click Update
+        const btns = screen.queryAllByRole('button');
+        const updateBtn = btns.find(b => b.getAttribute('aria-label') === 'Update' || b.getAttribute('title') === 'Update');
 
-        expect(electronAPI.updateAllMods).toHaveBeenCalled();
+        if (updateBtn) {
+             await act(async () => {
+                 fireEvent.click(updateBtn);
+             });
+
+             await waitFor(() => {
+                 expect(screen.getByText(/Yes, Update/i)).toBeInTheDocument();
+             });
+
+             await act(async () => {
+                 fireEvent.click(screen.getByText(/Yes, Update/i));
+             });
+
+             await waitFor(() => {
+                 expect(electronAPI.updateMod).toHaveBeenCalled();
+             });
+        }
     });
 
 });
