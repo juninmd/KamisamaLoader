@@ -1,13 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
 import fs from 'fs/promises';
-import { app } from 'electron';
+import { fetchModProfile } from '../../electron/gamebanana';
 
 vi.mock('electron', () => ({
     app: {
         getPath: vi.fn(() => '/tmp'),
         isPackaged: false,
     },
+}));
+
+vi.mock('../../electron/gamebanana', () => ({
+    fetchModProfile: vi.fn(),
 }));
 
 vi.mock('fs/promises', () => ({
@@ -19,7 +23,7 @@ vi.mock('fs/promises', () => ({
     }
 }));
 
-describe('ModManager getModChangelog Coverage', () => {
+describe('ModManager Final Coverage Fallbacks', () => {
     let modManager: ModManager;
 
     beforeEach(() => {
@@ -28,41 +32,36 @@ describe('ModManager getModChangelog Coverage', () => {
         (fs.mkdir as any).mockResolvedValue(undefined);
     });
 
-    it('should return null and log error if exception occurs during getModChangelog', async () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    describe('getModChangelog Error Handling', () => {
+        it('should return null and log error if exception occurs during getModChangelog', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            modManager.getModsFilePath = vi.fn().mockRejectedValue(new Error('Outer error'));
 
-        // Make getModsFilePath throw to test the outer catch
-        modManager.getModsFilePath = vi.fn().mockRejectedValue(new Error('Outer error'));
+            const result = await modManager.getModChangelog('mod1');
 
-        const result = await modManager.getModChangelog('mod1');
+            expect(result).toBeNull();
+            expect(consoleSpy).toHaveBeenCalledWith(
+                '[ModManager] Error in getModChangelog for id: mod1',
+                expect.any(Error)
+            );
 
-        expect(result).toBeNull();
-        expect(consoleSpy).toHaveBeenCalledWith(
-            '[ModManager] Error in getModChangelog for id: mod1',
-            expect.any(Error)
-        );
-
-        consoleSpy.mockRestore();
+            consoleSpy.mockRestore();
+        });
     });
 
-    it('should successfully get changelog from local mod mapping', async () => {
-        const mods = [{ id: 'mod1', gameBananaId: 123 }];
-        modManager.getModsFilePath = vi.fn().mockResolvedValue('/tmp/mods.json');
-        (fs.readFile as any).mockResolvedValue(JSON.stringify(mods));
+    describe('installOnlineMod Error Handling', () => {
+        it('should catch error in installOnlineMod', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-        // Cannot easily mock the dynamic import of gamebanana.js here since it relies on native import()
-        // We expect it to try to fetch or at least reach line 1125-1126
-        // Let's just catch the rejection if fetch fails
-        try {
-           await modManager.getModChangelog('mod1');
-        } catch(e) {
-           // ignore
-        }
-    });
+            // Make fetchModProfile throw an error
+            (fetchModProfile as any).mockRejectedValue(new Error('Network error'));
 
-    it('should successfully save profiles.json on cloud import', async () => {
-        // Test line 1307 targetPath = await this.getProfilesFilePath();
-        const AdmZip = (await import('adm-zip')).default;
-        // This is part of importCloudSync. The mock of AdmZip needs to return readAsText
+            const result = await modManager.installOnlineMod({ gameBananaId: 123 } as any);
+            expect(result.success).toBe(false);
+            expect(result.message).toContain('Installation failed: Network error');
+
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
     });
 });
