@@ -1144,7 +1144,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            let mods: LocalMod[] = JSON.parse(data);
+            const mods: LocalMod[] = JSON.parse(data);
 
             // Sort Descending (High Priority First) to match UI
             mods.sort((a, b) => (b.priority || 0) - (a.priority || 0));

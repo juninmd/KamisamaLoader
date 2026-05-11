@@ -105,7 +105,7 @@ describe('Dashboard Final Gaps', () => {
 
         // Mock setTimeout to run immediately to verify recovery logic
         const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation((cb: any) => {
-            try { cb(); } catch (e) { }
+            try { cb(); } catch (e) { console.error(e); }
             return 0 as any;
         });
 
