@@ -1,0 +1,1753 @@
+
+> temp_vite@0.0.0 test:coverage /app
+> vitest run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/app[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m1. should handle FilterBar onFilterChange
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould switch tabs
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/mods-page-final-coverage.test.tsx[2m > [22m[2mMods Page Final Coverage[2m > [22m[2mshould handle infinite scroll intersection
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould filter browse mods with debounce
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/mods-page-final-coverage.test.tsx[2m > [22m[2mMods Page Final Coverage[2m > [22m[2mshould handle infinite scroll intersection
+[22m[39m[Browse] Fetching page 2...
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m1. should handle FilterBar onFilterChange
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m2. should close ModDetailsModal via prop
+[22m[39mSkipping API calls for invalid or local mod ID: [33mNaN[39m
+
+ [32m✓[39m tests/unit/mods-page-final-coverage.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 826[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle infinite scroll intersection [33m 355[2mms[22m[39m
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould filter browse mods with debounce
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m4. should hit catch block for handleInstall
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould handle browse mods error
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould handle browse mods error
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m14. should loadBrowseMods when clicking refresh button
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/coverage-sweeper.test.tsx[2m > [22m[2mMods Page Full Sweeper Coverage[2m > [22m[2m14. should loadBrowseMods when clicking refresh button
+[22m[39m[Browse] Fetching page 1...
+
+ [32m✓[39m tests/unit/coverage-sweeper.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 1612[2mms[22m[39m
+     [33m[2m✓[22m[39m 1. should handle FilterBar onFilterChange [33m 637[2mms[22m[39m
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould load more mods on infinite scroll and disconnect observer on unmount
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould load more mods on infinite scroll and disconnect observer on unmount
+[22m[39m[Browse] Fetching page 2...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould filter by category in browse mode
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/pages/Mods.test.tsx[2m > [22m[2mMods Page[2m > [22m[2mshould filter by category in browse mode
+[22m[39m[Browse] Fetching page 1...
+
+ [32m✓[39m tests/unit/pages/Mods.test.tsx [2m([22m[2m22 tests[22m[2m)[22m[33m 2941[2mms[22m[39m
+     [33m[2m✓[22m[39m should filter browse mods with debounce [33m 576[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle browse mods error [33m 594[2mms[22m[39m
+     [33m[2m✓[22m[39m should filter by category in browse mode [33m 556[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-frontend.test.tsx[2m > [22m[2mFrontend Coverage Fill[2m > [22m[2mMods Page - Error Handling[2m > [22m[2mhandleInstall should show error toast on failure
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/coverage-frontend.test.tsx[2m > [22m[2mFrontend Coverage Fill[2m > [22m[2mMods Page - Error Handling[2m > [22m[2mloadCategories should handle API failure
+[22m[39m[Browse] Fetching page 1...
+
+ [32m✓[39m tests/unit/coverage-frontend.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 789[2mms[22m[39m
+[90mstdout[2m | tests/unit/mods-page-final-gaps.test.tsx[2m > [22m[2mMods Page Final Gaps[2m > [22m[2mshould trigger infinite scroll when intersection occurs
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/mods-page-final-gaps.test.tsx[2m > [22m[2mMods Page Final Gaps[2m > [22m[2mshould trigger infinite scroll when intersection occurs
+[22m[39m[Browse] Fetching page 2...
+
+ [32m✓[39m tests/unit/mods-page-final-gaps.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 634[2mms[22m[39m
+     [33m[2m✓[22m[39m should trigger infinite scroll when intersection occurs [33m 439[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Response Item Data status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Search Results
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_sOrder=popularity
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Search Results
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_sOrder=newest
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Search Results
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_sOrder=alphabetical
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Search Results
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_sOrder=alphabetical&_sOrder=asc
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Subfeed
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_sSort=new
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Subfeed
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_sSort=alphabetical
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mSorting Logic (via searchBySection)[2m > [22m[2mshould apply correct sort parameters for Subfeed
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould stop if page returns empty or error
+[22m[39m[API] Starting Fetch All Mods (Limit: 5 pages)
+[API] Fetching batch 1: Pages 1 - 5
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould stop if page returns empty or error
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=2&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=3&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=4&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=5&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould stop if page returns empty or error
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 1 mods.
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould deduplicate mods
+[22m[39m[API] Starting Fetch All Mods (Limit: 2 pages)
+[API] Fetching batch 1: Pages 1 - 2
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould deduplicate mods
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=2&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/final-gaps-frontend.test.tsx[2m > [22m[2mFrontend Final Gaps[2m > [22m[2mMods Page Error Handling[2m > [22m[2mshould handle installOnlineMod failure
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/final-gaps-frontend.test.tsx[2m > [22m[2mFrontend Final Gaps[2m > [22m[2mMods Page Error Handling[2m > [22m[2mshould handle installOnlineMod exception
+[22m[39m[Browse] Fetching page 1...
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mFetch All Mods Pagination[2m > [22m[2mshould deduplicate mods
+[22m[39m[API] Fetched total 2 mods.
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mItem Data[2m > [22m[2mshould include fields parameter
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mItem Data[2m > [22m[2mshould include fields parameter
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage&_aDataSchema=name,date
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mItem Data[2m > [22m[2mshould include fields parameter
+[22m[39m[API] Response Item Data status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mItem Data[2m > [22m[2mshould return null on fetch exception
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-extended.test.ts[2m > [22m[2mGameBanana API Extended[2m > [22m[2mItem Data[2m > [22m[2mshould return null on fetch exception
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+ [32m✓[39m tests/unit/gamebanana-extended.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 527[2mms[22m[39m
+       [33m[2m✓[22m[39m should deduplicate mods [33m 502[2mms[22m[39m
+ [32m✓[39m tests/unit/components/ProfileManager.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 524[2mms[22m[39m
+ [32m✓[39m tests/unit/final-gaps-frontend.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 584[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallOnlineMod should handle successful download completion event
+[22m[39mInstalling mod: 123
+
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallOnlineMod should ignore irrelevant download completion events
+[22m[39mInstalling mod: 123
+
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallOnlineMod should handle extraction failure in callback
+[22m[39mInstalling mod: 123
+
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallOnlineMod should handle extraction failure in callback
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallUE4SS should handle download completion via DownloadManager
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/backend-sweep.test.ts[2m > [22m[2mBackend Sweep - ModManager[2m > [22m[2minstallUE4SS should ignore irrelevant download events
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/backend-sweep.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 485[2mms[22m[39m
+ [32m✓[39m tests/unit/final-gaps-profile.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 470[2mms[22m[39m
+ [32m✓[39m tests/unit/mods-page-coverage.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 395[2mms[22m[39m
+ [32m✓[39m tests/unit/final-coverage-frontend.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+ [32m✓[39m tests/unit/components/ModDetailsModal.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 420[2mms[22m[39m
+ [32m✓[39m tests/unit/components/SettingsContext.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 414[2mms[22m[39m
+ [32m✓[39m tests/unit/components/CategorySidebar-interactions.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+ [32m✓[39m tests/unit/frontend-sweep.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 452[2mms[22m[39m
+ [32m✓[39m tests/unit/pages/Dashboard.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 337[2mms[22m[39m
+ [32m✓[39m tests/unit/pages/Dashboard-final.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 316[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-frontend-gaps.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 334[2mms[22m[39m
+ [32m✓[39m tests/unit/pages/Settings.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 337[2mms[22m[39m
+ [32m✓[39m tests/unit/components/ProfileManager-final.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 291[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-frontend-final-v2.test.tsx[2m > [22m[2mFrontend Final Coverage[2m > [22m[2mModDetailsModal[2m > [22m[2mshould handle null/invalid ID gracefully
+[22m[39mSkipping API calls for invalid or local mod ID: [33mNaN[39m
+
+ [32m✓[39m tests/unit/coverage-frontend-final-v2.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 325[2mms[22m[39m
+ [32m✓[39m tests/unit/components/FilterBar-final.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[32m 270[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-frontend-extended.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 322[2mms[22m[39m
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods fetches real data from GameBanana
+[22m[39m[Cache] Loaded 2 entries from disk
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods fetches real data from GameBanana
+[22m[39m[Cache] Hit (disk) for key: search_{"page":1,"search":""}
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods fetches real data from GameBanana
+[22m[39m[API] Cache hit for search
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods fetches real data from GameBanana
+[22m[39mFetched 15 mods from real API.
+Sample Mod: Zaiko Dragon Ball AF [9 New Slots] by MelechVT
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods handles pagination (fetching page 2)
+[22m[39m[Cache] Hit (memory) for key: search_{"page":1,"search":""}
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods handles pagination (fetching page 2)
+[22m[39m[API] Cache hit for search
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods handles pagination (fetching page 2)
+[22m[39m[Cache] Hit (memory) for key: search_{"page":2,"search":""}
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2msearchOnlineMods handles pagination (fetching page 2)
+[22m[39m[API] Cache hit for search
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39m[Cache] Hit (memory) for key: search_{"page":1,"search":""}
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39m[API] Cache hit for search
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39m[API] Fetching Mod Profile ID: 672367
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/672367/ProfilePage
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39m[API] Mod Profile Status: 200
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39m[API] Successfully fetched mod profile for 672367
+
+[90mstdout[2m | tests/integration.spec.ts[2m > [22m[2mReal API Integration Tests[2m > [22m[2mfetchModProfile fetches update info for a specific mod
+[22m[39mDownload URL found: https://gamebanana.com/dl/1700395
+
+ [32m✓[39m tests/integration.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 204[2mms[22m[39m
+ [32m✓[39m tests/unit/components/DownloadsList.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[32m 264[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-gaps.test.tsx[2m > [22m[2mFinal Coverage Gaps[2m > [22m[2mModManager.ts Gaps[2m > [22m[2mshould launch game with launch args
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game.exe
+
+ [32m✓[39m tests/unit/final-gaps.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[32m 243[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-gaps-frontend.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[32m 250[2mms[22m[39m
+ [32m✓[39m tests/unit/final-push-frontend.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 230[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould return null and log error if exception occurs during getModChangelog
+[22m[39m[ModManager] Getting changelog for modId: mod1
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould successfully get changelog from local mod mapping
+[22m[39m[ModManager] Getting changelog for modId: mod1
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould successfully get changelog from local mod mapping
+[22m[39m[ModManager] Found gameBananaId: 123 for modId: mod1
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould successfully get changelog from local mod mapping
+[22m[39m[API] Fetching Mod Updates ID: 123
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould successfully get changelog from local mod mapping
+[22m[39m[API] Update Info Status: 200
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v3.test.ts[2m > [22m[2mModManager getModChangelog Coverage[2m > [22m[2mshould successfully get changelog from local mod mapping
+[22m[39m[API] No updates found for mod 123
+
+ [32m✓[39m tests/unit/coverage-backend-final-v3.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 231[2mms[22m[39m
+ [32m✓[39m tests/unit/components/ModCard.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[32m 204[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-frontend-final.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 209[2mms[22m[39m
+ [32m✓[39m tests/unit/pages/Settings-gaps.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 217[2mms[22m[39m
+ [32m✓[39m tests/unit/components/FilterBar.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 201[2mms[22m[39m
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould initialize with default config
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould set and get from memory
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould set and get from memory
+[22m[39m[Cache] Set key: key1 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould set and get from memory
+[22m[39m[Cache] Hit (memory) for key: key1
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould return null for missing key
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould return null for missing key
+[22m[39m[Cache] Miss for key: missing
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould expire keys in memory
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould expire keys in memory
+[22m[39m[Cache] Set key: expired with TTL: -100ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould expire keys in memory
+[22m[39m[Cache] Memory cache expired for key: expired
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould expire keys in memory
+[22m[39m[Cache] Miss for key: expired
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould persist to disk
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould persist to disk
+[22m[39m[Cache] Set key: persist with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle persist write errors gracefully
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle persist write errors gracefully
+[22m[39m[Cache] Set key: persist_fail with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould load from disk if memory miss
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould load from disk if memory miss
+[22m[39m[Cache] Hit (disk) for key: diskKey
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle expired items on disk
+[22m[39m[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle expired items on disk
+[22m[39m[Cache] Miss for key: expiredDisk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle corrupt disk cache during load
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle corrupt disk cache during load
+[22m[39m[Cache] Miss for key: corruptKey
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Set key: test_1 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Set key: test_2 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Set key: other with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Invalidated (memory): test_1
+[Cache] Invalidated (memory): test_2
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Miss for key: test_1
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Miss for key: test_2
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould invalidate keys
+[22m[39m[Cache] Hit (memory) for key: other
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle invalidate disk errors
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clear all cache
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clear all cache
+[22m[39m[Cache] Set key: a with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clear all cache
+[22m[39m[Cache] Cleared all cache
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clear all cache
+[22m[39m[Cache] Miss for key: a
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle clear cache file error (ignore if not found)
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Set key: 1 with TTL: 300000ms
+[Cache] No persistent cache found, starting fresh
+[Cache] Set key: 2 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Evicted oldest entry: 1
+[Cache] Set key: 3 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Miss for key: 1
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Miss for key: 1
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Hit (memory) for key: 2
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould evict oldest memory entry when max size reached
+[22m[39m[Cache] Hit (memory) for key: 3
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould load persistent cache on init and ignore expired items
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould load persistent cache on init and ignore expired items
+[22m[39m[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould load persistent cache on init and ignore expired items
+[22m[39m[Cache] Hit (memory) for key: valid
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clean up expired entries during setPersistent
+[22m[39m[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould clean up expired entries during setPersistent
+[22m[39m[Cache] Set key: new with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle setPersistent when file does not exist yet
+[22m[39m[Cache] Loaded 0 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache.test.ts[2m > [22m[2mAPICache[2m > [22m[2mshould handle setPersistent when file does not exist yet
+[22m[39m[Cache] Set key: first with TTL: 300000ms
+
+ [32m✓[39m tests/unit/api-cache.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 173[2mms[22m[39m
+ [32m✓[39m tests/unit/frontend-drag.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 162[2mms[22m[39m
+ [32m✓[39m tests/unit/final-gaps-frontend-v4.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 231[2mms[22m[39m
+ [32m✓[39m tests/unit/components/CategorySidebar.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 154[2mms[22m[39m
+[90mstdout[2m | tests/unit/components/ModDetailsModal-final.test.tsx[2m > [22m[2mModDetailsModal Final Gaps[2m > [22m[2mshould skip API calls for invalid gameBananaId
+[22m[39mSkipping API calls for invalid or local mod ID: [33m-1[39m
+
+ [32m✓[39m tests/unit/components/ModDetailsModal-final.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 177[2mms[22m[39m
+ [32m✓[39m tests/unit/pages/Dashboard-strict.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 143[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-catchall.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+ [32m✓[39m tests/unit/components/ToastContext.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 104[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-gaps-v4.test.ts[2m > [22m[2mModManager Final Gaps V4 (Backend)[2m > [22m[2mshould handle extractZip failure during UE4SS install (finalizeUE4SSInstall)
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/final-gaps-v4.test.ts[2m > [22m[2mModManager Final Gaps V4 (Backend)[2m > [22m[2mshould handle execFile error callback in launchGame
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /games/SparkingZERO/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/final-gaps-v4.test.ts[2m > [22m[2mModManager Final Gaps V4 (Backend)[2m > [22m[2mshould handle downloadFile network error (fallback path)
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/final-gaps-v4.test.ts[2m > [22m[2mModManager Final Gaps V4 (Backend)[2m > [22m[2mshould handle downloadFile non-200 response
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/final-gaps-v4.test.ts[2m > [22m[2mModManager Final Gaps V4 (Backend)[2m > [22m[2mshould handle downloadFile redirect (302)
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/final-gaps-v4.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 105[2mms[22m[39m
+ [32m✓[39m tests/unit/layouts/MainLayout.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 134[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mCore Functionality[2m > [22m[2msyncActiveProfile should handle error
+[22m[39mDeploying mod (Non-destructive): undefined
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mProfile Management[2m > [22m[2mshould load a profile
+[22m[39mLoading Profile: Disabling 1, Enabling 1
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mUE4SS[2m > [22m[2mshould install UE4SS
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mUE4SS[2m > [22m[2mshould fail install UE4SS if game path missing
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mPriority & Deploy[2m > [22m[2mfixPriorities should normalize priorities
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mPriority & Deploy[2m > [22m[2mdeployMod should deploy files
+[22m[39mDeploying mod (Non-destructive): M
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mPriority & Deploy[2m > [22m[2mdeployMod should handle various file types and errors
+[22m[39mDeploying mod (Non-destructive): M
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mPriority & Deploy[2m > [22m[2mshould deploy Movies (audio/video) correctly
+[22m[39mDeploying mod (Non-destructive): MovieMod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mDeploy Fallbacks and Errors[2m > [22m[2mshould fallback to copy if link fails
+[22m[39mDeploying mod (Non-destructive): M
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mDeploy Fallbacks and Errors[2m > [22m[2mshould fallback to copy if link fails
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mDeploy Fallbacks and Errors[2m > [22m[2mshould log error if copy also fails
+[22m[39mDeploying mod (Non-destructive): M
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mDeploy Fallbacks and Errors[2m > [22m[2mshould log error if copy also fails
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mDeploy Fallbacks and Errors[2m > [22m[2mshould handle undeploy errors
+[22m[39mUndeploying mod: undefined
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Online Mod[2m > [22m[2mshould start download and install on complete
+[22m[39mInstalling mod: 1
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Online Mod[2m > [22m[2mshould start download and install on complete
+[22m[39mDeploying mod (Non-destructive): Mod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Online Mod[2m > [22m[2mshould fail install online mod if missing download manager
+[22m[39mInstalling mod: 1
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Online Mod[2m > [22m[2mshould fail install online mod if no files found
+[22m[39mInstalling mod: 1
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mGame Launch & Misc[2m > [22m[2mshould launch game
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mGame Launch & Misc[2m > [22m[2mshould resolve game executable from directory
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mGame Launch & Misc[2m > [22m[2mshould fallback to binary search if root exe missing
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mGame Launch & Misc[2m > [22m[2mshould handle launch execution error
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdvanced Deployment Logic[2m > [22m[2mshould deploy UE4SS mods correctly
+[22m[39mDeploying mod (Non-destructive): UE4SSMod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdvanced Deployment Logic[2m > [22m[2mshould handle UE4SS mods.txt update failure gracefully
+[22m[39mDeploying mod (Non-destructive): UE4SSMod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdvanced Deployment Logic[2m > [22m[2mshould deploy LogicMods correctly
+[22m[39mDeploying mod (Non-destructive): Logic
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mNon-destructive Deployment[2m > [22m[2mshould NOT wipe the destination directory on deploy
+[22m[39mDeploying mod (Non-destructive): SafeMod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Local Mod[2m > [22m[2mshould install zip
+[22m[39mDeploying mod (Non-destructive): mod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mInstall Local Mod[2m > [22m[2mshould install non-zip
+[22m[39mDeploying mod (Non-destructive): mod
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdditional Coverage[2m > [22m[2mupdateAllMods should handle partial failures
+[22m[39m[ModManager] Updating 2 mods...
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdditional Coverage[2m > [22m[2minstallUE4SS should use fallback if download manager is not present
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager.test.ts[2m > [22m[2mModManager[2m > [22m[2mAdditional Coverage[2m > [22m[2mlaunchGame should catch execFile errors (callback)
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game.exe
+
+ [32m✓[39m tests/unit/mod-manager.test.ts [2m([22m[2m59 tests[22m[2m)[22m[32m 112[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on 404 response
+[22m[39m[API] Fetching Item Data: Mod / 123
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on 404 response
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on 404 response
+[22m[39m[Cache] Miss for key: item_Mod_123_
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on 404 response
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/123/ProfilePage
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on 404 response
+[22m[39m[API] Response Item Data status: 404
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on network error
+[22m[39m[API] Fetching Item Data: Mod / 123
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on network error
+[22m[39m[Cache] Miss for key: item_Mod_123_
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchItemData should return null on network error
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/123/ProfilePage
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2msearchBySection should handle 500 server error gracefully
+[22m[39m[Cache] Miss for key: search_{}
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2msearchBySection should handle 500 server error gracefully
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchCategories should return empty array on 404
+[22m[39m[Cache] Miss for key: categories_21179
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchCategories should return empty array on 404
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchCategories should return empty array on 404
+[22m[39m[API] Fetch Categories Status: 404
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchModProfile should return null on 500
+[22m[39m[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchModProfile should return null on 500
+[22m[39m[API] Mod Profile Status: 500
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchModUpdates should return null on 404
+[22m[39m[API] Fetching Mod Updates ID: 1
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mGameBanana API Error Handling[2m > [22m[2mfetchModUpdates should return null on 404
+[22m[39m[API] Update Info Status: 404
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mAPICache Robustness[2m > [22m[2mshould handle EACCES when saving persistent cache
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mAPICache Robustness[2m > [22m[2mshould handle EACCES when saving persistent cache
+[22m[39m[Cache] Set key: test-key with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mAPICache Robustness[2m > [22m[2mshould handle corrupt cache file gracefully
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mAPICache Robustness[2m > [22m[2mshould handle corrupt cache file gracefully
+[22m[39m[Cache] Miss for key: some-key
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mModManager Deployment Gaps[2m > [22m[2mshould throw if getSettings fails in deployMod (current behavior)
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/coverage-gaps-backend.test.ts[2m > [22m[2mBackend Coverage Gaps[2m > [22m[2mModManager Deployment Gaps[2m > [22m[2mshould handle fs.link failure generic error (not EXDEV/EPERM) by failing deployment
+[22m[39mDeploying mod (Non-destructive): Test
+
+ [32m✓[39m tests/unit/coverage-gaps-backend.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m tests/unit/final-gaps-mods.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 166[2mms[22m[39m
+ [32m✓[39m tests/unit/components/UpdateDialog.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 89[2mms[22m[39m
+ [32m✓[39m tests/unit/components/Layout.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 84[2mms[22m[39m
+ [32m✓[39m tests/unit/components/Switch.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 88[2mms[22m[39m
+ [32m✓[39m tests/unit/layout-gap.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+ [32m✓[39m tests/unit/background-layout.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m tests/unit/components/Card.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mDeployment Fallback[2m > [22m[2mshould fallback to copyFile if link fails with EXDEV
+[22m[39mDeploying mod (Non-destructive): Test Mod
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mDeployment Fallback[2m > [22m[2mshould fallback to copyFile if link fails with EXDEV
+[22m[39m[Deploy] Linking failed, falling back to copy for: test.pak
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mDeployment Fallback[2m > [22m[2mshould return false if both link and copy fail
+[22m[39mDeploying mod (Non-destructive): Test Mod
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mDeployment Fallback[2m > [22m[2mshould return false if both link and copy fail
+[22m[39m[Deploy] Linking failed, falling back to copy for: test.pak
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mUE4SS Installation[2m > [22m[2mshould install UE4SS using fallback download if DownloadManager is missing
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mUE4SS Installation[2m > [22m[2mshould fail if fetchLatestRelease returns null
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mUE4SS Installation[2m > [22m[2mshould fail if download fails
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mFix Priorities[2m > [22m[2mshould reassign priorities and redeploy if needed
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+[ModManager] Redeploying 2 mods due to priority fix...
+
+[90mstdout[2m | tests/unit/mod-manager-extended.test.ts[2m > [22m[2mModManager Extended Coverage[2m > [22m[2mAdditional Coverage[2m > [22m[2muninstallMod should handle errors gracefully
+[22m[39mUndeploying mod: undefined
+
+ [32m✓[39m tests/unit/mod-manager-extended.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 91[2mms[22m[39m
+ [32m✓[39m tests/unit/components/App.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould handle deployMod failure when fs.mkdir fails
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould fall back to fs.copyFile if fs.link fails with EXDEV
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould fall back to fs.copyFile if fs.link fails with EXDEV
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould return false if fs.copyFile also fails after EXDEV
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould return false if fs.copyFile also fails after EXDEV
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould handle fs.link generic failure (non-EXDEV)
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould deploy UE4SS mods correctly
+[22m[39mDeploying mod (Non-destructive): UE4SSMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould handle updateUE4SSModsTxt file read failure (graceful)
+[22m[39mDeploying mod (Non-destructive): M
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould uninstallMod handle fs.rm failure
+[22m[39mUndeploying mod: undefined
+
+[90mstdout[2m | tests/unit/mod-manager-final-coverage.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould syncActiveProfile when toggling mod with active profile
+[22m[39mDeploying mod (Non-destructive): undefined
+
+ [32m✓[39m tests/unit/mod-manager-final-coverage.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/unit/components/UpdateDialog-final.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mfixPriorities[2m > [22m[2mshould tie-break by name if priorities are equal
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+[ModManager] Redeploying 2 mods due to priority fix...
+Undeploying mod: A_Mod
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mfixPriorities[2m > [22m[2mshould tie-break by name if priorities are equal
+[22m[39mDeploying mod (Non-destructive): A_Mod
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mfixPriorities[2m > [22m[2mshould tie-break by name if priorities are equal
+[22m[39mUndeploying mod: B_Mod
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mfixPriorities[2m > [22m[2mshould tie-break by name if priorities are equal
+[22m[39mDeploying mod (Non-destructive): B_Mod
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mdeployModFiles Edge Cases[2m > [22m[2mshould deploy LogicMods and Movies correctly
+[22m[39mDeploying mod (Non-destructive): Complex
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mdeployModFiles Edge Cases[2m > [22m[2mshould deploy UE4SS mods with deep structure
+[22m[39mDeploying mod (Non-destructive): UEM
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mupdateUE4SSModsTxt[2m > [22m[2mshould update existing entry in mods.txt
+[22m[39mDeploying mod (Non-destructive): Existing
+
+[90mstdout[2m | tests/unit/mod-manager-edge-cases.test.ts[2m > [22m[2mModManager Edge Cases[2m > [22m[2mupdateUE4SSModsTxt[2m > [22m[2mshould append new entry if not found
+[22m[39mDeploying mod (Non-destructive): New
+
+ [32m✓[39m tests/unit/mod-manager-edge-cases.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/unit/components/TitleBar.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 62[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2msearchBySection URL Construction[2m > [22m[2mshould use Search Results endpoint when search term is present
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=Goku&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_sOrder=popularity
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2msearchBySection URL Construction[2m > [22m[2mshould use Subfeed endpoint when NO search term is present
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_sSort=new
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2msearchBySection URL Construction[2m > [22m[2mshould NOT apply sort parameter on Subfeed if sort is popularity (downloads/likes)
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2msearchBySection URL Construction[2m > [22m[2mshould apply alphabet sort on Subfeed
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_sSort=alphabetical&_sOrder=asc
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2msearchBySection URL Construction[2m > [22m[2mshould handle date ranges
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_aFilters[Generic_DateAdded_Min]=1778035022
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Rate limit reached, waiting 59976ms
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetch Categories Status: undefined
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mRate Limiting[2m > [22m[2mshould wait if rate limit exceeded
+[22m[39m[API] Fetched Categories: {}
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchCategories failure (500)
+[22m[39m[API] Rate limit reached, waiting 59958ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchCategories failure (500)
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchCategories failure (500)
+[22m[39m[API] Fetch Categories Status: 500
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchCategories exception
+[22m[39m[API] Rate limit reached, waiting 59956ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchCategories exception
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchFeaturedMods exception
+[22m[39m[API] Rate limit reached, waiting 59948ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchFeaturedMods exception
+[22m[39m[API] Rate limit reached, waiting 0ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchFeaturedMods exception
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchAllMods page failure
+[22m[39m[API] Starting Fetch All Mods (Limit: 1 pages)
+[API] Fetching batch 1: Pages 1 - 1
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchAllMods page failure
+[22m[39m[API] Rate limit reached, waiting 59945ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchAllMods page failure
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mError Handling[2m > [22m[2mshould handle fetchAllMods page failure
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 0 mods.
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mfetchItemData[2m > [22m[2mshould return data on success
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mfetchItemData[2m > [22m[2mshould return data on success
+[22m[39m[API] Rate limit reached, waiting 59942ms
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mfetchItemData[2m > [22m[2mshould return data on success
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-complete.test.ts[2m > [22m[2mGameBanana Complete Coverage[2m > [22m[2mfetchItemData[2m > [22m[2mshould return data on success
+[22m[39m[API] Response Item Data status: 200
+
+ [32m✓[39m tests/unit/final-gaps-layout.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 61[2mms[22m[39m
+ [32m✓[39m tests/unit/gamebanana-complete.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould redeploy enabled mods when priorities are fixed and changed
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+[ModManager] Redeploying 2 mods due to priority fix...
+Undeploying mod: Mod A
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould redeploy enabled mods when priorities are fixed and changed
+[22m[39mDeploying mod (Non-destructive): Mod A
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould redeploy enabled mods when priorities are fixed and changed
+[22m[39mUndeploying mod: Mod B
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould redeploy enabled mods when priorities are fixed and changed
+[22m[39mDeploying mod (Non-destructive): Mod B
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould deploy Movies files correctly
+[22m[39mDeploying mod (Non-destructive): Movie Mod
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould warn about conflicts when enabling a mod of same category
+[22m[39mDeploying mod (Non-destructive): Goku SSJ
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould handle unlink errors in deployFile gracefully
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould handle copy fallback in deployFile
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/mod-manager-coverage.test.ts[2m > [22m[2mModManager Coverage Gaps[2m > [22m[2mshould handle copy fallback in deployFile
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+ [32m✓[39m tests/unit/mod-manager-coverage.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Miss for key: search_{"dateRange":"24h","search":"test"}
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_aFilters[Generic_DateAdded_Min]=1778553422
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Set key: search_{"dateRange":"24h","search":"test"} with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Miss for key: search_{"dateRange":"week","search":"test"}
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_aFilters[Generic_DateAdded_Min]=1778035022
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Set key: search_{"dateRange":"week","search":"test"} with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Miss for key: search_{"dateRange":"month","search":"test"}
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_aFilters[Generic_DateAdded_Min]=1776047822
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Set key: search_{"dateRange":"month","search":"test"} with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Miss for key: search_{"dateRange":"year","search":"test"}
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_aFilters[Generic_DateAdded_Min]=1747103822
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2msearchBySection should handle dateRange filtering correctly
+[22m[39m[Cache] Set key: search_{"dateRange":"year","search":"test"} with TTL: 300000ms
+
+ [32m✓[39m tests/unit/coverage-backend-gaps.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchAllMods should handle partial batch failures
+[22m[39m[API] Starting Fetch All Mods (Limit: 2 pages)
+[API] Fetching batch 1: Pages 1 - 2
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchAllMods should handle partial batch failures
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=2&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchAllMods should handle partial batch failures
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 1 mods.
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchCategories should return empty array on API failure
+[22m[39m[Cache] Miss for key: categories_21179
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchCategories should return empty array on API failure
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mGameBanana API - Extended[2m > [22m[2mfetchCategories should return empty array on API failure
+[22m[39m[API] Fetch Categories Status: 500
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mModManager - Extended Deployment Logic[2m > [22m[2mdeployFile should fallback to copy if link fails with EXDEV
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/final-coverage-backend.test.ts[2m > [22m[2mFinal Backend Coverage[2m > [22m[2mModManager - Extended Deployment Logic[2m > [22m[2mfixPriorities should tie-break by name if priorities are equal
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+[ModManager] Redeploying 2 mods due to priority fix...
+
+ [32m✓[39m tests/unit/final-coverage-backend.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on fetch error
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on fetch error
+[22m[39m[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on fetch error
+[22m[39m[Cache] Miss for key: item_Mod_1_
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on fetch error
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on non-ok response
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on non-ok response
+[22m[39m[Cache] Miss for key: item_Mod_1_
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on non-ok response
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchItemData should return null on non-ok response
+[22m[39m[API] Response Item Data status: 404
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle fetch error gracefully
+[22m[39m[API] Starting Fetch All Mods (Limit: 1 pages)
+[API] Fetching batch 1: Pages 1 - 1
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle fetch error gracefully
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/1/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle fetch error gracefully
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 0 mods.
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle non-ok response
+[22m[39m[API] Starting Fetch All Mods (Limit: 1 pages)
+[API] Fetching batch 1: Pages 1 - 1
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle non-ok response
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/1/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchAllMods should handle non-ok response
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 0 mods.
+
+[90mstdout[2m | tests/unit/gamebanana-extra.test.ts[2m > [22m[2mGameBanana Extra Coverage[2m > [22m[2mfetchFeaturedMods should handle error gracefully
+[22m[39m[Cache] Hit (memory) for key: featured_21179
+
+ [32m✓[39m tests/unit/gamebanana-extra.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-backend.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - deployModFiles[2m > [22m[2mshould catch error in internal loop
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/coverage-backend.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - getModChangelog[2m > [22m[2mshould return null if mod not found by ID string
+[22m[39m[ModManager] Getting changelog for modId: invalid-id
+
+[90mstdout[2m | tests/unit/coverage-backend.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - getModChangelog[2m > [22m[2mshould return null if mod found but no gameBananaId
+[22m[39m[ModManager] Getting changelog for gameBananaId: 1
+
+[90mstdout[2m | tests/unit/coverage-backend.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - installOnlineMod[2m > [22m[2mshould fail if profile fetch fails (missing files)
+[22m[39mInstalling mod: 1
+
+[90mstdout[2m | tests/unit/coverage-backend-extended.test.ts[2m > [22m[2mModManager Edge Cases Extended[2m > [22m[2minstallOnlineMod[2m > [22m[2mshould use default values if profile data missing
+[22m[39mInstalling mod: 123
+
+ [32m✓[39m tests/unit/coverage-backend.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/unit/coverage-backend-extended.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-backend-final.test.ts[2m > [22m[2mModManager Backend Final Coverage[2m > [22m[2mloadProfile[2m > [22m[2mshould correctly enable/disable mods based on profile
+[22m[39mLoading Profile: Disabling 1, Enabling 1
+
+[90mstdout[2m | tests/unit/coverage-backend-final.test.ts[2m > [22m[2mModManager Backend Final Coverage[2m > [22m[2mlaunchGame Error Handling[2m > [22m[2mshould log error if execFile fails
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game.exe
+
+ [32m✓[39m tests/unit/coverage-backend-final.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-backend-final-v2.test.ts[2m > [22m[2mModManager Final Backend Coverage[2m > [22m[2msyncActiveProfile[2m > [22m[2mshould do nothing if no active profile is set
+[22m[39mDeploying mod (Non-destructive): Mod1
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v2.test.ts[2m > [22m[2mModManager Final Backend Coverage[2m > [22m[2msyncActiveProfile[2m > [22m[2mshould sync if active profile is set
+[22m[39mDeploying mod (Non-destructive): Mod1
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v2.test.ts[2m > [22m[2mModManager Final Backend Coverage[2m > [22m[2mlaunchGame[2m > [22m[2mshould search for SparkingZERO.exe if directory is provided
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/dir/SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v2.test.ts[2m > [22m[2mModManager Final Backend Coverage[2m > [22m[2minstallOnlineMod[2m > [22m[2mshould return failure if profile has no files
+[22m[39mInstalling mod: 123
+
+[90mstdout[2m | tests/unit/coverage-backend-final-v2.test.ts[2m > [22m[2mModManager Final Backend Coverage[2m > [22m[2minstallOnlineMod[2m > [22m[2mshould return failure if profile fetch fails (returns null)
+[22m[39mInstalling mod: 123
+
+ [32m✓[39m tests/unit/coverage-backend-final-v2.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchOnlineMods[2m > [22m[2mshould fetch and return mods
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=Test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchOnlineMods[2m > [22m[2mshould use cache if available
+[22m[39m[API] Cache hit for search
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchOnlineMods[2m > [22m[2mshould handle API errors
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=Test&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchOnlineMods[2m > [22m[2mshould handle category filter
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchBySection[2m > [22m[2mshould construct correct URL for search
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Util/Search/Results?_sSearchString=Goku&_nPage=1&_nPerpage=20&_aFilters[Generic_Game]=21179&_aFilters[Generic_Category]=10
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchBySection[2m > [22m[2mshould construct correct URL for browsing (Subfeed)
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=2&_nPerpage=20&_aModelFilter[]=Mod&_sSort=new
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2msearchBySection[2m > [22m[2mshould handle date ranges
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_aFilters[Generic_DateAdded_Min]=1778553423
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould fetch item data
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould fetch item data
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould fetch item data
+[22m[39m[API] Response Item Data status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould return null on error
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould return null on error
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchItemData[2m > [22m[2mshould return null on error
+[22m[39m[API] Response Item Data status: 404
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchAllMods[2m > [22m[2mshould fetch multiple pages
+[22m[39m[API] Starting Fetch All Mods (Limit: 2 pages)
+[API] Fetching batch 1: Pages 1 - 2
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchAllMods[2m > [22m[2mshould fetch multiple pages
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=2&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchAllMods[2m > [22m[2mshould fetch multiple pages
+[22m[39m[API] Found empty page, stopping fetch.
+[API] Fetched total 1 mods.
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchNewMods[2m > [22m[2mshould call searchBySection with date sort
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod&_sSort=new
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchFeaturedMods[2m > [22m[2mshould fetch and sort locally
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=40&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchCategories[2m > [22m[2mshould return categories
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/21179/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchCategories[2m > [22m[2mshould return categories
+[22m[39m[API] Fetch Categories Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchCategories[2m > [22m[2mshould return categories
+[22m[39m[API] Fetched Categories: {"_idRow":1,"_sName":"Cat"}
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModProfile[2m > [22m[2mshould return profile data
+[22m[39m[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModProfile[2m > [22m[2mshould return profile data
+[22m[39m[API] Mod Profile Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModProfile[2m > [22m[2mshould return profile data
+[22m[39m[API] Successfully fetched mod profile for 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModProfile[2m > [22m[2mshould return null on error
+[22m[39m[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModProfile[2m > [22m[2mshould return null on error
+[22m[39m[API] Mod Profile Status: 404
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return update info
+[22m[39m[API] Fetching Mod Updates ID: 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return update info
+[22m[39m[API] Update Info Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return update info
+[22m[39m[API] Successfully fetched mod updates for 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return null if empty
+[22m[39m[API] Fetching Mod Updates ID: 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return null if empty
+[22m[39m[API] Update Info Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModUpdates[2m > [22m[2mshould return null if empty
+[22m[39m[API] No updates found for mod 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mgetModChangelog[2m > [22m[2mshould return mapped changelog
+[22m[39m[API] Successfully fetched changelog for 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return details with images
+[22m[39m[API] Fetching Mod Details ID: 1
+[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return details with images
+[22m[39m[API] Mod Profile Status: undefined
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return details with images
+[22m[39m[API] Successfully fetched mod profile for 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return details with images
+[22m[39m[API] Found 1 images for 1
+[API] Successfully fetched mod details for 1
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return null if profile fetch fails
+[22m[39m[API] Fetching Mod Details ID: 1
+[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana.test.ts[2m > [22m[2mGameBanana API[2m > [22m[2mfetchModDetails[2m > [22m[2mshould return null if profile fetch fails
+[22m[39m[API] Mod Profile Status: undefined
+
+ [32m✓[39m tests/unit/gamebanana.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend-coverage-fill.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - Deploy Mod[2m > [22m[2mshould handle internal loop error in deployModFiles
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/backend-coverage-fill.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - Install Online/Uninstall Gaps[2m > [22m[2mshould handle installOnlineMod failure when profile fetch fails
+[22m[39mInstalling mod: 1
+
+[90mstdout[2m | tests/unit/backend-coverage-fill.test.ts[2m > [22m[2mBackend Coverage Fill[2m > [22m[2mModManager - Install Online/Uninstall Gaps[2m > [22m[2mshould handle getModChangelog error
+[22m[39m[ModManager] Getting changelog for modId: invalid-id
+
+ [32m✓[39m tests/unit/backend-coverage-fill.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m tests/unit/cloud-sync.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m tests/unit/components/Skeleton.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m tests/unit/download-manager.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+[90mstdout[2m | tests/unit/backend-gap.test.ts[2m > [22m[2mModManager Backend Gaps[2m > [22m[2mshould return false if deployMod fails (e.g. mkdir fails)
+[22m[39mDeploying mod (Non-destructive): Test
+
+[90mstdout[2m | tests/unit/backend-gap.test.ts[2m > [22m[2mModManager Backend Gaps[2m > [22m[2mshould handle undeployMod gracefully when deployedFiles is missing
+[22m[39mUndeploying mod: undefined
+
+[90mstdout[2m | tests/unit/backend-gap.test.ts[2m > [22m[2mModManager Backend Gaps[2m > [22m[2mshould handle undeployMod error propagation if something catastrophic happens
+[22m[39mUndeploying mod: undefined
+
+[90mstdout[2m | tests/unit/backend-gap.test.ts[2m > [22m[2mModManager Backend Gaps[2m > [22m[2mshould return null if getModDetails fails
+[22m[39m[ModManager] Getting details for gameBananaId: 123
+
+ [32m✓[39m tests/unit/backend-gap.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fallback to copyFile when fs.link fails with EXDEV
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fallback to copyFile when fs.link fails with EXDEV
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fallback to copyFile when fs.link fails with EPERM
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fallback to copyFile when fs.link fails with EPERM
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fail deployment if copyFile also fails
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fail deployment if copyFile also fails
+[22m[39m[Deploy] Linking failed, falling back to copy for: file.pak
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould correctly resolve game path when given a deep nested exe
+[22m[39mDeploying mod (Non-destructive): TestMod
+
+[90mstdout[2m | tests/unit/mod-manager-final-gaps.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mshould fallback to downloadFile in installUE4SS if downloadManager is missing
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/mod-manager-final-gaps.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-strict.test.ts[2m > [22m[2mModManager Strict Coverage[2m > [22m[2mlaunchGame[2m > [22m[2mshould handle launchArgs with empty strings
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game.exe
+
+[90mstdout[2m | tests/unit/mod-manager-strict.test.ts[2m > [22m[2mModManager Strict Coverage[2m > [22m[2mlaunchGame[2m > [22m[2mshould succeed if game path is directory and binary exe exists
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /dir/SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe
+
+[90mstdout[2m | tests/unit/mod-manager-strict.test.ts[2m > [22m[2mModManager Strict Coverage[2m > [22m[2minstallUE4SS[2m > [22m[2mshould handle extraction failure
+[22m[39mInstalling UE4SS...
+
+[90mstdout[2m | tests/unit/mod-manager-strict.test.ts[2m > [22m[2mModManager Strict Coverage[2m > [22m[2minstallUE4SS[2m > [22m[2mshould handle clean up failure gracefully
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/mod-manager-strict.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m tests/unit/mod-manager-ue4ss.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle fetchItemData error
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle fetchItemData error
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle fetchItemData error
+[22m[39m[API] Response Item Data status: 500
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle fetchItemData exception
+[22m[39m[API] Fetching Item Data: Mod / 1
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle fetchItemData exception
+[22m[39m[API] Request Info: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould handle searchBySection error text
+[22m[39m[API] Fetching: https://gamebanana.com/apiv11/Game/21179/Subfeed?_nPage=1&_nPerpage=20&_aModelFilter[]=Mod
+
+[90mstdout[2m | tests/unit/final-gaps-backend.test.ts[2m > [22m[2mModManager Backend Final Gaps[2m > [22m[2mshould handle installUE4SS download failure
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/final-gaps-backend.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould fetch latest release and find UE4SS zip
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould fetch latest release and find UE4SS zip
+[22m[39m[GitHub] Found asset: zUE4SS_v3.0.0.zip
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould fallback to first zip if no UE4SS zip found
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould fallback to first zip if no UE4SS zip found
+[22m[39m[GitHub] Found asset: release.zip
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould return null if fetch fails
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould return null if no assets found
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould return null if no suitable zip found
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+[90mstdout[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub API[2m > [22m[2mshould return null on exception
+[22m[39m[GitHub] Fetching latest release for owner/repo
+
+ [32m✓[39m tests/unit/github.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould complete a full install, launch, and uninstall cycle
+[22m[39mDeploying mod (Non-destructive): MyMod
+
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould complete a full install, launch, and uninstall cycle
+[22m[39mLaunching game with 1 mods enabled
+Launching game at: /game/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould complete a full install, launch, and uninstall cycle
+[22m[39mUndeploying mod: MyMod
+
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould complete a full install, launch, and uninstall cycle
+[22m[39mDeploying mod (Non-destructive): MyMod
+
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould complete a full install, launch, and uninstall cycle
+[22m[39mUndeploying mod: MyMod
+
+[90mstdout[2m | tests/unit/simulation-installer.test.ts[2m > [22m[2mFull Installer Lifecycle Simulation[2m > [22m[2mshould install and manage UE4SS correctly
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/simulation-installer.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-coverage-mod-manager.test.ts[2m > [22m[2mModManager Final Coverage[2m > [22m[2mshould log error when launchGame fails via execFile
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/exe.exe
+
+ [32m✓[39m tests/unit/final-coverage-mod-manager.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/unit/final-gaps-download.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-coverage-all.test.ts[2m > [22m[2mFinal Coverage Sweeper[2m > [22m[2mshould install .pak file directly
+[22m[39mDeploying mod (Non-destructive): mod
+
+[90mstdout[2m | tests/unit/final-coverage-all.test.ts[2m > [22m[2mFinal Coverage Sweeper[2m > [22m[2mshould install .zip file via extraction
+[22m[39mDeploying mod (Non-destructive): mod
+
+ [32m✓[39m tests/unit/final-coverage-all.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/unit/rate-limit.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/unit/final-coverage-download-manager.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould use hardlinks (fs.link) to deploy files
+[22m[39mDeploying mod (Non-destructive): ModA
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould NOT delete existing files in ~mods that belong to other mods
+[22m[39mDeploying mod (Non-destructive): ModA
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould fallback to copyFile if link fails (Cross-Drive support)
+[22m[39mDeploying mod (Non-destructive): ModA
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould fallback to copyFile if link fails (Cross-Drive support)
+[22m[39m[Deploy] Linking failed, falling back to copy for: ModA.pak
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould support .pak, .utoc, .ucas, .sig extensions (IoStore support)
+[22m[39mDeploying mod (Non-destructive): ComplexMod
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould support .pak, .utoc, .ucas, .sig extensions (IoStore support)
+[22m[39m[Deploy] Linking failed, falling back to copy for: data.pak
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould support .pak, .utoc, .ucas, .sig extensions (IoStore support)
+[22m[39m[Deploy] Linking failed, falling back to copy for: data.utoc
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould support .pak, .utoc, .ucas, .sig extensions (IoStore support)
+[22m[39m[Deploy] Linking failed, falling back to copy for: data.ucas
+
+[90mstdout[2m | tests/unit/deployment.test.ts[2m > [22m[2mDeployment Logic (Non-Destructive)[2m > [22m[2mshould support .pak, .utoc, .ucas, .sig extensions (IoStore support)
+[22m[39m[Deploy] Linking failed, falling back to copy for: data.sig
+
+ [32m✓[39m tests/unit/deployment.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/unit/download-manager.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mPriority Normalization[2m > [22m[2mshould normalize non-sequential priorities
+[22m[39m[ModManager] Fixed/Normalized mod priorities.
+[ModManager] Redeploying 2 mods due to priority fix...
+Undeploying mod: A
+
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mPriority Normalization[2m > [22m[2mshould normalize non-sequential priorities
+[22m[39mDeploying mod (Non-destructive): A
+
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mPriority Normalization[2m > [22m[2mshould normalize non-sequential priorities
+[22m[39mUndeploying mod: B
+
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mPriority Normalization[2m > [22m[2mshould normalize non-sequential priorities
+[22m[39mDeploying mod (Non-destructive): B
+
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mToggle Conflict Check[2m > [22m[2mshould detect category conflict
+[22m[39mDeploying mod (Non-destructive): Mod2
+
+[90mstdout[2m | tests/unit/final-push-backend.test.ts[2m > [22m[2mFinal Push Backend[2m > [22m[2mToggle Conflict Check[2m > [22m[2mshould ignore conflict for generic categories
+[22m[39mDeploying mod (Non-destructive): Mod2
+
+ [32m✓[39m tests/unit/final-push-backend.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/unit/download-manager-coverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould evict oldest entry when maxMemorySize is exceeded
+[22m[39m[Cache] Set key: 1 with TTL: 300000ms
+[Cache] Loaded 1 entries from disk
+[Cache] Set key: 2 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould evict oldest entry when maxMemorySize is exceeded
+[22m[39m[Cache] Evicted oldest entry: 1
+[Cache] Set key: 3 with TTL: 300000ms
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould evict oldest entry when maxMemorySize is exceeded
+[22m[39m[Cache] Miss for key: 1
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould evict oldest entry when maxMemorySize is exceeded
+[22m[39m[Cache] Hit (memory) for key: 2
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould evict oldest entry when maxMemorySize is exceeded
+[22m[39m[Cache] Hit (memory) for key: 3
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould handle persistent write failure gracefully
+[22m[39m[Cache] Set key: 1 with TTL: 300000ms
+[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould handle persistent directory creation failure
+[22m[39m[Cache] Set key: 1 with TTL: 300000ms
+[Cache] Loaded 1 entries from disk
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould handle persistent read failure during load
+[22m[39m[Cache] No persistent cache found, starting fresh
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould invalidate persistent cache matching regex
+[22m[39m[Cache] Loaded 0 entries from disk
+[Cache] Invalidated (disk): mod_1
+[Cache] Invalidated (disk): mod_2
+
+[90mstdout[2m | tests/unit/api-cache-gaps.test.ts[2m > [22m[2mAPICache Gaps[2m > [22m[2mshould handle invalidate persistent failure
+[22m[39m[Cache] Loaded 0 entries from disk
+
+ [32m✓[39m tests/unit/api-cache-gaps.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+[90mstdout[2m | tests/unit/final-gaps-v3.test.ts[2m > [22m[2mModManager Final Gaps V3[2m > [22m[2mlaunchGame[2m > [22m[2mshould split launch arguments correctly
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/exe.exe
+
+[90mstdout[2m | tests/unit/final-gaps-v3.test.ts[2m > [22m[2mModManager Final Gaps V3[2m > [22m[2mlaunchGame[2m > [22m[2mshould handle missing launch arguments
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/exe.exe
+
+[90mstdout[2m | tests/unit/final-gaps-v3.test.ts[2m > [22m[2mModManager Final Gaps V3[2m > [22m[2mlaunchGame[2m > [22m[2mshould handle execution error in callback
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/exe.exe
+
+[90mstdout[2m | tests/unit/final-gaps-v3.test.ts[2m > [22m[2mModManager Final Gaps V3[2m > [22m[2mdeployMod[2m > [22m[2mshould return false if game path not set
+[22m[39mDeploying mod (Non-destructive): Mod
+
+[90mstdout[2m | tests/unit/final-gaps-v3.test.ts[2m > [22m[2mModManager Final Gaps V3[2m > [22m[2minstallUE4SS[2m > [22m[2mshould return failure if game path not set
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/final-gaps-v3.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+[90mstdout[2m | tests/unit/update-all.test.ts[2m > [22m[2mModManager - updateAllMods[2m > [22m[2mshould update all mods successfully
+[22m[39m[ModManager] Updating 3 mods...
+
+[90mstdout[2m | tests/unit/update-all.test.ts[2m > [22m[2mModManager - updateAllMods[2m > [22m[2mshould handle partial failures
+[22m[39m[ModManager] Updating 3 mods...
+
+[90mstdout[2m | tests/unit/update-all.test.ts[2m > [22m[2mModManager - updateAllMods[2m > [22m[2mshould handle exceptions in updateMod
+[22m[39m[ModManager] Updating 1 mods...
+
+[90mstdout[2m | tests/unit/update-all.test.ts[2m > [22m[2mModManager - updateAllMods[2m > [22m[2mshould respect concurrency (implicitly checked via p-limit usage)
+[22m[39m[ModManager] Updating 10 mods...
+
+ [32m✓[39m tests/unit/update-all.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-final.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2mlaunchGame[2m > [22m[2mshould handle execFile error callback
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/SparkingZERO.exe
+
+[90mstdout[2m | tests/unit/mod-manager-final.test.ts[2m > [22m[2mModManager Final Gaps[2m > [22m[2minstallUE4SS[2m > [22m[2mshould return failure if fetchLatestRelease returns null
+[22m[39mInstalling UE4SS...
+
+ [32m✓[39m tests/unit/mod-manager-final.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+[90mstdout[2m | tests/unit/mod-manager-launch.test.ts[2m > [22m[2mModManager Launch Gaps[2m > [22m[2mshould launch game without launch arguments
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game.exe
+
+[90mstdout[2m | tests/unit/mod-manager-launch.test.ts[2m > [22m[2mModManager Launch Gaps[2m > [22m[2mshould handle execution error in callback
+[22m[39mLaunching game with 0 mods enabled
+Launching game at: /game/exe.exe
+
+ [32m✓[39m tests/unit/mod-manager-launch.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+[90mstdout[2m | tests/unit/coverage-backend-final-v4.test.ts[2m > [22m[2mModManager Error Branches[2m > [22m[2mshould catch error in installOnlineMod
+[22m[39mInstalling mod: 123
+
+ [32m✓[39m tests/unit/coverage-backend-final-v4.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana-final.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould return empty array if fetchCategories returns non-ok response
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/12345/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-final.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould return empty array if fetchCategories returns non-ok response
+[22m[39m[API] Fetch Categories Status: 404
+
+[90mstdout[2m | tests/unit/gamebanana-final.test.ts[2m > [22m[2mGameBanana API Final Gaps[2m > [22m[2mshould return empty array if fetchCategories throws an error
+[22m[39m[API] Fetching Categories URL: https://gamebanana.com/apiv11/Game/12345/ProfilePage
+
+ [32m✓[39m tests/unit/gamebanana-final.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+[90mstdout[2m | tests/unit/gamebanana-gaps.test.ts[2m > [22m[2mGameBanana API Gaps[2m > [22m[2mshould return null if fetchModProfile API fails
+[22m[39m[API] Fetching Mod Profile ID: 1
+[API] Profile URL: https://gamebanana.com/apiv11/Mod/1/ProfilePage
+
+[90mstdout[2m | tests/unit/gamebanana-gaps.test.ts[2m > [22m[2mGameBanana API Gaps[2m > [22m[2mshould return null if fetchModProfile API fails
+[22m[39m[API] Mod Profile Status: 500
+
+[90mstdout[2m | tests/unit/gamebanana-gaps.test.ts[2m > [22m[2mGameBanana API Gaps[2m > [22m[2mshould return null if fetchModUpdates API fails
+[22m[39m[API] Fetching Mod Updates ID: 1
+
+[90mstdout[2m | tests/unit/gamebanana-gaps.test.ts[2m > [22m[2mGameBanana API Gaps[2m > [22m[2mshould return null if fetchModUpdates API fails
+[22m[39m[API] Update Info Status: 500
+
+ [32m✓[39m tests/unit/gamebanana-gaps.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+[90mstdout[2m | tests/unit/logic-mods.test.ts[2m > [22m[2mModManager - LogicMods[2m > [22m[2mshould deploy LogicMods to the correct directory
+[22m[39mDeploying mod (Non-destructive): Test Logic Mod
+
+ [32m✓[39m tests/unit/logic-mods.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 12[2mms[22m[39m
+[90mstdout[2m | tests/unit/test-utils-format.test.ts[2m > [22m[2mformatBytes gaps[2m > [22m[2mshould format all sizes
+[22m[39m1.37 TB
+
+ [32m✓[39m tests/unit/test-utils-format.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m100 passed[39m[22m[90m (100)[39m
+[2m      Tests [22m [1m[32m699 passed[39m[22m[90m (699)[39m
+[2m   Start at [22m 02:36:22
+[2m   Duration [22m 47.04s[2m (transform 3.56s, setup 18.88s, import 50.47s, tests 20.54s, environment 20.95s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   94.49 |    87.02 |   95.07 |   95.27 |
+ electron          |   93.64 |    82.93 |   93.29 |   94.88 |
+  api-cache.ts     |   97.75 |    91.42 |    92.3 |   98.86 | 96
+  ...ad-manager.ts |   99.13 |    79.71 |     100 |     100 | ...03,123-195,217
+  gamebanana.ts    |   92.18 |    89.65 |   96.77 |   92.67 | ...76-480,508-509
+  github.ts        |     100 |      100 |     100 |     100 |
+  mod-manager.ts   |   92.63 |     77.7 |      91 |   94.11 | ...1087-1088,1307
+ src               |     100 |      100 |     100 |     100 |
+  App.tsx          |     100 |      100 |     100 |     100 |
+ src/components    |   97.54 |    96.76 |   96.18 |   97.53 |
+  ...rySidebar.tsx |   98.57 |      100 |   95.45 |   98.18 | 132
+  ...loadsList.tsx |     100 |      100 |     100 |     100 |
+  FilterBar.tsx    |     100 |    94.11 |     100 |     100 | 178-184
+  ...ailsModal.tsx |   96.96 |    93.15 |    90.9 |   96.29 | 62,200
+  ...leManager.tsx |   94.02 |    97.61 |    87.5 |   95.31 | 93,111,183
+  ...gsContext.tsx |   95.45 |       90 |     100 |   95.45 | 54,90
+  Skeleton.tsx     |     100 |      100 |     100 |     100 |
+  TitleBar.tsx     |     100 |      100 |     100 |     100 |
+  Toast.tsx        |     100 |      100 |     100 |     100 |
+  ToastContext.tsx |     100 |      100 |     100 |     100 |
+  UpdateDialog.tsx |     100 |      100 |     100 |     100 |
+ ...omponents/mods |   97.14 |     97.1 |     100 |     100 |
+  ModCard.tsx      |     100 |    98.18 |     100 |     100 | 132
+  ModGrid.tsx      |   94.11 |    92.85 |     100 |     100 | 36
+ src/components/ui |     100 |      100 |     100 |     100 |
+  Badge.tsx        |     100 |      100 |     100 |     100 |
+  Button.tsx       |     100 |      100 |     100 |     100 |
+  Card.tsx         |     100 |      100 |     100 |     100 |
+  Switch.tsx       |     100 |      100 |     100 |     100 |
+ src/layouts       |     100 |       90 |     100 |     100 |
+  MainLayout.tsx   |     100 |       90 |     100 |     100 | 53
+ src/lib           |     100 |      100 |     100 |     100 |
+  utils.ts         |     100 |      100 |     100 |     100 |
+ src/pages         |    93.5 |    82.68 |   94.94 |   93.35 |
+  Dashboard.tsx    |     100 |      100 |     100 |     100 |
+  Mods.tsx         |   92.28 |    79.48 |   93.67 |   91.98 | ...96,527,639-640
+  Settings.tsx     |     100 |      100 |     100 |     100 |
+-------------------|---------|----------|---------|---------|-------------------
