@@ -25,7 +25,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     coverage: {
         provider: 'v8',
-        reporter: ['text', 'json', 'html'],
+        reporter: ["text", "json", "html"],
         include: ['electron/**/*.ts', 'src/**/*.{ts,tsx}'],
         exclude: [
             '**/*.d.ts',
@@ -46,10 +46,10 @@ export default defineConfig({
         ],
         all: true,
         thresholds: {
-            lines: 95.0,
-            functions: 94.6,
-            branches: 86.9,
-            statements: 94.1
+            lines: 94.64,
+            functions: 95.53,
+            branches: 87.34,
+            statements: 94.64
         }
     }
   },
