@@ -173,7 +173,7 @@ describe('DownloadManager Coverage Gaps', () => {
             close: vi.fn(),
             on: vi.fn()
         };
-        // @ts-ignore
+        // @ts-expect-error coverage test
         fs.createWriteStream.mockReturnValue(mockStream);
 
         mocks.request.on.mockImplementation((event, cb) => {
