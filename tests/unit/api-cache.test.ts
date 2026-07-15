@@ -209,4 +209,12 @@ describe('APICache', () => {
          await new Promise(r => setTimeout(r, 10));
          expect(fs.writeFile).toHaveBeenCalled();
     });
+    it('should catch error when setPersistent fails', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(cache as any, 'setPersistent').mockRejectedValueOnce(new Error('Persistence failed'));
+        await cache.set('err_key', 'val');
+        // Let background promise resolve
+        await new Promise(r => setTimeout(r, 10));
+        expect(consoleSpy).toHaveBeenCalledWith('[Cache] Failed to persist cache:', expect.any(Error));
+    });
 });
