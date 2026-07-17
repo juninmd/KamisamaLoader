@@ -343,7 +343,7 @@ describe('Mods Page', () => {
          const btn = screen.getByText('Select Misc');
          fireEvent.click(btn);
          await waitFor(() => {
-             expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ categoryId: 'Misc' }));
+             expect(window.electronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({ categoryId: 1 }));
          });
     });
 
