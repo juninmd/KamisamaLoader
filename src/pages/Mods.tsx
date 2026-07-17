@@ -132,7 +132,9 @@ const Mods: React.FC = () => {
             };
 
             if (filters.categories.length > 0) {
-                options.categoryId = filters.categories[0];
+                options.categoryId = categories.find(
+                    category => category.name === filters.categories[0]
+                )?.id;
             }
 
             const results = await window.electronAPI.searchBySection(options);
