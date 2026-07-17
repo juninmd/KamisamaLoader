@@ -3,6 +3,11 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { ModManager } from './mod-manager.js';
 import { DownloadManager } from './download-manager.js';
+import { configureWindowSecurity } from './window-security.js';
+import {
+  asBoolean, asDirection, asId, asOnlineMod, asPage, asPositiveId,
+  asSearchOptions, asSettings, asString, asStringArray,
+} from './ipc-validation.js';
 
 let mainWindow: BrowserWindow | null;
 
@@ -21,10 +26,10 @@ process.on('unhandledRejection', (reason, promise) => {
 function registerIpcHandlers() {
   // Downloads IPC
   ipcMain.handle('get-downloads', () => downloadManager.getDownloads());
-  ipcMain.handle('pause-download', (_, id) => downloadManager.pauseDownload(id));
-  ipcMain.handle('resume-download', (_, id) => downloadManager.resumeDownload(id));
-  ipcMain.handle('cancel-download', (_, id) => downloadManager.cancelDownload(id));
-  ipcMain.handle('open-download-folder', (_, id) => downloadManager.openDownloadFolder(id));
+  ipcMain.handle('pause-download', (_, id) => downloadManager.pauseDownload(asId(id)));
+  ipcMain.handle('resume-download', (_, id) => downloadManager.resumeDownload(asId(id)));
+  ipcMain.handle('cancel-download', (_, id) => downloadManager.cancelDownload(asId(id)));
+  ipcMain.handle('open-download-folder', (_, id) => downloadManager.openDownloadFolder(asId(id)));
   ipcMain.handle('clear-completed-downloads', () => downloadManager.clearCompleted());
 
   // Window Controls
@@ -34,6 +39,7 @@ function registerIpcHandlers() {
     else mainWindow?.maximize();
   });
   ipcMain.on('close-window', () => mainWindow?.close());
+  ipcMain.handle('open-mods-directory', () => modManager.openModsDirectory());
 
   // Mod Management IPC Handlers
   ipcMain.handle('get-installed-mods', async () => {
@@ -41,15 +47,15 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('install-mod', async (_event, filePath) => {
-    return await modManager.installMod(filePath);
+    return await modManager.installMod(asString(filePath, 'mod file path', 32_767));
   });
 
   ipcMain.handle('uninstall-mod', async (_event, modId) => {
-    return await modManager.uninstallMod(modId);
+    return await modManager.uninstallMod(asId(modId));
   });
 
   ipcMain.handle('toggle-mod', async (_event, modId, isEnabled) => {
-    return await modManager.toggleMod(modId, isEnabled);
+    return await modManager.toggleMod(asId(modId), asBoolean(isEnabled));
   });
 
   ipcMain.handle('get-settings', async () => {
@@ -57,7 +63,7 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('save-settings', async (_event, settings) => {
-    return await modManager.saveSettings(settings);
+    return await modManager.saveSettings(asSettings(settings));
   });
 
   ipcMain.handle('select-game-directory', async () => {
@@ -102,19 +108,19 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('update-mod', async (_event, modId) => {
-    return await modManager.updateMod(modId);
+    return await modManager.updateMod(asId(modId));
   });
 
   ipcMain.handle('update-all-mods', async (_event, modIds) => {
-    return await modManager.updateAllMods(modIds);
+    return await modManager.updateAllMods(asStringArray(modIds));
   });
 
   ipcMain.handle('search-online-mods', async (_event, page = 1, search = '') => {
-    return await modManager.searchOnlineMods(page, search);
+    return await modManager.searchOnlineMods(asPage(page), asString(search, 'search', 256));
   });
 
   ipcMain.handle('install-online-mod', async (_event, mod) => {
-    return await modManager.installOnlineMod(mod);
+    return await modManager.installOnlineMod(asOnlineMod(mod));
   });
 
   ipcMain.handle('launch-game', async () => {
@@ -126,34 +132,34 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('set-mod-priority', async (event, modId, direction) => {
-    return await modManager.setModPriority(modId, direction);
+    return await modManager.setModPriority(asId(modId), asDirection(direction));
   });
 
   // Profiles
   ipcMain.handle('get-profiles', async () => modManager.getProfiles());
-  ipcMain.handle('create-profile', async (_event, name) => modManager.createProfile(name));
-  ipcMain.handle('delete-profile', async (_event, id) => modManager.deleteProfile(id));
-  ipcMain.handle('load-profile', async (_event, id) => modManager.loadProfile(id));
+  ipcMain.handle('create-profile', async (_event, name) => modManager.createProfile(asId(name)));
+  ipcMain.handle('delete-profile', async (_event, id) => modManager.deleteProfile(asId(id)));
+  ipcMain.handle('load-profile', async (_event, id) => modManager.loadProfile(asId(id)));
 
   ipcMain.handle('get-mod-changelog', async (event, modId) => {
-    return await modManager.getModChangelog(modId);
+    return await modManager.getModChangelog(asId(modId));
   });
 
   ipcMain.handle('get-mod-details', async (event, gameBananaId) => {
-    return await modManager.getModDetails(gameBananaId);
+    return await modManager.getModDetails(asPositiveId(gameBananaId, 'GameBanana identifier'));
   });
 
   // New API methods for categories and advanced search
   ipcMain.handle('search-by-section', async (_event, options) => {
-    return await modManager.searchBySection(options);
+    return await modManager.searchBySection(asSearchOptions(options));
   });
 
   ipcMain.handle('fetch-categories', async (_event, gameId) => {
-    return await modManager.fetchCategories(gameId);
+    return await modManager.fetchCategories(gameId === undefined ? undefined : asPositiveId(gameId, 'game identifier'));
   });
 
   ipcMain.handle('fetch-new-mods', async (_event, page) => {
-    return await modManager.fetchNewMods(page);
+    return await modManager.fetchNewMods(asPage(page));
   });
 
   ipcMain.handle('fetch-featured-mods', async () => {
@@ -161,7 +167,7 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('get-all-online-mods', async (_, forceRefresh) => {
-    return await modManager.getAllOnlineMods(forceRefresh);
+    return await modManager.getAllOnlineMods(forceRefresh === undefined ? false : asBoolean(forceRefresh));
   });
 
   // Cloud Sync
@@ -202,6 +208,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
     },
     titleBarStyle: 'hidden',
   });
@@ -217,20 +224,7 @@ function createWindow() {
   // Open DevTools for debugging (remove in final release if desired, but good for beta)
   // mainWindow.webContents.openDevTools(); // Disabled for tests
 
-  // Handle external links
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      const parsedUrl = new URL(url);
-      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
-        shell.openExternal(url);
-      } else {
-        console.warn(`Blocked attempt to open external URL with unsafe protocol: ${url}`);
-      }
-    } catch (e) {
-      console.error('Invalid URL in setWindowOpenHandler:', url);
-    }
-    return { action: 'deny' };
-  });
+  configureWindowSecurity(mainWindow.webContents, url => shell.openExternal(url));
 
   mainWindow.on('closed', () => {
     mainWindow = null;

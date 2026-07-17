@@ -60,7 +60,7 @@ describe('DownloadManager', () => {
         const mockStream = {
             write: vi.fn(),
             close: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             on: vi.fn() // critical for 'error' handling on stream if implemented
         };
         (fs.createWriteStream as any).mockReturnValue(mockStream);

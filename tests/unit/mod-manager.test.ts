@@ -43,6 +43,7 @@ vi.mock('fs/promises', () => ({
         unlink: vi.fn(),
         readdir: vi.fn(),
         rm: vi.fn(),
+        rename: vi.fn(),
         rmdir: vi.fn(),
         cp: vi.fn(),
         access: vi.fn(),
@@ -80,6 +81,7 @@ vi.mock('adm-zip', () => {
         default: class {
             constructor() { }
             extractAllTo = vi.fn();
+            getEntries = vi.fn(() => []);
             extractAllToAsync = vi.fn((dest, overwrite, keepPerms, cb) => {
                 if (cb) cb(null);
             });
@@ -91,7 +93,8 @@ vi.mock('adm-zip', () => {
 const mockDownloadManager = {
     startDownload: vi.fn(),
     on: vi.fn(),
-    removeListener: vi.fn()
+    removeListener: vi.fn(),
+    failDownload: vi.fn()
 };
 
 describe('ModManager', () => {
@@ -113,6 +116,7 @@ describe('ModManager', () => {
         (fs.readdir as any).mockResolvedValue([]);
         (fs.unlink as any).mockResolvedValue(undefined);
         (fs.rm as any).mockResolvedValue(undefined);
+        (fs.rename as any).mockResolvedValue(undefined);
         (fs.copyFile as any).mockResolvedValue(undefined);
         (fs.link as any).mockResolvedValue(undefined);
     });
@@ -339,6 +343,22 @@ describe('ModManager', () => {
             expect(fs.unlink).toHaveBeenCalled();
         });
 
+        it('should resolve false when an update download fails', async () => {
+            (fs.readFile as any).mockResolvedValue(JSON.stringify([
+                { id: '1', latestFileUrl: 'http://update' }
+            ]));
+            mockDownloadManager.startDownload.mockReturnValue('dl-failed');
+
+            const promise = modManager.updateMod('1');
+            await new Promise(r => setTimeout(r, 0));
+            const failure = mockDownloadManager.on.mock.calls
+                .find((call: any) => call[0] === 'download-failed');
+
+            expect(failure).toBeDefined();
+            failure[1]('dl-failed', 'Network Error');
+            await expect(promise).resolves.toBe(false);
+        });
+
         it('should return false update if download manager missing', async () => {
             const noDlManager = new ModManager(undefined);
             noDlManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '/p' });
@@ -388,6 +408,21 @@ describe('ModManager', () => {
             modManager.getSettings = vi.fn().mockResolvedValue({ gamePath: '' });
             const result = await modManager.installUE4SS();
             expect(result.success).toBe(false);
+        });
+
+        it('should resolve a UE4SS download failure', async () => {
+            const { fetchLatestRelease } = await import('../../electron/github');
+            (fetchLatestRelease as any).mockResolvedValue('http://ue4ss.zip');
+            mockDownloadManager.startDownload.mockReturnValue('dl-ue4ss-failed');
+
+            const promise = modManager.installUE4SS();
+            await new Promise(r => setTimeout(r, 0));
+            const failure = mockDownloadManager.on.mock.calls
+                .find((call: any) => call[0] === 'download-failed');
+
+            expect(failure).toBeDefined();
+            failure[1]('dl-ue4ss-failed', 'Network Error');
+            await expect(promise).resolves.toEqual({ success: false, message: 'Network Error' });
         });
     });
 

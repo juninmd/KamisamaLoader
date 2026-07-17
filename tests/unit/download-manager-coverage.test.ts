@@ -8,7 +8,7 @@ import { net } from 'electron'; // Mocked
 const mocks = vi.hoisted(() => ({
     request: {
         on: vi.fn(),
-        end: vi.fn(),
+        end: vi.fn((callback?: () => void) => callback?.()),
         abort: vi.fn()
     },
     response: {
@@ -36,7 +36,7 @@ vi.mock('fs', () => ({
     default: {
         createWriteStream: vi.fn().mockReturnValue({
             write: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             close: vi.fn(),
             on: vi.fn()
         }),
@@ -169,7 +169,7 @@ describe('DownloadManager Coverage Gaps', () => {
 
         const mockStream = {
             write: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             close: vi.fn(),
             on: vi.fn()
         };

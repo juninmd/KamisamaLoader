@@ -31,6 +31,7 @@ vi.mock('fs/promises', () => ({
 vi.mock('adm-zip', () => ({
     default: vi.fn(function() {
         return {
+            getEntries: vi.fn(() => []),
             extractAllToAsync: mocks.admZip.extractAllToAsync
         };
     })

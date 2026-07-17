@@ -58,7 +58,7 @@ describe('DownloadManager', () => {
         mockStream = {
             write: vi.fn(),
             close: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             on: vi.fn() // Add on method just in case
         };
         (fs.createWriteStream as any).mockReturnValue(mockStream);

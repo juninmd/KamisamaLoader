@@ -299,8 +299,8 @@ describe('ModManager Final Coverage', () => {
         (fs.readFile as any)
             .mockResolvedValueOnce(JSON.stringify([{ id: 'm1', isEnabled: false, category: 'UI', folderPath: '/mods/m1' }])) // mods.json
             .mockResolvedValueOnce(JSON.stringify({ gamePath: '/game' })) // deployMod -> getSettings
-            .mockResolvedValueOnce(JSON.stringify({ activeProfileId: 'p1' })) // syncActiveProfile -> getSettings
-            .mockResolvedValueOnce(JSON.stringify([{ id: 'p1', modIds: [] }])); // profiles.json
+            .mockResolvedValueOnce(JSON.stringify({ gamePath: '/game', activeProfileId: 'p1' })) // syncActiveProfile -> getSettings
+            .mockResolvedValueOnce(JSON.stringify([{ id: 'p1', name: 'Main', modIds: [] }])); // profiles.json
 
         await modManager.toggleMod('m1', true);
 

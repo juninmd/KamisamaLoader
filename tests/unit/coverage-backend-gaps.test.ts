@@ -19,6 +19,7 @@ vi.mock('electron', () => ({
 vi.mock('adm-zip', () => {
     return {
         default: class {
+            getEntries() { return []; }
             extractAllToAsync(dest: any, overwrite: any, keep: any, cb: any) {
                 if (dest && dest.includes('fail')) {
                     cb(new Error('Zip Error'));

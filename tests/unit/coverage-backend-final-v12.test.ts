@@ -10,7 +10,8 @@ vi.mock('fs/promises', () => ({
         readdir: vi.fn(),
         mkdir: vi.fn(),
         cp: vi.fn(),
-        rm: vi.fn()
+        rm: vi.fn(),
+        rename: vi.fn()
     }
 }));
 vi.mock('../../electron/gamebanana', () => ({
@@ -54,7 +55,8 @@ describe('ModManager - Final specific lines', () => {
         (modManager as any).downloadManager = {
             startDownload: vi.fn(() => 'dl-1'),
             on: vi.fn(),
-            removeListener: vi.fn()
+            removeListener: vi.fn(),
+            failDownload: vi.fn()
         };
 
         const onlineModArg = {
@@ -83,7 +85,8 @@ describe('ModManager - Final specific lines', () => {
         const dlManagerMock = {
             startDownload: vi.fn(() => 'dl-1'),
             on: vi.fn(),
-            removeListener: vi.fn()
+            removeListener: vi.fn(),
+            failDownload: vi.fn()
         };
         (modManager as any).downloadManager = dlManagerMock;
 

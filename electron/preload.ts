@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { Settings, OnlineMod, Download } from '../shared/types.js';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type { Download, OnlineMod, SearchOptions, Settings } from '../shared/types.js';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('minimize-window'),
@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDownloadFolder: (id: string) => ipcRenderer.invoke('open-download-folder', id),
   clearCompletedDownloads: () => ipcRenderer.invoke('clear-completed-downloads'),
   onDownloadUpdate: (callback: (downloads: Download[]) => void) => {
-    const subscription = (_event: any, value: any) => callback(value);
+    const subscription = (_event: IpcRendererEvent, value: Download[]) => callback(value);
     ipcRenderer.on('downloads-update', subscription);
     return () => ipcRenderer.removeListener('downloads-update', subscription);
   },
@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Online Mods
   searchOnlineMods: (page: number, search?: string) => ipcRenderer.invoke('search-online-mods', page, search),
-  searchBySection: (options: any) => ipcRenderer.invoke('search-by-section', options),
+  searchBySection: (options: SearchOptions) => ipcRenderer.invoke('search-by-section', options),
   fetchCategories: (gameId?: number) => ipcRenderer.invoke('fetch-categories', gameId),
   fetchNewMods: (page?: number) => ipcRenderer.invoke('fetch-new-mods', page),
   getModDetails: (gameBananaId: number) => ipcRenderer.invoke('get-mod-details', gameBananaId),

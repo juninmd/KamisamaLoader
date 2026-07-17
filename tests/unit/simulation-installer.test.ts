@@ -152,6 +152,7 @@ vi.mock('adm-zip', () => {
     return {
         default: vi.fn(function(buffer) {
             return {
+                getEntries: vi.fn(() => []),
                 extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => {
                     // Simulate extracting a file
                     const normalizedDest = normalizePath(dest);
@@ -227,7 +228,7 @@ describe('Full Installer Lifecycle Simulation', () => {
         // Verify execFile called with correct args
         // Since settings has gamePath, it should try to launch it
         expect(execFile).toHaveBeenCalledWith(
-            '/game/SparkingZERO.exe',
+            path.normalize('/game/SparkingZERO.exe'),
             expect.arrayContaining(['-fileopenlog']),
             expect.anything(),
             expect.anything()

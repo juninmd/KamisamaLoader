@@ -192,6 +192,16 @@ describe('DownloadsList', () => {
         await waitFor(() => screen.getByText('new.zip'));
     });
 
+    it('should unsubscribe from download updates on unmount', () => {
+        const unsubscribe = vi.fn();
+        (window.electronAPI.onDownloadUpdate as any).mockReturnValue(unsubscribe);
+
+        const { unmount } = renderWithProviders(<DownloadsList />);
+        unmount();
+
+        expect(unsubscribe).toHaveBeenCalledOnce();
+    });
+
     it('should poll for updates', async () => {
         vi.useFakeTimers();
         (window.electronAPI.getDownloads as any).mockResolvedValue([]);
