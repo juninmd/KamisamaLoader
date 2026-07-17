@@ -10,6 +10,18 @@ test('homologates navigation, settings and profiles', async ({ browserName: _bro
   const { page, root, modsDir } = harness;
   await expect(page.getByRole('heading', { name: /SPARKING!/ })).toBeVisible();
   await expect(page.getByText('System Online')).toBeVisible();
+  const hero = page.getByTestId('dashboard-hero');
+  const artwork = page.getByTestId('hero-artwork');
+  await expect(artwork).toHaveJSProperty('complete', true);
+  await expect.poll(() => artwork.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const heroBox = await hero.boundingBox();
+  const artworkBox = await artwork.boundingBox();
+  const launchBox = await page.getByRole('button', { name: 'LAUNCH GAME' }).boundingBox();
+  expect(heroBox && artworkBox && launchBox).toBeTruthy();
+  expect(artworkBox!.y).toBeGreaterThanOrEqual(heroBox!.y);
+  expect(artworkBox!.y + artworkBox!.height).toBeLessThanOrEqual(heroBox!.y + heroBox!.height);
+  expect(launchBox!.y + launchBox!.height).toBeLessThan(heroBox!.y + heroBox!.height);
+  await expect(page.getByRole('img', { name: /placeholder/ })).toHaveCount(3);
   await shot(page, info, '01-dashboard');
 
   await page.getByRole('button', { name: 'Settings' }).click();
@@ -73,5 +85,6 @@ test('homologates catalog, search, filters and details', async ({ browserName: _
   await page.getByText('E2E Aura Pack').click();
   await expect(page.getByText('Hermetic details for E2E Aura Pack')).toBeVisible();
   await expect(page.getByText('0 views')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'E2E Aura Pack placeholder' }).last()).toBeVisible();
   await shot(page, info, '11-mod-details');
 });

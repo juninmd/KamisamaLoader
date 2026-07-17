@@ -133,8 +133,7 @@ describe('Frontend Final Coverage', () => {
 
             // Error again on fallback
             fireEvent.error(img);
-            // Should hide
-            expect(img).toHaveStyle('display: none');
+            expect(screen.getByRole('img', { name: 'Test Mod placeholder' })).toBeVisible();
         });
 
         it('should navigate carousel', () => {
