@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Download, RefreshCw, Trash2, Heart, Folder, ArrowUp, ArrowDown } from 'lucide-react';
+import { Download, RefreshCw, Trash2, Heart, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -8,6 +8,7 @@ import { Badge } from '../ui/Badge';
 import { Switch } from '../ui/Switch';
 import { cn } from '../../lib/utils';
 import type { Mod, LocalMod } from '../../../shared/types';
+import { Artwork } from '../Artwork';
 
 interface ModCardProps {
     mod: Mod;
@@ -56,23 +57,12 @@ export const ModCard: React.FC<ModCardProps> = ({
             >
                 {/* Image Area */}
                 <div className="relative aspect-video w-full overflow-hidden bg-gray-900">
-                    {effectiveMod.images && effectiveMod.images.length > 0 ? (
-                        <img
-                            src={effectiveMod.images[0]}
-                            alt={effectiveMod.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                    ) : effectiveMod.iconUrl ? (
-                        <img
-                            src={effectiveMod.iconUrl}
-                            alt={effectiveMod.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600">
-                            <Folder size={40} strokeWidth={1} />
-                        </div>
-                    )}
+                    <Artwork
+                        src={effectiveMod.images?.[0] || effectiveMod.iconUrl}
+                        alt={effectiveMod.name}
+                        className="w-full h-full"
+                        imageClassName="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
 
                     {/* Overlays */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
