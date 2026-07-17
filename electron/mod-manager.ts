@@ -1036,7 +1036,7 @@ export class ModManager {
                 const onComplete = async (dlId: string) => {
                     if (dlId === downloadId) {
                         const tempFile = path.join(tempDir, fileName);
-                        const modDestDir = path.join(this.modsDir, mod.name.replace(/[^a-z0-9]/gi, '_'));
+                        const modDestDir = path.join(this.modsDir, `${mod.name.replace(/[^a-z0-9]/gi, '_')}_${mod.gameBananaId}`);
                         const stagingDir = `${modDestDir}.installing-${downloadId}`;
                         try {
                             await fs.rm(stagingDir, { recursive: true, force: true });
@@ -1049,7 +1049,11 @@ export class ModManager {
                             // 4. Update mods.json
                             const modsFile = await this.getModsFilePath();
                             let mods: LocalMod[] = [];
-                            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { }
+                            try {
+                                mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8'));
+                            } catch (error: any) {
+                                if (error.code !== 'ENOENT') throw error;
+                            }
 
                             const existingIdx = mods.findIndex((m: LocalMod) => m.gameBananaId === mod.gameBananaId);
                             const size = await this.calculateFolderSize(modDestDir);
