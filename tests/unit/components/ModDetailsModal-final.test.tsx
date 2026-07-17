@@ -74,7 +74,7 @@ describe('ModDetailsModal Final Gaps', () => {
         expect(img).toHaveAttribute('src', 'http://fallback.com/icon.png');
     });
 
-    it('should hide image if error occurs and no fallback/already fallback', async () => {
+    it('should show artwork if error occurs with no fallback', async () => {
          const mod = {
             id: '1',
             name: 'Test Mod',
@@ -103,7 +103,7 @@ describe('ModDetailsModal Final Gaps', () => {
              fireEvent.error(img);
         });
 
-        expect(img).toHaveStyle('display: none');
+        expect(screen.getByRole('img', { name: 'Test Mod placeholder' })).toBeVisible();
     });
 
     it('should load details on mount', async () => {
