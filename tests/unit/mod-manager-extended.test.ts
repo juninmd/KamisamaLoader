@@ -49,6 +49,7 @@ vi.mock('adm-zip', () => {
     return {
         default: class {
             constructor() {}
+            getEntries() { return []; }
             extractAllToAsync(dest: any, overwrite: any, keepOriginal: any, cb: any) { cb(null); }
         }
     };
@@ -167,7 +168,12 @@ describe('ModManager Extended Coverage', () => {
             (net.request as any).mockReturnValue(mockRequest);
 
             // Mock write stream
-            const mockStream = { write: vi.fn(), end: vi.fn(), close: vi.fn(), on: vi.fn() };
+            const mockStream = {
+                write: vi.fn(),
+                end: vi.fn((callback?: () => void) => callback?.()),
+                close: vi.fn(),
+                on: vi.fn()
+            };
             (createWriteStream as any).mockReturnValue(mockStream);
 
             const result = await modManager.installUE4SS();

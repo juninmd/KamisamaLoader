@@ -64,10 +64,10 @@ const Mods: React.FC = () => {
     // Track latest request to avoid race conditions
     const lastRequestId = useRef(0);
 
-    // Initial load for Installed Mods
+    // Refresh after downloads or browsing may have changed the local catalog.
     useEffect(() => {
-        loadInstalledMods();
-    }, []);
+        if (activeTab === 'installed') loadInstalledMods();
+    }, [activeTab]);
 
     // Listen for deep link events or external changes
     useEffect(() => {

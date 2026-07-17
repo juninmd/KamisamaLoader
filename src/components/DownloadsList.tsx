@@ -16,7 +16,7 @@ export const DownloadsList: React.FC = () => {
 
         // This relies on the preload exposing the listener specifically
         // In the d.ts we added onDownloadUpdate
-        window.electronAPI.onDownloadUpdate(handleUpdate);
+        const unsubscribe = window.electronAPI.onDownloadUpdate(handleUpdate);
 
         const interval = setInterval(() => {
             window.electronAPI.getDownloads().then(setDownloads);
@@ -24,7 +24,7 @@ export const DownloadsList: React.FC = () => {
 
         return () => {
             clearInterval(interval);
-            // removeListener would be ideal here if exposed
+            unsubscribe?.();
         };
     }, []);
 

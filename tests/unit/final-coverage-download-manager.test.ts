@@ -48,7 +48,7 @@ describe('DownloadManager Final Coverage', () => {
         mockStream = {
             write: vi.fn(),
             close: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             on: vi.fn()
         };
         (fs.createWriteStream as any).mockReturnValue(mockStream);

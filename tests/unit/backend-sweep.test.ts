@@ -13,7 +13,7 @@ vi.mock('fs', () => {
     return {
         createWriteStream: vi.fn().mockReturnValue({
             write: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             close: vi.fn(),
             on: vi.fn((event, cb) => {
             })
@@ -61,6 +61,7 @@ describe('Backend Sweep - ModManager', () => {
         vi.clearAllMocks();
         mockDownloadManager = new EventEmitter();
         mockDownloadManager.startDownload = vi.fn().mockReturnValue('dl-123');
+        mockDownloadManager.failDownload = vi.fn();
         modManager = new ModManager(mockDownloadManager as unknown as DownloadManager);
         (fs.mkdir as any).mockResolvedValue(undefined);
         (fs.readFile as any).mockResolvedValue(JSON.stringify([]));
@@ -107,6 +108,36 @@ describe('Backend Sweep - ModManager', () => {
 
         await (modManager as any).downloadFile('http://original.com', '/dest/file.zip');
         expect(net.request).toHaveBeenCalledTimes(2);
+    });
+
+    it('downloadFile should resolve only after the file is flushed', async () => {
+        let flush = () => undefined;
+        const syncFs = await import('fs');
+        (syncFs.createWriteStream as any).mockReturnValue({
+            write: vi.fn(),
+            close: vi.fn(),
+            on: vi.fn(),
+            end: vi.fn((callback?: () => void) => { flush = () => callback?.(); })
+        });
+        const response = {
+            statusCode: 200,
+            headers: {},
+            on: vi.fn((event, callback) => { if (event === 'end') callback(); })
+        };
+        const request = {
+            on: vi.fn((event, callback) => { if (event === 'response') callback(response); }),
+            end: vi.fn()
+        };
+        (net.request as any).mockReturnValue(request);
+
+        let settled = false;
+        const download = (modManager as any).downloadFile('http://file', '/dest/file.zip')
+            .then(() => { settled = true; });
+        await Promise.resolve();
+
+        expect(settled).toBe(false);
+        flush();
+        await download;
     });
 
     it('downloadFile should handle network errors', async () => {
@@ -205,6 +236,19 @@ describe('Backend Sweep - ModManager', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
 
         expect((modManager as any).deployMod).not.toHaveBeenCalled();
+    });
+
+    it('installOnlineMod should remove its completion listener on download failure', async () => {
+        vi.spyOn(gamebanana, 'fetchModProfile').mockResolvedValue({
+            _aFiles: [{ _idRow: 1, _sDownloadUrl: 'http://dl.com' }]
+        } as any);
+
+        await modManager.installOnlineMod({ gameBananaId: 123, name: 'TestMod' } as any);
+        expect(mockDownloadManager.listenerCount('download-completed')).toBe(1);
+
+        mockDownloadManager.emit('download-failed', 'dl-123', 'Network Error');
+
+        expect(mockDownloadManager.listenerCount('download-completed')).toBe(0);
     });
 
     it('installOnlineMod should handle extraction failure in callback', async () => {

@@ -134,7 +134,7 @@ describe('Backend Coverage Fill', () => {
             const fsMock = await import('fs');
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
-                end: vi.fn(),
+                end: vi.fn((callback?: () => void) => callback?.()),
                 close: vi.fn()
             });
 
@@ -164,7 +164,7 @@ describe('Backend Coverage Fill', () => {
             const fsMock = await import('fs');
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
-                end: vi.fn(),
+                end: vi.fn((callback?: () => void) => callback?.()),
                 close: vi.fn()
             });
 
@@ -193,7 +193,7 @@ describe('Backend Coverage Fill', () => {
             const fsMock = await import('fs');
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
-                end: vi.fn(),
+                end: vi.fn((callback?: () => void) => callback?.()),
                 close: vi.fn()
             });
 

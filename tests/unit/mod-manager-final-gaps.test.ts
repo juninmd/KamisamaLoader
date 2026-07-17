@@ -52,6 +52,7 @@ vi.mock('adm-zip', () => {
     return {
         default: vi.fn(function() {
             return {
+                getEntries: vi.fn(() => []),
                 extractAllToAsync: vi.fn((dest, overwrite, keep, cb) => cb(null))
             };
         })
@@ -62,7 +63,7 @@ vi.mock('adm-zip', () => {
 vi.mock('fs', () => ({
     createWriteStream: vi.fn().mockReturnValue({
         write: vi.fn(),
-        end: vi.fn(),
+        end: vi.fn((callback?: () => void) => callback?.()),
         close: vi.fn(),
         on: vi.fn()
     })

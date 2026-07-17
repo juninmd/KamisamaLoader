@@ -398,3 +398,4 @@ Mods/
 temp-test-data/
 test-data/
 coverage/
+coverage_report*.txt

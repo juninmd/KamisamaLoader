@@ -117,7 +117,7 @@ describe('ModManager Coverage Gaps', () => {
         // Target is contentDir + 'Movies' + relativePath
         expect(mocks.fs.link).toHaveBeenCalledWith(
             expect.stringContaining('intro.mp4'),
-            expect.stringContaining('Content/Movies/intro.mp4')
+            expect.stringContaining(path.join('Content', 'Movies', 'intro.mp4'))
         );
     });
 

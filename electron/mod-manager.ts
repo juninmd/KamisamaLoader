@@ -10,6 +10,8 @@ import { fetchLatestRelease } from './github.js';
 import { LocalMod, Profile, Settings, OnlineMod } from '../shared/types.js';
 
 import { DownloadManager } from './download-manager.js';
+import { extractArchive } from './archive.js';
+import { parseLocalMods, parseOnlineModsCache, parseProfiles, parseSettings } from './data-validation.js';
 
 export class ModManager {
     private modsDir: string;
@@ -42,7 +44,7 @@ export class ModManager {
         try {
             const file = await this.getProfilesFilePath();
             const data = await fs.readFile(file, 'utf-8');
-            return JSON.parse(data);
+            return parseProfiles(data);
         } catch {
             return [];
         }
@@ -92,7 +94,7 @@ export class ModManager {
 
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             const targetEnabledIds = new Set(profile.modIds);
             const toDisable: LocalMod[] = [];
@@ -182,7 +184,7 @@ export class ModManager {
         try {
             await this.ensureModsDir();
             const data = await fs.readFile(this.settingsFile, 'utf-8');
-            const settings = JSON.parse(data);
+            const settings = parseSettings(data);
             if (settings.modDownloadPath) {
                 this.modsDir = settings.modDownloadPath;
                 this.settingsFile = path.join(this.modsDir, 'settings.json');
@@ -251,7 +253,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            const mods: LocalMod[] = JSON.parse(data);
+            const mods = parseLocalMods(data);
 
             // Check for 0 bytes size and fix aggressively
             let needsSave = false;
@@ -301,7 +303,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return; }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return; }
 
             // Sort by current priority desc (Highest first)
             // If priorities are equal, use name as tie-breaker for deterministic order
@@ -408,19 +410,7 @@ export class ModManager {
     }
 
     private async extractZip(zipPath: string, dest: string): Promise<void> {
-        // Read file async to avoid blocking main thread
-        const buffer = await fs.readFile(zipPath);
-        const zip = new AdmZip(buffer);
-
-        return new Promise((resolve, reject) => {
-            zip.extractAllToAsync(dest, true, false, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        await extractArchive(zipPath, dest);
     }
 
     private async updateUE4SSModsTxt(binariesDir: string, modName: string, enabled: boolean) {
@@ -638,7 +628,7 @@ export class ModManager {
             // Update mods.json
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             // Calculate new priority (highest + 1)
             const maxPriority = mods.reduce((max: number, m: LocalMod) => Math.max(max, m.priority || 0), 0);
@@ -681,7 +671,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
             const modIndex = mods.findIndex((m: LocalMod) => m.id === modId);
             if (modIndex === -1) {
@@ -713,7 +703,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            const mods: LocalMod[] = JSON.parse(data);
+            const mods = parseLocalMods(data);
             const modIndex = mods.findIndex((m: LocalMod) => m.id === modId);
 
             if (modIndex !== -1) {
@@ -763,7 +753,7 @@ export class ModManager {
     async checkForUpdates() {
         const modsFile = await this.getModsFilePath();
         let mods: LocalMod[] = [];
-        try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return []; }
+        try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return []; }
 
         const updates: string[] = [];
         const limit = pLimit(5); // Concurrency limit
@@ -820,8 +810,7 @@ export class ModManager {
                 const fileStream = createWriteStream(destPath);
                 response.on('data', (chunk) => fileStream.write(chunk));
                 response.on('end', () => {
-                    fileStream.end();
-                    resolve();
+                    fileStream.end(resolve);
                 });
                 response.on('error', (err: any) => {
                     fileStream.close();
@@ -838,7 +827,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return false; }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return false; }
 
             const mod = mods.find((m: LocalMod) => m.id === modId);
             if (!mod || !mod.latestFileUrl) return false;
@@ -851,18 +840,29 @@ export class ModManager {
                     const downloadUrl = mod.latestFileUrl!;
                     const id = this.downloadManager!.startDownload(downloadUrl, tempDir, fileName, { type: 'update', modId });
 
+                    const cleanup = () => {
+                        this.downloadManager!.removeListener('download-completed', onComplete);
+                        this.downloadManager!.removeListener('download-failed', onFailed);
+                    };
+
                     const onComplete = async (dlId: string) => {
                         if (dlId === id) {
                             // Proceed with install
                             const tempFile = path.join(tempDir, fileName);
                             const success = await this.finalizeUpdate(mod, tempFile, mods, modsFile);
-                            this.downloadManager!.removeListener('download-completed', onComplete);
+                            cleanup();
                             resolve(success);
                         }
                     };
 
+                    const onFailed = (dlId: string) => {
+                        if (dlId !== id) return;
+                        cleanup();
+                        resolve(false);
+                    };
+
                     this.downloadManager!.on('download-completed', onComplete);
-                    // Handle error too... simplify for now or assume UI handles it
+                    this.downloadManager!.on('download-failed', onFailed);
                 });
             } else {
                 // Fallback / Legacy (keep or remove? Let's remove to force usage)
@@ -960,7 +960,7 @@ export class ModManager {
         if (!forceRefresh) {
             try {
                 const data = await fs.readFile(cacheFile, 'utf-8');
-                const cache = JSON.parse(data);
+                const cache = parseOnlineModsCache(data);
                 if (Date.now() - cache.timestamp < CACHE_DURATION) {
                     console.log('[Cache] Returning cached online mods');
                     return cache.mods;
@@ -1023,6 +1023,11 @@ export class ModManager {
                     mod: { ...mod, latestFileId: latestFile._idRow } // Pass full mod context
                 });
 
+                const cleanup = () => {
+                    this.downloadManager!.removeListener('download-completed', onComplete);
+                    this.downloadManager!.removeListener('download-failed', onFailed);
+                };
+
                 // Listen for completion ONE-OFF for this specific download ID (to trigger install)
                 // Note: Better design might be a global listener in ModManager ctor, but this works for now
                 // IF we don't want to leak listeners, we should be careful. 
@@ -1030,26 +1035,21 @@ export class ModManager {
 
                 const onComplete = async (dlId: string) => {
                     if (dlId === downloadId) {
+                        const tempFile = path.join(tempDir, fileName);
+                        const modDestDir = path.join(this.modsDir, mod.name.replace(/[^a-z0-9]/gi, '_'));
+                        const stagingDir = `${modDestDir}.installing-${downloadId}`;
                         try {
-                            const tempFile = path.join(tempDir, fileName);
-                            // 3. Install logic from temp file
-
-                            const modDestDir = path.join(this.modsDir, mod.name.replace(/[^a-z0-9]/gi, '_'));
-                            await fs.mkdir(modDestDir, { recursive: true });
-
-                            try {
-                                await this.extractZip(tempFile, modDestDir);
-                            } catch (e) {
-                                console.error('Zip extraction failed', e);
-                                // could emit an error event to UI via DownloadManager?
-                            }
-
+                            await fs.rm(stagingDir, { recursive: true, force: true });
+                            await fs.mkdir(stagingDir, { recursive: true });
+                            await this.extractZip(tempFile, stagingDir);
+                            await fs.rm(modDestDir, { recursive: true, force: true });
+                            await fs.rename(stagingDir, modDestDir);
                             await fs.unlink(tempFile);
 
                             // 4. Update mods.json
                             const modsFile = await this.getModsFilePath();
                             let mods: LocalMod[] = [];
-                            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { }
+                            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { }
 
                             const existingIdx = mods.findIndex((m: LocalMod) => m.gameBananaId === mod.gameBananaId);
                             const size = await this.calculateFolderSize(modDestDir);
@@ -1073,24 +1073,30 @@ export class ModManager {
                                 fileSize: size
                             };
 
+                            if (!await this.deployMod(newModEntry)) {
+                                throw new Error('Failed to deploy the installed mod.');
+                            }
                             if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newModEntry };
                             else mods.push(newModEntry);
-
                             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
-
-                            await this.deployMod(newModEntry);
-
-                            // Notify UI? The download manager emits 'completed', we can rely on that or send extra event.
-                            this.downloadManager!.removeListener('download-completed', onComplete);
 
                         } catch (err) {
                             console.error("Install post-download failed", err);
-                            this.downloadManager!.removeListener('download-completed', onComplete);
+                            try { await fs.rm(stagingDir, { recursive: true, force: true }); } catch { }
+                            try { await fs.unlink(tempFile); } catch { }
+                            this.downloadManager!.failDownload(downloadId, `Installation failed: ${(err as Error).message}`);
+                        } finally {
+                            cleanup();
                         }
                     }
                 };
 
+                const onFailed = (dlId: string) => {
+                    if (dlId === downloadId) cleanup();
+                };
+
                 this.downloadManager.on('download-completed', onComplete);
+                this.downloadManager.on('download-failed', onFailed);
 
                 return { success: true, message: 'Download started.', downloadId };
             } else {
@@ -1114,7 +1120,7 @@ export class ModManager {
             console.log(`[ModManager] Getting changelog for modId: ${id}`);
             const modsFile = await this.getModsFilePath();
             let mods: LocalMod[] = [];
-            try { mods = JSON.parse(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
+            try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return null; }
 
             const mod = mods.find(m => m.id === id);
             if (!mod || !mod.gameBananaId) {
@@ -1144,7 +1150,7 @@ export class ModManager {
         try {
             const modsFile = await this.getModsFilePath();
             const data = await fs.readFile(modsFile, 'utf-8');
-            const mods: LocalMod[] = JSON.parse(data);
+            const mods = parseLocalMods(data);
 
             // Sort Descending (High Priority First) to match UI
             mods.sort((a, b) => (b.priority || 0) - (a.priority || 0));
@@ -1212,14 +1218,25 @@ export class ModManager {
                         name: 'UE4SS'
                     });
 
+                    const cleanup = () => {
+                        this.downloadManager!.removeListener('download-completed', onComplete);
+                        this.downloadManager!.removeListener('download-failed', onFailed);
+                    };
+
                     const onComplete = async (completedId: string) => {
                         if (completedId === dlId) {
-                            this.downloadManager!.removeListener('download-completed', onComplete);
+                            cleanup();
                             const result = await this.finalizeUE4SSInstall(tempFile, binariesDir);
                             resolve(result);
                         }
                     };
+                    const onFailed = (failedId: string, message: string) => {
+                        if (failedId !== dlId) return;
+                        cleanup();
+                        resolve({ success: false, message });
+                    };
                     this.downloadManager!.on('download-completed', onComplete);
+                    this.downloadManager!.on('download-failed', onFailed);
                 });
             } else {
                 // Fallback

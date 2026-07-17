@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { app } from 'electron';
+import { parsePersistentCache } from './data-validation.js';
 
 interface CacheEntry {
     data: any;
@@ -152,7 +153,7 @@ export class APICache {
 
         try {
             const data = await fs.readFile(this.persistentCachePath, 'utf-8');
-            const cache = JSON.parse(data);
+            const cache = parsePersistentCache(data);
 
             // Only load non-expired entries
             const now = Date.now();
@@ -174,7 +175,7 @@ export class APICache {
     private async getPersistent(key: string): Promise<CacheEntry | null> {
         try {
             const data = await fs.readFile(this.persistentCachePath, 'utf-8');
-            const cache = JSON.parse(data);
+            const cache = parsePersistentCache(data);
             const entry = cache[key] as CacheEntry;
 
             if (entry && Date.now() - entry.timestamp <= entry.ttl) {
@@ -192,7 +193,7 @@ export class APICache {
 
             try {
                 const data = await fs.readFile(this.persistentCachePath, 'utf-8');
-                cache = JSON.parse(data);
+                cache = parsePersistentCache(data);
             } catch {
                 // File doesn't exist yet, start with empty cache
             }
@@ -220,7 +221,7 @@ export class APICache {
     private async invalidatePersistent(regex: RegExp): Promise<void> {
         try {
             const data = await fs.readFile(this.persistentCachePath, 'utf-8');
-            const cache = JSON.parse(data);
+            const cache = parsePersistentCache(data);
 
             for (const key of Object.keys(cache)) {
                 if (regex.test(key)) {

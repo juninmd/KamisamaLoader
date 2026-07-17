@@ -31,7 +31,7 @@ vi.mock('fs/promises', () => ({
 vi.mock('fs', () => ({
     createWriteStream: vi.fn(() => ({
         write: vi.fn(),
-        end: vi.fn(),
+        end: vi.fn((callback?: () => void) => callback?.()),
         close: vi.fn(),
         on: vi.fn(),
     })),

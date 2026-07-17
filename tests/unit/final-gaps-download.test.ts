@@ -50,7 +50,7 @@ describe('DownloadManager Gaps', () => {
         // Setup mock WriteStream
         mockWriteStream = {
             write: vi.fn(),
-            end: vi.fn(),
+            end: vi.fn((callback?: () => void) => callback?.()),
             close: vi.fn(),
             on: vi.fn(),
         };

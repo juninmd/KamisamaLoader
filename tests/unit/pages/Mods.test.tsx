@@ -105,6 +105,19 @@ describe('Mods Page', () => {
         expect(screen.getByText('No active downloads')).toBeInTheDocument();
     });
 
+    it('should refresh installed mods when returning from downloads', async () => {
+        renderWithProviders(<Mods />);
+        await waitFor(() => screen.getByText('Local Mod'));
+        fireEvent.click(screen.getByRole('button', { name: 'Downloads' }));
+        (window.electronAPI.getInstalledMods as any).mockResolvedValue([
+            { id: '3', name: 'Newly Installed', isEnabled: true, priority: 1, author: 'QA', fileSize: 1 }
+        ]);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Installed' }));
+
+        await waitFor(() => expect(screen.getByText('Newly Installed')).toBeInTheDocument());
+    });
+
     it('should toggle mod', async () => {
         renderWithProviders(<Mods />);
         await waitFor(() => screen.getByText('Local Mod'));
