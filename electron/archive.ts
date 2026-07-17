@@ -25,6 +25,9 @@ export function validateArchiveEntries(entries: ArchiveEntryInfo[]) {
       throw new Error(`Unsafe archive path: ${name}`);
     }
     if (entry.isDirectory) continue;
+    if (entry.size < 0 || entry.compressedSize < 0) {
+      throw new Error(`Invalid entry size in archive: ${name}`);
+    }
     expandedBytes += entry.size;
     if (expandedBytes > MAX_EXPANDED_BYTES) {
       throw new Error('Archive expanded size exceeds 4 GiB.');
