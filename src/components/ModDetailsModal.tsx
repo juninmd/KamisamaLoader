@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Download, ChevronLeft, ChevronRight, Eye, Heart, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Mod, OnlineMod } from '../../shared/types';
+import { Artwork } from './Artwork';
 
 interface ModDetailsModalProps {
     mod: Mod;
@@ -113,19 +114,12 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {/* Hero / Carousel */}
                     <div className="relative w-full aspect-video max-h-[40vh] bg-black">
-                        <img
+                        <Artwork
                             src={displayImages[currentImageIndex]}
+                            fallbackSrc={mod.iconUrl}
                             alt={mod.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                                console.error('Error loading image:', e.currentTarget.src);
-                                // If we already tried fallback or don't have one, hide
-                                if (!mod.iconUrl || e.currentTarget.src.includes(mod.iconUrl)) {
-                                    e.currentTarget.style.display = 'none';
-                                } else {
-                                    e.currentTarget.src = mod.iconUrl;
-                                }
-                            }}
+                            className="w-full h-full"
+                            imageClassName="object-contain"
                         />
 
                         {/* Navigation */}

@@ -48,24 +48,12 @@ describe('Frontend Final Gaps V4', () => {
     });
 
     describe('Dashboard.tsx', () => {
-        it('should handle character image error (Line 116)', async () => {
-            const { container } = renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
+        it('should use bundled hero artwork', async () => {
+            renderWithProviders(<Dashboard onNavigate={vi.fn()} />);
 
-            // Find the image by selector since alt="" hides it from accessibility tree
-            const charImg = container.querySelector('img[src*="fortniteapi.io"]') as HTMLImageElement;
-
-            if (charImg) {
-                // Initial state: visible (default)
-                expect(charImg.style.display).not.toBe('none');
-
-                // Trigger error
-                fireEvent.error(charImg);
-
-                // Check result: display none
-                expect(charImg.style.display).toBe('none');
-            } else {
-                throw new Error('Character image not found');
-            }
+            const artwork = screen.getByTestId('hero-artwork');
+            expect(artwork).toHaveAttribute('src', expect.stringContaining('kamisama-hero.png'));
+            expect(artwork).toHaveAttribute('alt', 'Original cosmic warrior artwork');
         });
 
         it('should handle navigation click on updates banner (Line 169)', async () => {

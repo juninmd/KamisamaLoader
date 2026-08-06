@@ -208,7 +208,7 @@ describe('ModDetailsModal', () => {
 
         // Second error (fallback fails)
         fireEvent.error(img);
-        expect(img).not.toBeVisible();
+        expect(screen.getByRole('img', { name: 'Goku Mod placeholder' })).toBeVisible();
     });
 
     it('should render external link if present', async () => {

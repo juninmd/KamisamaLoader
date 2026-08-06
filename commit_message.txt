@@ -1,0 +1,6 @@
+test: comprehensive test coverage and fuzzing
+
+- Add automated E2E fuzz testing (`fuzz.spec.ts`) for search input and rapid UI navigation edge cases.
+- Increase backend Vitest coverage to >95% statements and branches by creating extensive gap tests.
+- Fix broken E2E paths ensuring `full_system.spec.ts` passes consistently.
+- Implement exhaustive unit tests across `gamebanana`, `mod-manager`, `download-manager`, and API cache systems.

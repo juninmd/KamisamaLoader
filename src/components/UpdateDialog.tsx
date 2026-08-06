@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, Check, ArrowRight, RefreshCw } from 'lucide-react';
+import { Artwork } from './Artwork';
 
 interface Mod {
     id: string;
@@ -42,7 +43,7 @@ const UpdateDialog: React.FC<UpdateDialogProps> = ({ mod, changelog, isUpdating,
                 <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                     <div className="flex items-start space-x-4 mb-6">
                         <div className="w-24 h-24 rounded-lg bg-gray-800 overflow-hidden flex-shrink-0 border border-white/10 shadow-lg relative">
-                            {mod.iconUrl && <img src={mod.iconUrl} alt="icon" className="w-full h-full object-cover" />}
+                            <Artwork src={mod.iconUrl} alt={mod.name} className="w-full h-full" imageClassName="object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
                         </div>
                         <div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Activity, Globe, Download, Zap, RefreshCw, Star } from 'lucide-react';
+import { Artwork } from '../components/Artwork';
+import heroArtwork from '../assets/kamisama-hero.png';
 
 interface DashboardProps {
     onNavigate: (page: string) => void;
@@ -54,13 +56,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-700">
 
             {/* Hero Section - Dynamic & Premium */}
-            <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 flex flex-col md:flex-row items-center justify-between shadow-[0_0_50px_rgba(59,130,246,0.15)] bg-[#050510] group min-h-[300px]">
+            <div data-testid="dashboard-hero" className="relative isolate w-full shrink-0 overflow-hidden rounded-3xl border border-white/10 flex items-center shadow-[0_0_50px_rgba(59,130,246,0.15)] bg-[#050510] group min-h-[380px]">
 
-                {/* Background Image - High Quality Wallpaper */}
-                <div className="absolute inset-0 bg-[url('https://images.alphacoders.com/134/1346413.png')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-1000 ease-in-out mix-blend-lighten"></div>
+                <img
+                    data-testid="hero-artwork"
+                    src={heroArtwork}
+                    alt="Original cosmic warrior artwork"
+                    className="absolute inset-y-0 right-0 h-full w-auto max-w-none object-contain object-right opacity-90 transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
+                />
 
                 {/* Gradient Overlays for Readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-0"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 via-45% to-transparent z-0"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0"></div>
 
                 {/* Content Container */}
@@ -105,21 +111,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     </div>
                 </div>
 
-                {/* Character Art - Right Side */}
-                <div className="hidden lg:block relative z-10 w-[40%] h-full flex items-end justify-end pointer-events-none self-end">
-                    {/* Using a mask to blend the bottom of the character if needed, or just placing it nicely */}
-                    <img
-                        src="https://media.fortniteapi.io/images/cosmetics/c5598877bc33b41249aa3429fa83984d/v2/transparent.png"
-                        className="w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] opacity-90"
-                        style={{ maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)' }}
-                        alt=""
-                        onError={(e) => e.currentTarget.style.display = 'none'}
-                    />
-                </div>
             </div>
 
             {/* Dashboard Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-0 flex-1">
 
                 {/* Left Col: Stats & Quick Actions */}
                 <div className="lg:col-span-1 space-y-6">
@@ -204,9 +199,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         ) : (
                             featuredMods.map((mod) => (
                                 <div key={mod.id} className="glass-panel p-3 flex gap-4 hover:bg-white/10 transition-colors cursor-pointer group border-l-4 border-transparent hover:border-l-blue-500">
-                                    <div className="h-20 w-20 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0 relative">
-                                        <img src={mod.iconUrl} alt={mod.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                    </div>
+                                    <Artwork
+                                        src={mod.iconUrl}
+                                        alt={mod.name}
+                                        className="h-20 w-20 rounded-lg flex-shrink-0"
+                                        imageClassName="object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
                                     <div className="flex flex-col justify-center min-w-0">
                                         <h4 className="font-bold text-white text-base truncate pr-4 group-hover:text-blue-300 transition-colors">{mod.name}</h4>
                                         <p className="text-gray-400 text-sm truncate">{mod.category} • by {mod.author}</p>

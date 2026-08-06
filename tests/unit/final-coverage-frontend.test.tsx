@@ -117,11 +117,11 @@ describe('Frontend Final Coverage', () => {
             // Should switch to iconUrl
             expect(img.src).toContain('http://fallback.com/icon.png');
 
-            // Simulate error again (should hide)
+            // Simulate error again (should show intentional artwork)
             await act(async () => {
                  fireEvent.error(img);
             });
-            expect(img.style.display).toBe('none');
+            expect(screen.getByRole('img', { name: 'Test Mod placeholder' })).toBeVisible();
         });
 
         it('should handle missing mod details from API', async () => {
