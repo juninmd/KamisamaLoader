@@ -82,4 +82,66 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     expect(await window.title()).toBe('Kamisama Loader');
     await window.screenshot({ path: 'evidence/fuzz-navigation.png' });
   });
+
+  test('Rapid button clicks fuzzing', async () => {
+    await window.click('text=Dashboard');
+    await window.waitForTimeout(500);
+
+    const updateAllBtn = window.locator('button:has-text("Update All")');
+    if (await updateAllBtn.isVisible()) {
+      for (let i = 0; i < 15; i++) {
+        await updateAllBtn.click({ force: true });
+      }
+    }
+
+    await window.click('text=Mods');
+    await window.waitForTimeout(500);
+
+    // Rapidly toggle mods
+    const modToggles = window.locator('button[role="switch"]');
+    const count = await modToggles.count();
+
+    if (count > 0) {
+      for (let i = 0; i < 10; i++) {
+        // Toggle the first available mod switch repeatedly
+        await modToggles.first().click({ force: true });
+        await window.waitForTimeout(50);
+      }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'evidence/fuzz-rapid-clicks.png' });
+  });
+
+  test('Settings themes and values fuzzing', async () => {
+    await window.click('button[title="Settings"], button:has(.lucide-settings)');
+    await window.waitForTimeout(1000);
+
+    const themeButtons = window.locator('button:has-text("Light"), button:has-text("Dark"), button:has-text("System")');
+    const themeCount = await themeButtons.count();
+
+    if (themeCount > 0) {
+        for(let i=0; i<15; i++) {
+            const randomThemeIndex = Math.floor(Math.random() * themeCount);
+            await themeButtons.nth(randomThemeIndex).click({force: true});
+            await window.waitForTimeout(100);
+        }
+    }
+
+    // Fuzz background opacity slider if present
+    const opacityInput = window.locator('input[type="range"]');
+    if (await opacityInput.isVisible()) {
+      for (let i = 0; i < 5; i++) {
+        const val = (Math.floor(Math.random() * 20) * 0.05).toFixed(2);
+        await opacityInput.evaluate((el: HTMLInputElement, val: string) => {
+            el.value = val;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }, val);
+      }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'evidence/fuzz-settings-rapid.png' });
+  });
 });
