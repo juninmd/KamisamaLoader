@@ -50,7 +50,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
       }
     }
 
-    await window.screenshot({ path: 'evidence/fuzz-search.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search.png' });
   });
 
   test('Random navigation fuzzing', async () => {
@@ -80,7 +80,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-navigation.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-navigation.png' });
   });
 
   test('Rapid button clicks fuzzing', async () => {
@@ -110,7 +110,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-rapid-clicks.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-clicks.png' });
   });
 
   test('Settings themes and values fuzzing', async () => {
@@ -142,6 +142,70 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-settings-rapid.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-settings-rapid.png' });
   });
+
+  test('Fuzz profile creation', async () => {
+    await window.click('text=Mods');
+    const manageProfilesBtn = window.locator('button[title="Manage Mod Profiles"]');
+    if (await manageProfilesBtn.isVisible()) {
+      await manageProfilesBtn.click();
+      await window.waitForTimeout(500);
+
+      const createProfileBtn = window.locator('button[title="Create New Profile"]');
+      if (await createProfileBtn.isVisible()) {
+        await createProfileBtn.click();
+
+        const profileNameInput = window.getByPlaceholder('Profile Name...');
+        const fuzzStrings = [
+          '   ',
+          'a'.repeat(300),
+          '<script>alert(1)</script>',
+          '../../etc/passwd',
+          '👾 🤖 👻',
+          '   valid name   '
+        ];
+
+        if (await profileNameInput.isVisible()) {
+          for (const fuzz of fuzzStrings) {
+             if (!await profileNameInput.isVisible()) {
+                 if (await createProfileBtn.isVisible()) {
+                     await createProfileBtn.click();
+                 }
+             }
+             if (await profileNameInput.isVisible()) {
+                 await profileNameInput.fill(fuzz);
+                 const saveBtn = window.locator('button:has-text("Save")');
+                 if (await saveBtn.isVisible() && await saveBtn.isEnabled()) {
+                   await saveBtn.click();
+                 }
+                 await window.waitForTimeout(200);
+                 if (await profileNameInput.isVisible()) {
+                   await profileNameInput.fill('');
+                 }
+             }
+          }
+        }
+      }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-profile-creation.png' });
+  });
+
+  test('Keyboard navigation fuzzing', async () => {
+    await window.click('text=Dashboard');
+
+    for (let i = 0; i < 20; i++) {
+        await window.keyboard.press('Tab');
+        await window.waitForTimeout(50);
+        if (i % 5 === 0) {
+            await window.keyboard.press('Enter');
+            await window.waitForTimeout(100);
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-keyboard-navigation.png' });
+    });
 });
