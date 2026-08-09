@@ -24,6 +24,41 @@ export function isTrustedNavigation(target: string, current: string) {
   }
 }
 
+const GAMEBANANA_HOSTS = ['gamebanana.com', 'www.gamebanana.com', 'files.gamebanana.com', 'images.gamebanana.com'];
+
+export function isGameBananaUrl(target: string) {
+  try {
+    const url = new URL(target);
+    return url.protocol === 'https:' && GAMEBANANA_HOSTS.includes(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reads the mod id out of a GameBanana page or 1-click URL, so a download
+ * started inside the built-in browser can go through the normal install flow.
+ */
+export function extractGameBananaModId(target: string): number | null {
+  try {
+    const url = new URL(target);
+    const idRow = url.searchParams.get('_idRow') || url.searchParams.get('id');
+    if (idRow && /^\d+$/.test(idRow)) return parseInt(idRow, 10);
+
+    const parts = url.pathname.split('/').filter(part => part.length > 0);
+    const modsIndex = parts.indexOf('mods');
+    if (modsIndex !== -1 && /^\d+$/.test(parts[modsIndex + 1] || '')) {
+      return parseInt(parts[modsIndex + 1], 10);
+    }
+
+    const last = parts[parts.length - 1];
+    if (last && /^\d+$/.test(last)) return parseInt(last, 10);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function configureWindowSecurity(
   webContents: SecuredWebContents,
   openExternal: (url: string) => Promise<void>

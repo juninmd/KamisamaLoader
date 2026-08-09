@@ -43,6 +43,7 @@ vi.mock('lucide-react', () => ({
     Download: () => <div data-testid="icon-download" />,
     RefreshCw: () => <div data-testid="icon-refresh" />,
     Wrench: () => <div data-testid="icon-wrench" />,
+    Globe: () => <div data-testid="icon-globe" />,
     UploadCloud: () => <div data-testid="icon-upload" />,
     ChevronDown: () => <div data-testid="icon-chevron" />,
     Filter: () => <div data-testid="icon-filter" />,

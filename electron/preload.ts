@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectBackgroundImage: () => ipcRenderer.invoke('select-background-image'),
   openModsDirectory: () => ipcRenderer.invoke('open-mods-directory'),
   verifyDeployment: () => ipcRenderer.invoke('verify-deployment'),
+  openModBrowser: () => ipcRenderer.invoke('open-mod-browser'),
+  setModOrder: (orderedIds: string[]) => ipcRenderer.invoke('set-mod-order', orderedIds),
 
   // Updates
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

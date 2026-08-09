@@ -3,13 +3,16 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { ModManager } from './mod-manager.js';
 import { DownloadManager } from './download-manager.js';
-import { configureWindowSecurity } from './window-security.js';
+import { configureWindowSecurity, extractGameBananaModId, isGameBananaUrl } from './window-security.js';
 import {
   asBoolean, asDirection, asId, asOnlineMod, asPage, asPositiveId,
   asSearchOptions, asSettings, asString, asStringArray,
 } from './ipc-validation.js';
 
 let mainWindow: BrowserWindow | null;
+let modBrowserWindow: BrowserWindow | null = null;
+
+const GAMEBANANA_GAME_ID = 21179; // Dragon Ball Sparking! ZERO
 
 const downloadManager = new DownloadManager();
 const modManager = new ModManager(downloadManager); // Pass dependency
@@ -41,6 +44,8 @@ function registerIpcHandlers() {
   ipcMain.on('close-window', () => mainWindow?.close());
   ipcMain.handle('open-mods-directory', () => modManager.openModsDirectory());
   ipcMain.handle('verify-deployment', () => modManager.verifyDeployment());
+  ipcMain.handle('open-mod-browser', () => openModBrowser());
+  ipcMain.handle('set-mod-order', (_event, orderedIds) => modManager.setModOrder(asStringArray(orderedIds)));
 
   // Mod Management IPC Handlers
   ipcMain.handle('get-installed-mods', async () => {
@@ -232,6 +237,108 @@ function createWindow() {
   });
 }
 
+function installFromGameBananaId(gameBananaId: number) {
+  console.log(`Install triggered for GameBanana ID: ${gameBananaId}`);
+
+  // Basic stub matching OnlineMod interface; installOnlineMod only needs the id
+  const modStub: any = {
+    id: Date.now().toString(),
+    name: 'Unknown',
+    author: 'Unknown',
+    version: '1.0',
+    description: '',
+    isEnabled: true,
+    iconUrl: '',
+    gameBananaId,
+    latestVersion: '1.0',
+  };
+
+  return modManager.installOnlineMod(modStub).then((result) => {
+    console.log('Install result:', result);
+    if (mainWindow) {
+      mainWindow.webContents.send('download-scan-finished');
+    }
+    return result;
+  });
+}
+
+/**
+ * Built-in GameBanana browser. Navigation is pinned to GameBanana, downloads
+ * are handed to the normal install pipeline instead of hitting the disk raw,
+ * and 1-click links are resolved in-process.
+ */
+function openModBrowser() {
+  if (modBrowserWindow && !modBrowserWindow.isDestroyed()) {
+    modBrowserWindow.focus();
+    return true;
+  }
+
+  modBrowserWindow = new BrowserWindow({
+    width: 1280,
+    height: 860,
+    parent: mainWindow ?? undefined,
+    title: 'GameBanana',
+    backgroundColor: '#000000',
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      partition: 'persist:gamebanana',
+    },
+  });
+
+  const browserContents = modBrowserWindow.webContents;
+
+  const handleCandidateUrl = (url: string) => {
+    if (url.startsWith('kamisama://') || url.startsWith('gb-modmanager://')) {
+      handleProtocolUrl(url);
+      return true;
+    }
+    return false;
+  };
+
+  browserContents.setWindowOpenHandler(({ url }) => {
+    if (handleCandidateUrl(url)) return { action: 'deny' };
+    if (isGameBananaUrl(url)) {
+      browserContents.loadURL(url);
+      return { action: 'deny' };
+    }
+    void shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  browserContents.on('will-navigate', (event, url) => {
+    if (handleCandidateUrl(url)) {
+      event.preventDefault();
+      return;
+    }
+    if (!isGameBananaUrl(url)) {
+      event.preventDefault();
+      void shell.openExternal(url);
+    }
+  });
+
+  // A download inside the browser means "install this mod" - route it through
+  // the same pipeline as the 1-click button so it lands in the Mods folder.
+  browserContents.session.on('will-download', (event, item) => {
+    const modId = extractGameBananaModId(browserContents.getURL())
+      ?? extractGameBananaModId(item.getURL());
+    if (!modId) return;
+
+    event.preventDefault();
+    void installFromGameBananaId(modId);
+    mainWindow?.focus();
+  });
+
+  modBrowserWindow.on('closed', () => {
+    modBrowserWindow = null;
+  });
+
+  modBrowserWindow.loadURL(`https://gamebanana.com/games/${GAMEBANANA_GAME_ID}`);
+  return true;
+}
+
 function handleProtocolUrl(url: string) {
   console.log('Received Protocol URL:', url);
   try {
@@ -258,29 +365,7 @@ function handleProtocolUrl(url: string) {
       }
 
       if (gameBananaId > 0) {
-        console.log(`Deep link install triggered for ID: ${gameBananaId}`);
-
-        // Basic stub matching OnlineMod interface
-        const modStub: any = {
-          id: Date.now().toString(),
-          name: 'Unknown',
-          author: 'Unknown',
-          version: '1.0',
-          description: '',
-          isEnabled: true,
-          iconUrl: '',
-          gameBananaId: gameBananaId,
-          latestVersion: '1.0',
-          // Add missing required fields if any, strictly complying with OnlineMod
-          // However, installOnlineMod mostly needs gameBananaId.
-        };
-
-        modManager.installOnlineMod(modStub).then((result) => {
-          console.log('Deep link install result:', result);
-          if (mainWindow) {
-            mainWindow.webContents.send('download-scan-finished');
-          }
-        });
+        void installFromGameBananaId(gameBananaId);
       }
     }
   } catch (e) {

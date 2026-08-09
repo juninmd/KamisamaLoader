@@ -13,6 +13,17 @@ import { DownloadManager } from './download-manager.js';
 import { extractArchive } from './archive.js';
 import { parseLocalMods, parseOnlineModsCache, parseProfiles, parseSettings } from './data-validation.js';
 
+// Loose media mods are not packed: each extension has a home in the Content tree.
+const LOOSE_FILE_TARGETS: Record<string, string> = {
+    '.usm': 'Movies',
+    '.mp4': 'Movies',
+    '.bmp': 'Splash',
+    '.awb': 'Sound',
+    '.acb': 'Sound',
+};
+
+const PAK_EXTENSIONS = ['.pak', '.sig', '.utoc', '.ucas'];
+
 export class ModManager {
     private modsDir: string;
     private settingsFile: string;
@@ -484,6 +495,20 @@ export class ModManager {
             let isMovies = false;
             try { isMovies = (await fs.stat(moviesSrcDir)).isDirectory(); } catch { }
 
+            // Mods shipped as a mirror of the game tree keep their own layout
+            let contentSrcDir: string | null = null;
+            for (const candidate of [
+                this.joinPath(mod.folderPath, 'Content'),
+                this.joinPath(mod.folderPath, 'SparkingZERO', 'Content')
+            ]) {
+                try {
+                    if ((await fs.stat(candidate)).isDirectory()) {
+                        contentSrcDir = candidate;
+                        break;
+                    }
+                } catch { }
+            }
+
             for (const src of files) {
                 // If it is inside ue4ss dir
                 if (isUe4ss && this.isInsidePath(src, ue4ssDir)) {
@@ -527,12 +552,31 @@ export class ModManager {
                 const filename = path.basename(src);
 
                 // Deploy .pak, .sig, .utoc, .ucas
-                if (['.pak', '.sig', '.utoc', '.ucas'].includes(ext)) {
+                if (PAK_EXTENSIONS.includes(ext)) {
                     // Priority prefix: 001_ModName.pak
                     const priority = (mod.priority || 0).toString().padStart(3, '0');
                     const destFilename = `${priority}_${filename}`;
                     const dest = path.join(paksDir, destFilename);
 
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
+                    continue;
+                }
+
+                // Loose files laid out as a copy of the game's Content tree
+                if (contentSrcDir && this.isInsidePath(src, contentSrcDir)) {
+                    const dest = path.join(contentDir, this.relativePath(contentSrcDir, src));
+                    if (await this.deployFile(src, dest)) {
+                        deployedFiles.push(dest);
+                    }
+                    continue;
+                }
+
+                // Bare music, movie and splash files the game reads outside a pak
+                const looseTarget = LOOSE_FILE_TARGETS[ext];
+                if (looseTarget) {
+                    const dest = path.join(contentDir, looseTarget, filename);
                     if (await this.deployFile(src, dest)) {
                         deployedFiles.push(dest);
                     }
@@ -607,6 +651,40 @@ export class ModManager {
             console.error('Undeployment failed', e);
             return false;
         }
+    }
+
+    /**
+     * Applies a full load order, top of the list winning. Pak filenames carry the
+     * priority, so every affected enabled mod is redeployed under its new name.
+     */
+    async setModOrder(orderedIds: string[]) {
+        const modsFile = await this.getModsFilePath();
+        let mods: LocalMod[] = [];
+        try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return false; }
+
+        const total = orderedIds.length;
+        const touched: LocalMod[] = [];
+
+        orderedIds.forEach((id, index) => {
+            const mod = mods.find(m => m.id === id);
+            if (!mod) return;
+            const priority = total - index;
+            if (mod.priority !== priority) {
+                mod.priority = priority;
+                touched.push(mod);
+            }
+        });
+
+        if (touched.length === 0) return true;
+
+        for (const mod of touched) {
+            if (!mod.isEnabled) continue;
+            await this.undeployMod(mod);
+            await this.deployMod(mod);
+        }
+
+        await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+        return true;
     }
 
     private async pathExists(target: string) {

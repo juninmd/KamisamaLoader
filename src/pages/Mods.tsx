@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, RefreshCw, UploadCloud, ChevronDown, Wrench } from 'lucide-react';
+import { Search, Download, RefreshCw, UploadCloud, ChevronDown, Wrench, Globe } from 'lucide-react';
 import { useToast } from '../components/ToastContext';
 import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
@@ -282,6 +282,35 @@ const Mods: React.FC = () => {
             console.error(_e);
         } finally {
             setCheckingUpdates(false);
+        }
+    };
+
+    // The grid only knows the rows it renders, so the visible order is merged
+    // back into the full list before priorities are reassigned.
+    const handleReorder = async (visibleOrder: string[]) => {
+        const fullIds = installedMods.map(m => m.id);
+        const slots = fullIds.reduce<number[]>((acc, id, index) => {
+            if (visibleOrder.includes(id)) acc.push(index);
+            return acc;
+        }, []);
+        slots.forEach((slot, i) => { fullIds[slot] = visibleOrder[i]; });
+
+        const byId = new Map(installedMods.map(m => [m.id, m]));
+        const total = fullIds.length;
+        setInstalledMods(fullIds
+            .map((id, index) => {
+                const mod = byId.get(id);
+                return mod ? { ...mod, priority: total - index } : null;
+            })
+            .filter((m): m is LocalMod => !!m));
+
+        try {
+            await window.electronAPI.setModOrder(fullIds);
+        } catch (e) {
+            console.error('Failed to save load order', e);
+            showToast('Failed to save load order', 'error');
+        } finally {
+            await loadInstalledMods();
         }
     };
 
@@ -597,6 +626,15 @@ const Mods: React.FC = () => {
                                 <span>{repairing ? 'Repairing...' : 'Repair Mods'}</span>
                             </button>
 
+                            <button
+                                onClick={() => window.electronAPI.openModBrowser()}
+                                title="Browse GameBanana inside the loader and install with one click"
+                                className="flex items-center space-x-2 bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                            >
+                                <Globe size={16} />
+                                <span>GameBanana</span>
+                            </button>
+
                             {hasUpdates && (
                                 <button
                                     onClick={handleUpdateAll}
@@ -643,6 +681,7 @@ const Mods: React.FC = () => {
                         onUpdate={(mod) => handleUpdateClick(mod)}
                         onUninstall={handleUninstall}
                         onPriorityChange={handlePriorityChange}
+                        onReorder={handleReorder}
                         updatingMods={updatingMods}
                         onSelect={(mod) => setSelectedMod(mod)}
                     />

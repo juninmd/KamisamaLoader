@@ -36,6 +36,8 @@ if (typeof window !== 'undefined') {
       getModChangelog: vi.fn(),
       getModDetails: vi.fn(),
       setModPriority: vi.fn(),
+      setModOrder: vi.fn(() => Promise.resolve(true)),
+      openModBrowser: vi.fn(() => Promise.resolve(true)),
       searchBySection: vi.fn(),
       fetchCategories: vi.fn(),
       fetchNewMods: vi.fn(),

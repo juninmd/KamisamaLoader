@@ -14,9 +14,12 @@ interface ModGridProps {
     onUpdate?: (mod: Mod) => void;
     onSelect?: (mod: Mod) => void;
     onPriorityChange?: (id: string, direction: 'up' | 'down') => void;
+    onReorder?: (orderedIds: string[]) => void;
     updatingMods?: string[];
     className?: string;
 }
+
+const MOD_DRAG_TYPE = 'application/x-kamisama-mod';
 
 export const ModGrid: React.FC<ModGridProps> = ({
     mods,
@@ -28,9 +31,23 @@ export const ModGrid: React.FC<ModGridProps> = ({
     onUpdate,
     onSelect,
     onPriorityChange,
+    onReorder,
     updatingMods = [],
     className
 }) => {
+    const [draggedId, setDraggedId] = React.useState<string | null>(null);
+
+    // Load order drag: moving a card onto another one drops it at that position
+    const moveMod = (fromId: string, toId: string) => {
+        if (!onReorder || fromId === toId) return;
+        const ids = mods.map(m => m.id);
+        const fromIndex = ids.indexOf(fromId);
+        const toIndex = ids.indexOf(toId);
+        if (fromIndex === -1 || toIndex === -1) return;
+        ids.splice(toIndex, 0, ids.splice(fromIndex, 1)[0]);
+        onReorder(ids);
+    };
+
     // Helper to find installed version
     const getLocalMod = (gameBananaId?: number) => {
         if (!gameBananaId) return undefined;
@@ -71,6 +88,49 @@ export const ModGrid: React.FC<ModGridProps> = ({
 
                 const effectiveLocalMod = localMod || (installedMods.find(m => m.id === mod.id));
                 const isInstalled = !!effectiveLocalMod;
+
+                if (onReorder) {
+                    return (
+                        <div
+                            key={mod.id}
+                            draggable
+                            data-testid={`mod-drag-${mod.id}`}
+                            className={draggedId === mod.id ? 'opacity-40' : undefined}
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData(MOD_DRAG_TYPE, mod.id);
+                                e.dataTransfer.effectAllowed = 'move';
+                                setDraggedId(mod.id);
+                            }}
+                            onDragEnd={() => setDraggedId(null)}
+                            onDragOver={(e) => {
+                                if (!e.dataTransfer.types.includes(MOD_DRAG_TYPE)) return;
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                            }}
+                            onDrop={(e) => {
+                                const sourceId = e.dataTransfer.getData(MOD_DRAG_TYPE);
+                                if (!sourceId) return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                moveMod(sourceId, mod.id);
+                                setDraggedId(null);
+                            }}
+                        >
+                            <ModCard
+                                mod={mod}
+                                localMod={effectiveLocalMod}
+                                isInstalled={isInstalled}
+                                onInstall={onInstall}
+                                onToggle={onToggle}
+                                onUninstall={onUninstall}
+                                onUpdate={onUpdate}
+                                onSelect={onSelect}
+                                onPriorityChange={onPriorityChange}
+                                isUpdating={effectiveLocalMod ? updatingMods.includes(effectiveLocalMod.id) : false}
+                            />
+                        </div>
+                    );
+                }
 
                 return (
                     <ModCard

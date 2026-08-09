@@ -21,6 +21,8 @@ declare global {
       openModsDirectory: () => Promise<boolean>;
       verifyDeployment: () => Promise<{ repaired: string[]; broken: string[]; removedOrphans: number }>;
       setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
+      setModOrder: (orderedIds: string[]) => Promise<boolean>;
+      openModBrowser: () => Promise<boolean>;
 
       // Updates
       checkForUpdates: () => Promise<string[]>;
