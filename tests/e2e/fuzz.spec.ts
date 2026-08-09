@@ -50,7 +50,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
       }
     }
 
-    await window.screenshot({ path: 'evidence/fuzz-search.png' });
+    await window.screenshot({ path: 'tests/evidence/fuzz-search.png' });
   });
 
   test('Random navigation fuzzing', async () => {
@@ -80,7 +80,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-navigation.png' });
+    await window.screenshot({ path: 'tests/evidence/fuzz-navigation.png' });
   });
 
   test('Rapid button clicks fuzzing', async () => {
@@ -110,7 +110,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-rapid-clicks.png' });
+    await window.screenshot({ path: 'tests/evidence/fuzz-rapid-clicks.png' });
   });
 
   test('Settings themes and values fuzzing', async () => {
@@ -142,6 +142,6 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/fuzz-settings-rapid.png' });
+    await window.screenshot({ path: 'tests/evidence/fuzz-settings-rapid.png' });
   });
 });

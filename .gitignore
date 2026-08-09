@@ -399,3 +399,4 @@ temp-test-data/
 test-data/
 coverage/
 coverage_report*.txt
+coverage_output*.txt
