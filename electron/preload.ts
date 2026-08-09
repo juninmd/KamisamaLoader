@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectModDirectory: () => ipcRenderer.invoke('select-mod-directory'),
   selectBackgroundImage: () => ipcRenderer.invoke('select-background-image'),
   openModsDirectory: () => ipcRenderer.invoke('open-mods-directory'),
+  verifyDeployment: () => ipcRenderer.invoke('verify-deployment'),
 
   // Updates
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

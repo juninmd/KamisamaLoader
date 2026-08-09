@@ -40,6 +40,7 @@ function registerIpcHandlers() {
   });
   ipcMain.on('close-window', () => mainWindow?.close());
   ipcMain.handle('open-mods-directory', () => modManager.openModsDirectory());
+  ipcMain.handle('verify-deployment', () => modManager.verifyDeployment());
 
   // Mod Management IPC Handlers
   ipcMain.handle('get-installed-mods', async () => {
@@ -319,6 +320,8 @@ if (!gotTheLock) {
     await modManager.ensureModsDir();
     registerIpcHandlers();
     createWindow();
+    // Re-deploy anything a game patch removed, so mods survive updates
+    modManager.verifyDeployment().catch(e => console.error('Deployment verification failed', e));
   });
 }
 

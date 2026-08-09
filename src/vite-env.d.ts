@@ -19,6 +19,7 @@ declare global {
       selectModDirectory: () => Promise<string | null>;
       selectBackgroundImage: () => Promise<string | null>;
       openModsDirectory: () => Promise<boolean>;
+      verifyDeployment: () => Promise<{ repaired: string[]; broken: string[]; removedOrphans: number }>;
       setModPriority: (modId: string, direction: 'up' | 'down') => Promise<boolean>;
 
       // Updates

@@ -32,6 +32,7 @@ if (typeof window !== 'undefined') {
       installUE4SS: vi.fn(),
       launchGame: vi.fn(),
       openModsDirectory: vi.fn(),
+      verifyDeployment: vi.fn(() => Promise.resolve({ repaired: [], broken: [], removedOrphans: 0 })),
       getModChangelog: vi.fn(),
       getModDetails: vi.fn(),
       setModPriority: vi.fn(),

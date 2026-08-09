@@ -609,6 +609,111 @@ export class ModManager {
         }
     }
 
+    private async pathExists(target: string) {
+        try {
+            await fs.access(target);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private async existingDeployedFiles(mod: LocalMod) {
+        if (!Array.isArray(mod.deployedFiles)) return [];
+        const present: string[] = [];
+        for (const file of mod.deployedFiles) {
+            if (await this.pathExists(file)) present.push(file);
+        }
+        return present;
+    }
+
+    /**
+     * Removes files left inside ~mods that no longer belong to any mod we deploy.
+     * Only touches our own "001_" prefixed pak set, so files dropped there by
+     * hand are preserved.
+     */
+    private async removeOrphanPaks(mods: LocalMod[], gamePath: string) {
+        const { paksDir } = this.resolveGamePaths(gamePath);
+        const owned = new Set<string>();
+        for (const mod of mods) {
+            for (const file of mod.deployedFiles || []) {
+                if (this.isInsidePath(file, paksDir)) owned.add(path.basename(file));
+            }
+        }
+
+        let removed = 0;
+        let entries: string[] = [];
+        try { entries = await fs.readdir(paksDir); } catch { return removed; }
+        if (!Array.isArray(entries)) return removed;
+
+        for (const entry of entries) {
+            if (!/^\d{3}_.+\.(pak|sig|utoc|ucas)$/i.test(entry)) continue;
+            if (owned.has(entry)) continue;
+            try {
+                await fs.unlink(path.join(paksDir, entry));
+                removed++;
+            } catch (e) {
+                console.warn(`Failed to remove orphan pak: ${entry}`, e);
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Reconciles mods.json with what is actually on disk inside the game folder.
+     * A game patch or a Steam file validation wipes Paks/~mods, which left mods
+     * flagged as enabled while the game silently ran vanilla - the reason mods
+     * had to be reinstalled by hand. Enabled mods are redeployed from the local
+     * Mods folder, disabled mods have leftovers removed.
+     */
+    async verifyDeployment() {
+        const result = { repaired: [] as string[], broken: [] as string[], removedOrphans: 0 };
+        const settings = await this.getSettings();
+        if (!settings.gamePath) return result;
+
+        const modsFile = await this.getModsFilePath();
+        let mods: LocalMod[] = [];
+        try { mods = parseLocalMods(await fs.readFile(modsFile, 'utf-8')); } catch { return result; }
+
+        let changed = false;
+
+        for (const mod of mods) {
+            if (mod.isEnabled) {
+                if (!await this.pathExists(mod.folderPath)) {
+                    result.broken.push(mod.name);
+                    continue;
+                }
+
+                const present = await this.existingDeployedFiles(mod);
+                const isDeployed = (mod.deployedFiles?.length || 0) > 0 && present.length === mod.deployedFiles!.length;
+                if (isDeployed) continue;
+
+                if (await this.deployMod(mod)) {
+                    changed = true;
+                    if ((mod.deployedFiles?.length || 0) > 0) result.repaired.push(mod.name);
+                }
+                continue;
+            }
+
+            // Disabled mods must not keep any file inside the game folder.
+            if ((await this.existingDeployedFiles(mod)).length > 0) {
+                await this.undeployMod(mod);
+                changed = true;
+            }
+        }
+
+        result.removedOrphans = await this.removeOrphanPaks(mods, settings.gamePath);
+
+        if (changed || result.removedOrphans > 0) {
+            await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));
+        }
+
+        if (result.repaired.length || result.broken.length || result.removedOrphans) {
+            console.log(`[ModManager] Deployment verified: ${result.repaired.length} repaired, ${result.broken.length} broken, ${result.removedOrphans} orphans removed`);
+        }
+        return result;
+    }
+
     async installMod(filePath: string) {
         try {
             await this.ensureModsDir();
@@ -1376,6 +1481,9 @@ export class ModManager {
                 }
             }
         }
+
+        // Make sure the game folder still holds every enabled mod before starting
+        await this.verifyDeployment();
 
         // Get enabled mods to potentially pass as parameters
         const mods = await this.getInstalledMods();

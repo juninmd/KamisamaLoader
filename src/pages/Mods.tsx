@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, RefreshCw, UploadCloud, ChevronDown } from 'lucide-react';
+import { Search, Download, RefreshCw, UploadCloud, ChevronDown, Wrench } from 'lucide-react';
 import { useToast } from '../components/ToastContext';
 import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
@@ -40,6 +40,7 @@ const Mods: React.FC = () => {
     const [updateChangelog, setUpdateChangelog] = useState<any | null>(null);
 
     const [checkingUpdates, setCheckingUpdates] = useState(false);
+    const [repairing, setRepairing] = useState(false);
     const [updatingMods, setUpdatingMods] = useState<string[]>([]);
 
     // Drag and Drop state
@@ -281,6 +282,26 @@ const Mods: React.FC = () => {
             console.error(_e);
         } finally {
             setCheckingUpdates(false);
+        }
+    };
+
+    const handleRepairMods = async () => {
+        setRepairing(true);
+        try {
+            const result = await window.electronAPI.verifyDeployment();
+            if (result.broken.length > 0) {
+                showToast(`Missing mod files for: ${result.broken.join(', ')}. Reinstall required.`, 'error');
+            } else if (result.repaired.length > 0) {
+                showToast(`Re-deployed ${result.repaired.length} mod(s) to the game folder`, 'success');
+            } else {
+                showToast('All enabled mods are already deployed', 'info');
+            }
+            await loadInstalledMods();
+        } catch (e) {
+            console.error('Repair failed', e);
+            showToast('Failed to repair mods', 'error');
+        } finally {
+            setRepairing(false);
         }
     };
 
@@ -564,6 +585,16 @@ const Mods: React.FC = () => {
                             >
                                 <RefreshCw size={16} className={checkingUpdates ? "animate-spin" : ""} />
                                 <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
+                            </button>
+
+                            <button
+                                onClick={handleRepairMods}
+                                disabled={repairing}
+                                title="Re-deploy enabled mods removed by a game update"
+                                className={`flex items-center space-x-2 bg-amber-600/20 text-amber-300 border border-amber-500/30 hover:bg-amber-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all ${repairing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <Wrench size={16} className={repairing ? "animate-spin" : ""} />
+                                <span>{repairing ? 'Repairing...' : 'Repair Mods'}</span>
                             </button>
 
                             {hasUpdates && (
