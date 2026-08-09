@@ -27,7 +27,7 @@ test('homologates navigation, settings and profiles', async ({ browserName: _bro
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByPlaceholder('Path to Dragon Ball: Sparking! ZERO executable'))
-    .toHaveValue(`${root}\\SparkingZERO.exe`);
+    .toHaveValue(`${root}/SparkingZERO.exe`);
   await expect(page.getByPlaceholder('Default internal directory')).toHaveValue(modsDir);
   await shot(page, info, '02-settings');
 

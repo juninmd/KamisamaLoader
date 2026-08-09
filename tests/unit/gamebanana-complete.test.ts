@@ -117,14 +117,14 @@ describe('GameBanana Complete Coverage', () => {
 
             // We can't easily test the internal state without exporting it or refactoring.
             // But we can trust the logic if we cover the lines.
-            // Coverage report said `checkRateLimit` branch `if (requestCount >= 60)` was uncovered.
+            // Coverage report said `checkRateLimit` branch `if (requestCount >= 50)` was uncovered.
 
             // To hit it, we MUST make > 60 calls.
             // Mock fetch to be instant.
             (global.fetch as any).mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
 
             const p = [];
-            for(let i=0; i<65; i++) {
+            for(let i=0; i<70; i++) {
                 p.push(fetchCategories());
             }
 
@@ -133,7 +133,7 @@ describe('GameBanana Complete Coverage', () => {
 
             await Promise.all(p);
             // If we are here without timeout error, it worked.
-            expect(global.fetch).toHaveBeenCalledTimes(65);
+            expect(global.fetch).toHaveBeenCalledTimes(70);
         });
     });
 
