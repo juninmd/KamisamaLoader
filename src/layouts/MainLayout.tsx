@@ -3,6 +3,7 @@ import { LayoutDashboard, Package, Settings as SettingsIcon } from 'lucide-react
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Button';
 import { useSettings } from '../components/SettingsContext';
+import TitleBar from '../components/TitleBar';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -39,13 +40,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activePage, onNavigat
 
     return (
         <div
-            className="flex h-screen w-full bg-background text-foreground overflow-hidden relative transition-all duration-500"
+            className="flex h-screen w-full bg-background text-foreground overflow-hidden relative transition-all duration-500 pt-8"
             style={settings.backgroundImage ? {
                 backgroundImage: `url(${settings.backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
             } : {}}
         >
+            <TitleBar />
             {/* Background Overlay for readability if image is set */}
             {settings.backgroundImage && (
                 <div

@@ -24,6 +24,26 @@ const LOOSE_FILE_TARGETS: Record<string, string> = {
 
 const PAK_EXTENSIONS = ['.pak', '.sig', '.utoc', '.ucas'];
 
+// Windows holds directory handles briefly after rm/extract (AV scans, shell).
+// Rename retries first; if it still fails, fall back to copy + delete.
+const RETRYABLE_RENAME_CODES = new Set(['EPERM', 'EBUSY', 'ENOTEMPTY', 'EACCES']);
+
+async function moveDirWithRetry(src: string, dest: string, attempts = 5): Promise<void> {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            await fs.rename(src, dest);
+            return;
+        } catch (err: any) {
+            if (attempt === attempts || !RETRYABLE_RENAME_CODES.has(err?.code)) {
+                await fs.cp(src, dest, { recursive: true });
+                await fs.rm(src, { recursive: true, force: true });
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 400));
+        }
+    }
+}
+
 export class ModManager {
     private modsDir: string;
     private settingsFile: string;
@@ -1226,7 +1246,7 @@ export class ModManager {
                             await fs.mkdir(stagingDir, { recursive: true });
                             await this.extractZip(tempFile, stagingDir);
                             await fs.rm(modDestDir, { recursive: true, force: true });
-                            await fs.rename(stagingDir, modDestDir);
+                            await moveDirWithRetry(stagingDir, modDestDir);
                             await fs.unlink(tempFile);
 
                             // 4. Update mods.json
@@ -1260,9 +1280,15 @@ export class ModManager {
                                 fileSize: size
                             };
 
+                            // Deploy is best-effort: without a game path it is
+                            // skipped and the mod stays disabled until configured.
                             if (!await this.deployMod(newModEntry)) {
-                                throw new Error('Failed to deploy the installed mod.');
+                                console.warn(`Deploy skipped for ${mod.name} (game path not configured?)`);
+                                newModEntry.isEnabled = false;
                             }
+
+                            // Register the mod so a deployment problem never
+                            // orphans an installed mod or rolls the install back.
                             if (existingIdx !== -1) mods[existingIdx] = { ...mods[existingIdx], ...newModEntry };
                             else mods.push(newModEntry);
                             await fs.writeFile(modsFile, JSON.stringify(mods, null, 2));

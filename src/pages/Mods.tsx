@@ -64,6 +64,9 @@ const Mods: React.FC = () => {
     const initialLoadDone = useRef(false);
     // Track latest request to avoid race conditions
     const lastRequestId = useRef(0);
+    // Infinite scroll: next page to load + in-flight guard (page advances only when idle)
+    const pageRef = useRef(1);
+    const loadingBrowseRef = useRef(false);
 
     // Refresh after downloads or browsing may have changed the local catalog.
     useEffect(() => {
@@ -116,8 +119,9 @@ const Mods: React.FC = () => {
         // Increment request ID
         const requestId = ++lastRequestId.current;
 
-        if (loadingBrowse && !reset) return;
+        if (loadingBrowseRef.current && !reset) return;
 
+        loadingBrowseRef.current = true;
         setLoadingBrowse(true);
         try {
             console.log(`[Browse] Fetching page ${page}...`);
@@ -172,8 +176,10 @@ const Mods: React.FC = () => {
             if (reset || page === 1) {
                 setBrowseMods(processed);
                 setBrowsePage(1);
+                pageRef.current = 1;
             } else {
                 setBrowseMods(prev => [...prev, ...processed]);
+                pageRef.current = page;
             }
 
             // If we got fewer results than requested, we likely hit the end
@@ -187,6 +193,7 @@ const Mods: React.FC = () => {
             console.error('Failed to load online mods:', error);
             showToast('Failed to load online mods', 'error');
         } finally {
+            loadingBrowseRef.current = false;
             setLoadingBrowse(false);
         }
     };
@@ -213,13 +220,28 @@ const Mods: React.FC = () => {
         }
     }, [filters, searchQuery]);
 
-    // Effect: Infinite Scroll (Page > 1)
+    // Effect: Infinite Scroll (loads next page when sentinel is visible and idle)
+    const observerTarget = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (browsePage > 1 && activeTab === 'browse') {
-            loadBrowseMods(browsePage, false);
-        }
-    }, [browsePage]);
+        if (loadingBrowseRef.current || !hasMore) return;
 
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !loadingBrowseRef.current) {
+                    const next = pageRef.current + 1;
+                    setBrowsePage(next);
+                    loadBrowseMods(next, false);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [loadingBrowse, hasMore, browseMods]);
     // Effect: Sync Installed Status
     useEffect(() => {
         if (browseMods.length > 0) {
@@ -232,27 +254,6 @@ const Mods: React.FC = () => {
             });
         }
     }, [installedMods]);
-
-    // Infinite Scroll Observer
-    const observerTarget = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (loadingBrowse || !hasMore) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    setBrowsePage(prev => prev + 1);
-                }
-            },
-            { threshold: 0.1 }
-        );
-
-        if (observerTarget.current) {
-            observer.observe(observerTarget.current);
-        }
-
-        return () => observer.disconnect();
-    }, [loadingBrowse, hasMore, browseMods]);
 
     // Filter Logic for Installed Mods (Local)
     const filteredInstalledMods = installedMods.filter(mod => {
