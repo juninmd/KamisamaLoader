@@ -50,7 +50,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
       }
     }
 
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-search.png' });
   });
 
   test('Random navigation fuzzing', async () => {
@@ -80,7 +80,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-navigation.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-navigation.png' });
   });
 
   test('Rapid button clicks fuzzing', async () => {
@@ -110,7 +110,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-clicks.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-rapid-clicks.png' });
   });
 
   test('Settings themes and values fuzzing', async () => {
@@ -142,7 +142,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-settings-rapid.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-settings-rapid.png' });
   });
 
   test('Fuzz profile creation', async () => {
@@ -190,7 +190,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-profile-creation.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-profile-creation.png' });
   });
 
   test('Keyboard navigation fuzzing', async () => {
@@ -206,6 +206,6 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-keyboard-navigation.png' });
+    await window.screenshot({ path: 'evidence/homologation/fuzz-keyboard-navigation.png' });
     });
 });
