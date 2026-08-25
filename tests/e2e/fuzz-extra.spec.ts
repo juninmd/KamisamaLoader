@@ -107,4 +107,73 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
       await window.screenshot({ path: 'evidence/homologation/fuzz-mouse-hover.png' });
   });
 
+
+
+  test('Extensive Mod Settings Fuzzing', async () => {
+    await window.click('text=Mods');
+    await window.waitForTimeout(500);
+
+    const filterButton = window.locator('button:has-text("All Categories")');
+    if (await filterButton.isVisible()) {
+        for(let i=0; i<10; i++) {
+             await filterButton.click({ force: true });
+             await window.waitForTimeout(50);
+             await window.keyboard.press('ArrowDown');
+             await window.keyboard.press('Enter');
+        }
+    }
+
+    const sortButton = window.locator('button:has-text("Sort by:")');
+    if (await sortButton.isVisible()) {
+        for(let i=0; i<5; i++) {
+            await sortButton.click({ force: true });
+            await window.waitForTimeout(50);
+            await window.keyboard.press('ArrowDown');
+            await window.keyboard.press('Enter');
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'evidence/homologation/fuzz-mod-filters.png' });
+});
+
+test('Theme Toggle Spam Fuzzing', async () => {
+    await window.click('button[title="Settings"], button:has(.lucide-settings)');
+    await window.waitForTimeout(500);
+
+    const themeToggle = window.locator('button:has-text("Light"), button:has-text("Dark"), button:has-text("System")').first();
+    if (await themeToggle.isVisible()) {
+        for (let i = 0; i < 20; i++) {
+            await themeToggle.click({ force: true });
+            await window.waitForTimeout(20);
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'evidence/homologation/fuzz-theme-spam.png' });
+});
+
+test('Spam Download Button Fuzzing', async () => {
+    await window.click('text=Mods');
+    const browseTab = window.locator('button:has-text("Browse Online")');
+    if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
+        await browseTab.click();
+    }
+    await window.waitForTimeout(1000);
+
+    const firstModCard = window.locator('.group.relative.flex.flex-col').first();
+    if (await firstModCard.isVisible()) {
+        const downloadBtn = firstModCard.locator('button[title="Download Mod"], button:has(.lucide-download)');
+        if (await downloadBtn.isVisible()) {
+            for(let i=0; i<10; i++) {
+                 await downloadBtn.click({ force: true });
+                 await window.waitForTimeout(10);
+            }
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'evidence/homologation/fuzz-download-spam.png' });
+});
+
 });

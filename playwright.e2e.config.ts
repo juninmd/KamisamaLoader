@@ -7,5 +7,5 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   workers: 1,
   retries: 0,
-  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  use: { trace: 'retain-on-failure', screenshot: 'on' },
 });
