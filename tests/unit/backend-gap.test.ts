@@ -28,6 +28,8 @@ describe('ModManager Backend Gaps', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     modManager = new ModManager();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     // Default mock implementation
     (fs.readFile as any).mockResolvedValue(JSON.stringify([]));
     (fs.stat as any).mockResolvedValue({ isDirectory: () => true });

@@ -31,6 +31,7 @@ describe('ModManager deleteProfile gaps', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         modManager = new ModManager();
+        vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     it('should catch error in deleteProfile', async () => {
