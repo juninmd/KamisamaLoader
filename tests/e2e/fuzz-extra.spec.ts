@@ -38,7 +38,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     await window.waitForTimeout(500);
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-resizing.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-resizing.png' });
   });
 
   test('Rapid modal toggling fuzzing', async () => {
@@ -61,7 +61,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-modal-rapid.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-modal-rapid.png' });
   });
 
   test('Malformed Search input fuzzing in Browse Online', async () => {
@@ -91,7 +91,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-search-malformed.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search-malformed.png' });
   });
 
   test('Mouse movement and rapid hover fuzzing', async () => {
@@ -104,7 +104,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
       }
 
       expect(await window.title()).toBe('Kamisama Loader');
-      await window.screenshot({ path: 'evidence/homologation/fuzz-mouse-hover.png' });
+      await window.screenshot({ path: 'tests/evidence/homologation/fuzz-mouse-hover.png' });
   });
 
 
@@ -134,7 +134,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-mod-filters.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-mod-filters.png' });
 });
 
 test('Theme Toggle Spam Fuzzing', async () => {
@@ -150,7 +150,7 @@ test('Theme Toggle Spam Fuzzing', async () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-theme-spam.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-theme-spam.png' });
 });
 
 test('Spam Download Button Fuzzing', async () => {
@@ -173,7 +173,7 @@ test('Spam Download Button Fuzzing', async () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-download-spam.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-download-spam.png' });
 });
 
 });
