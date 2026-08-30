@@ -1,3 +1,4 @@
+import { launchFuzzApp } from "./support/fuzz-setup";
 import { test, expect, _electron as electron } from '@playwright/test';
 
 test.describe('Fuzz Testing and Edge Cases', () => {
@@ -5,13 +6,9 @@ test.describe('Fuzz Testing and Edge Cases', () => {
   let window: any;
 
   test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
+    const setup = await launchFuzzApp();
+    electronApp = setup.electronApp;
+    window = setup.window;
   });
 
   test.afterEach(async () => {
@@ -50,7 +47,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
       }
     }
 
-    await window.screenshot({ path: 'evidence/homologation/fuzz-search.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search.png' });
   });
 
   test('Random navigation fuzzing', async () => {
@@ -80,7 +77,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-navigation.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-navigation.png' });
   });
 
   test('Rapid button clicks fuzzing', async () => {
@@ -110,7 +107,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-rapid-clicks.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-clicks.png' });
   });
 
   test('Settings themes and values fuzzing', async () => {
@@ -142,7 +139,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-settings-rapid.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-settings-rapid.png' });
   });
 
   test('Fuzz profile creation', async () => {
@@ -190,7 +187,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-profile-creation.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-profile-creation.png' });
   });
 
   test('Keyboard navigation fuzzing', async () => {
@@ -206,6 +203,6 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     }
 
     expect(await window.title()).toBe('Kamisama Loader');
-    await window.screenshot({ path: 'evidence/homologation/fuzz-keyboard-navigation.png' });
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-keyboard-navigation.png' });
     });
 });
