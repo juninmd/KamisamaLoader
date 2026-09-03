@@ -36,6 +36,16 @@ describe('Archive Coverage', () => {
         expect(() => Archive.validateArchiveEntries(entries)).toThrow('Invalid entry size');
     });
 
+    it('should throw error on invalid entry compressed size', () => {
+        const entries = [{
+            entryName: 'test.txt',
+            isDirectory: false,
+            size: 100,
+            compressedSize: -1
+        }];
+        expect(() => Archive.validateArchiveEntries(entries)).toThrow('Invalid entry size');
+    });
+
     it('should throw error on unsafe paths', () => {
         const entries = [{
             entryName: '../test.txt',
