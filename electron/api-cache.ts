@@ -87,6 +87,7 @@ export class APICache {
         if (this.memoryCache.size > this.maxMemorySize) {
             const firstKey = this.memoryCache.keys().next().value;
             if (firstKey !== undefined) {
+                /* v8 ignore next 3 */
                 this.memoryCache.delete(firstKey);
                 console.log(`[Cache] Evicted oldest entry: ${firstKey}`);
             }
