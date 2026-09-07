@@ -1,24 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test';
+import { test, expect } from './support/fuzz-test';
 
 test.describe('Fuzz Testing and Edge Cases', () => {
-  let electronApp: any;
-  let window: any;
-
-  test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
-  });
-
-  test.afterEach(async () => {
-    await electronApp.close();
-  });
-
-  test('Search input fuzzing', async () => {
+  test('Search input fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
@@ -53,7 +36,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search.png' });
   });
 
-  test('Random navigation fuzzing', async () => {
+  test('Random navigation fuzzing', async ({ window }) => {
     // Navigate via sidebar explicitly
     const tabs = [
         { name: 'Dashboard', selector: 'text=Dashboard' },
@@ -83,7 +66,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-navigation.png' });
   });
 
-  test('Rapid button clicks fuzzing', async () => {
+  test('Rapid button clicks fuzzing', async ({ window }) => {
     await window.click('text=Dashboard');
     await window.waitForTimeout(500);
 
@@ -113,7 +96,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-clicks.png' });
   });
 
-  test('Settings themes and values fuzzing', async () => {
+  test('Settings themes and values fuzzing', async ({ window }) => {
     await window.click('button[title="Settings"], button:has(.lucide-settings)');
     await window.waitForTimeout(1000);
 
@@ -145,7 +128,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-settings-rapid.png' });
   });
 
-  test('Fuzz profile creation', async () => {
+  test('Fuzz profile creation', async ({ window }) => {
     await window.click('text=Mods');
     const manageProfilesBtn = window.locator('button[title="Manage Mod Profiles"]');
     if (await manageProfilesBtn.isVisible()) {
@@ -193,7 +176,7 @@ test.describe('Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-profile-creation.png' });
   });
 
-  test('Keyboard navigation fuzzing', async () => {
+  test('Keyboard navigation fuzzing', async ({ window }) => {
     await window.click('text=Dashboard');
 
     for (let i = 0; i < 20; i++) {

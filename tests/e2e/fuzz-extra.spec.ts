@@ -1,24 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test';
+import { test, expect } from './support/fuzz-test';
 
 test.describe('Additional Fuzz Testing and Edge Cases', () => {
-  let electronApp: any;
-  let window: any;
-
-  test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
-  });
-
-  test.afterEach(async () => {
-    await electronApp.close();
-  });
-
-  test('Window resizing fuzzing', async () => {
+  test('Window resizing fuzzing', async ({ window }) => {
     const sizes = [
       { width: 1920, height: 1080 },
       { width: 800, height: 600 },
@@ -41,7 +24,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-resizing.png' });
   });
 
-  test('Rapid modal toggling fuzzing', async () => {
+  test('Rapid modal toggling fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     await window.waitForTimeout(500);
 
@@ -64,7 +47,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-modal-rapid.png' });
   });
 
-  test('Malformed Search input fuzzing in Browse Online', async () => {
+  test('Malformed Search input fuzzing in Browse Online', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
@@ -94,7 +77,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search-malformed.png' });
   });
 
-  test('Mouse movement and rapid hover fuzzing', async () => {
+  test('Mouse movement and rapid hover fuzzing', async ({ window }) => {
       // Rapidly move mouse across the screen to trigger hover states
       for (let i = 0; i < 20; i++) {
           const x = Math.floor(Math.random() * 800);
@@ -109,7 +92,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
 
 
 
-  test('Extensive Mod Settings Fuzzing', async () => {
+  test('Extensive Mod Settings Fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     await window.waitForTimeout(500);
 
@@ -137,7 +120,7 @@ test.describe('Additional Fuzz Testing and Edge Cases', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-mod-filters.png' });
 });
 
-test('Theme Toggle Spam Fuzzing', async () => {
+test('Theme Toggle Spam Fuzzing', async ({ window }) => {
     await window.click('button[title="Settings"], button:has(.lucide-settings)');
     await window.waitForTimeout(500);
 
@@ -153,7 +136,7 @@ test('Theme Toggle Spam Fuzzing', async () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-theme-spam.png' });
 });
 
-test('Spam Download Button Fuzzing', async () => {
+test('Spam Download Button Fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {

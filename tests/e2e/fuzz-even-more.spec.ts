@@ -1,24 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test';
+import { test, expect } from './support/fuzz-test';
 
 test.describe('Even More Extended Fuzz Testing Scenarios', () => {
-  let electronApp: any;
-  let window: any;
-
-  test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
-  });
-
-  test.afterEach(async () => {
-    await electronApp.close();
-  });
-
-  test('Excessively long query string search fuzzing', async () => {
+  test('Excessively long query string search fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
@@ -49,7 +32,7 @@ test.describe('Even More Extended Fuzz Testing Scenarios', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-search-excessive.png' });
   });
 
-  test('Rapid sorting and filter combination fuzzing', async () => {
+  test('Rapid sorting and filter combination fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
@@ -84,7 +67,7 @@ test.describe('Even More Extended Fuzz Testing Scenarios', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-sorting-filtering-rapid.png' });
   });
 
-  test('Context menu and rapid escape fuzzing', async () => {
+  test('Context menu and rapid escape fuzzing', async ({ window }) => {
     await window.click('text=Mods');
     await window.waitForTimeout(500);
 
@@ -108,7 +91,7 @@ test.describe('Even More Extended Fuzz Testing Scenarios', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-context-menu-spam.png' });
   });
 
-  test('Window minimize, maximize and restore fuzzing', async () => {
+  test('Window minimize, maximize and restore fuzzing', async ({ window }) => {
     for (let i = 0; i < 10; i++) {
       // We simulate window state changes using window.evaluate to call electron window APIs
       // Note: We might need to ensure window.electronAPI is available.
@@ -124,7 +107,7 @@ test.describe('Even More Extended Fuzz Testing Scenarios', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-window-state-rapid.png' });
   });
 
-  test('Simulate offline and online state rapid toggling', async () => {
+  test('Simulate offline and online state rapid toggling', async ({ window }) => {
     await window.click('text=Mods');
     const browseTab = window.locator('button:has-text("Browse Online")');
     if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {

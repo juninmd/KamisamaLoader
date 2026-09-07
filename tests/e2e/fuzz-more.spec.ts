@@ -1,24 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test';
+import { test, expect } from './support/fuzz-test';
 
 test.describe('Extended Fuzz Testing Scenarios', () => {
-  let electronApp: any;
-  let window: any;
-
-  test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
-  });
-
-  test.afterEach(async () => {
-    await electronApp.close();
-  });
-
-  test('Fuzz settings path inputs via events', async () => {
+  test('Fuzz settings path inputs via events', async ({ window }) => {
     await window.click('button[title="Settings"], button:has(.lucide-settings)');
     await window.waitForTimeout(1000);
 
@@ -63,7 +46,7 @@ test.describe('Extended Fuzz Testing Scenarios', () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-settings-paths.png' });
   });
 
-  test('Profile selection spamming', async () => {
+  test('Profile selection spamming', async ({ window }) => {
     await window.click('text=Mods');
     await window.waitForTimeout(500);
 

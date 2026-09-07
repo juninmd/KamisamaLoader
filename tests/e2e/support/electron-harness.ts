@@ -63,3 +63,14 @@ export async function expectFile(file: string, body: string) {
 export async function expectMissing(file: string) {
   await expect.poll(async () => fs.readFile(file).catch(() => null)).toBeNull();
 }
+
+export async function setupFuzzWindow() {
+  const electronApp = await electron.launch({
+    args: ['.'],
+    env: { ...process.env, NODE_ENV: 'test' }
+  });
+  const window = await electronApp.firstWindow();
+  await window.waitForLoadState('domcontentloaded');
+  await window.waitForTimeout(2000);
+  return { electronApp, window };
+}

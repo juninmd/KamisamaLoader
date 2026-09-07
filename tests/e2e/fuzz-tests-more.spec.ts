@@ -1,24 +1,7 @@
-import { test, expect, _electron as electron } from '@playwright/test';
+import { test, expect } from './support/fuzz-test';
 
 test.describe('Additional Extra Fuzz Testing Scenarios', () => {
-  let electronApp: any;
-  let window: any;
-
-  test.beforeEach(async () => {
-    electronApp = await electron.launch({
-      args: ['.'],
-      env: { ...process.env, NODE_ENV: 'test' }
-    });
-    window = await electronApp.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(1000);
-  });
-
-  test.afterEach(async () => {
-    await electronApp.close();
-  });
-
-  test('Fuzz filter clear all combinations', async () => {
+  test('Fuzz filter clear all combinations', async ({ window }) => {
       await window.click('text=Mods');
       const browseTab = window.locator('button:has-text("Browse Online")');
       if (!await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
