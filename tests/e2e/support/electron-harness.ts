@@ -4,7 +4,6 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { startFixture, type Fixture } from './gamebanana-fixture';
-
 export type Harness = {
   app: ElectronApplication;
   page: Page;
@@ -14,12 +13,11 @@ export type Harness = {
   deployed: string;
   close: () => Promise<void>;
 };
-
-export async function launchHarness(): Promise<Harness> {
+export async function launchHarness(suppliedFixture?: Fixture): Promise<Harness> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'kamisama-e2e-'));
   const gameExe = path.join(root, 'SparkingZERO.exe');
   const modsDir = path.join(root, 'Mods');
-  const fixture = await startFixture();
+  const fixture = suppliedFixture || await startFixture();
   await fs.writeFile(gameExe, 'fixture');
   const hook = path.resolve('tests/e2e/fetch-hook.cjs').replaceAll('\\', '/');
   const app = await electron.launch({
@@ -48,18 +46,15 @@ export async function launchHarness(): Promise<Harness> {
     },
   };
 }
-
 export async function shot(page: Page, info: TestInfo, name: string) {
   const output = path.resolve('tests/evidence/homologation', `${name}.png`);
   await fs.mkdir(path.dirname(output), { recursive: true });
   await page.screenshot({ path: output, fullPage: true, animations: 'disabled' });
   await info.attach(name, { path: output, contentType: 'image/png' });
 }
-
 export async function expectFile(file: string, body: string) {
   await expect.poll(async () => fs.readFile(file, 'utf8').catch(() => '')).toBe(body);
 }
-
 export async function expectMissing(file: string) {
   await expect.poll(async () => fs.readFile(file).catch(() => null)).toBeNull();
 }

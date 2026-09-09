@@ -1,14 +1,11 @@
 import type { LocalMod, OnlineMod, Profile, Settings } from '../shared/types.js';
 import { asSettings } from './ipc-validation.js';
-
 type Data = Record<string, unknown>;
-
 export interface PersistentCacheEntry {
   data: unknown;
   timestamp: number;
   ttl: number;
 }
-
 function decode(text: string, label: string): unknown {
   try {
     return JSON.parse(text) as unknown;
@@ -16,24 +13,20 @@ function decode(text: string, label: string): unknown {
     throw new TypeError(`Invalid ${label} JSON.`);
   }
 }
-
 function record(value: unknown, label: string): Data {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new TypeError(`Invalid ${label}.`);
   }
   return value as Data;
 }
-
 function optionalType(data: Data, key: string, type: 'string' | 'number' | 'boolean', label: string) {
   if (data[key] !== undefined && typeof data[key] !== type) {
     throw new TypeError(`Invalid ${label}.${key}.`);
   }
 }
-
 export function parseSettings(text: string): Settings {
   return asSettings(decode(text, 'settings'));
 }
-
 export function parseLocalMods(text: string): LocalMod[] {
   const value = decode(text, 'mods');
   if (!Array.isArray(value)) throw new TypeError('Invalid mods list.');
@@ -45,10 +38,21 @@ export function parseLocalMods(text: string): LocalMod[] {
     optionalType(mod, 'isEnabled', 'boolean', 'mod');
     optionalType(mod, 'priority', 'number', 'mod');
     optionalType(mod, 'gameBananaId', 'number', 'mod');
+    optionalType(mod, 'installedFileId', 'number', 'mod');
+    optionalType(mod, 'latestFileId', 'number', 'mod');
+    if (mod.deployedFiles !== undefined && (!Array.isArray(mod.deployedFiles)
+      || !mod.deployedFiles.every(file => typeof file === 'string' && file.length > 0))) {
+      throw new TypeError('Invalid mod.deployedFiles.');
+    }
+    if (mod.lastInstall !== undefined) {
+      const summary = record(mod.lastInstall, 'mod.lastInstall');
+      for (const key of ['added', 'changed', 'removed', 'unchanged']) {
+        if (!Number.isSafeInteger(summary[key]) || (summary[key] as number) < 0) throw new TypeError('Invalid mod.lastInstall.');
+      }
+    }
     return mod as unknown as LocalMod;
   });
 }
-
 export function parseProfiles(text: string): Profile[] {
   const value = decode(text, 'profiles');
   if (!Array.isArray(value)) throw new TypeError('Invalid profiles list.');
@@ -61,7 +65,6 @@ export function parseProfiles(text: string): Profile[] {
     return profile as unknown as Profile;
   });
 }
-
 export function parseOnlineModsCache(text: string): { timestamp: number; mods: OnlineMod[] } {
   const cache = record(decode(text, 'online mods cache'), 'online mods cache');
   if (typeof cache.timestamp !== 'number' || !Array.isArray(cache.mods)
@@ -70,7 +73,6 @@ export function parseOnlineModsCache(text: string): { timestamp: number; mods: O
   }
   return cache as { timestamp: number; mods: OnlineMod[] };
 }
-
 export function parsePersistentCache(text: string): Record<string, PersistentCacheEntry> {
   const cache = record(decode(text, 'persistent cache'), 'persistent cache');
   for (const [key, value] of Object.entries(cache)) {

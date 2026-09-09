@@ -1,3 +1,4 @@
+export interface FileChangeSummary { added: number; changed: number; removed: number; unchanged: number }
 export interface LocalMod {
     id: string;
     name: string;
@@ -10,6 +11,7 @@ export interface LocalMod {
     fileSize: number;
     gameBananaId?: number;
     latestVersion?: string;
+    installedFileId?: number;
     latestFileId?: number;
     latestFileUrl?: string;
     hasUpdate?: boolean;
@@ -24,8 +26,8 @@ export interface LocalMod {
     downloadCount?: number;
     dateAdded?: number;
     isNsfw?: boolean;
+    lastInstall?: FileChangeSummary;
 }
-
 export interface OnlineMod {
     id: string;
     name: string;
@@ -47,15 +49,12 @@ export interface OnlineMod {
     submitter?: string;
     isNsfw?: boolean;
 }
-
 export type Mod = LocalMod | OnlineMod;
-
 export interface Profile {
     id: string;
     name: string;
     modIds: string[];
 }
-
 export interface Settings {
     gamePath: string;
     modDownloadPath?: string;
@@ -64,7 +63,6 @@ export interface Settings {
     launchArgs?: string;
     backgroundOpacity?: number;
 }
-
 export interface Download {
     id: string;
     url: string;
@@ -72,14 +70,13 @@ export interface Download {
     savePath: string;
     totalBytes: number;
     receivedBytes: number;
-    state: 'progressing' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'queued';
+    state: 'progressing' | 'paused' | 'installing' | 'completed' | 'failed' | 'cancelled' | 'queued';
     speed: number; // bytes per second
     progress: number; // 0-100
     startTime: number;
     error?: string;
     context?: Record<string, unknown>; // Extra data (type: 'install' | 'update', modId, etc.)
 }
-
 export interface SearchOptions {
     itemType?: 'Mod' | 'Sound' | 'WiP' | 'Skin';
     gameId?: number;
@@ -92,14 +89,12 @@ export interface SearchOptions {
     dateRange?: '24h' | 'week' | 'month' | 'year' | 'all';
     filters?: Record<string, unknown>;
 }
-
 export interface ModUpdateInfo {
     hasUpdate: boolean;
     latestVersion: string;
     latestFileId: number;
     latestFileUrl: string;
 }
-
 export interface ModChangelog {
     version: string;
     date: number;

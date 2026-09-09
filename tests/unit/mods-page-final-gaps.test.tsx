@@ -2,8 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent, waitFor, act } from './test-utils';
 import Mods from '../../src/pages/Mods';
-
-// Mock electron API
 const mockElectronAPI = {
     getInstalledMods: vi.fn(),
     searchBySection: vi.fn(),
@@ -12,7 +10,7 @@ const mockElectronAPI = {
     installOnlineMod: vi.fn(),
     updateAllMods: vi.fn(),
     checkForUpdates: vi.fn(),
-    onDownloadScanFinished: vi.fn(() => () => {}),
+    onDownloadScanFinished: vi.fn(() => () => { }),
     getProfiles: vi.fn().mockResolvedValue([]),
     saveSettings: vi.fn().mockResolvedValue(true),
     getSettings: vi.fn().mockResolvedValue({}),
@@ -22,19 +20,14 @@ const mockElectronAPI = {
     setModPriority: vi.fn(),
     updateMod: vi.fn(),
 };
-
 Object.defineProperty(window, 'electronAPI', {
     value: mockElectronAPI,
     writable: true
 });
-
-// Mock IntersectionObserver
 const observe = vi.fn();
 const disconnect = vi.fn();
-// We capture the callback to manually trigger it
 let observerCallback: any = null;
-
-window.IntersectionObserver = vi.fn(function(cb) {
+window.IntersectionObserver = vi.fn(function (cb) {
     observerCallback = cb;
     return {
         observe,
@@ -43,7 +36,6 @@ window.IntersectionObserver = vi.fn(function(cb) {
         takeRecords: vi.fn()
     };
 }) as any;
-
 describe('Mods Page Final Gaps', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -51,108 +43,63 @@ describe('Mods Page Final Gaps', () => {
         mockElectronAPI.searchBySection.mockResolvedValue([]);
         mockElectronAPI.fetchCategories.mockResolvedValue([]);
     });
-
     it('should handle drag leave correctly', async () => {
         let container: HTMLElement;
         act(() => {
             container = renderWithProviders(<Mods />).container;
         });
         const dropZone = container.firstChild as HTMLElement;
-
-        // Enter
         act(() => {
             fireEvent.dragEnter(dropZone, {
                 dataTransfer: { items: [{ kind: 'file' }] }
             });
         });
         expect(screen.getByText('Drop to Install')).toBeInTheDocument();
-
-        // Leave
         act(() => {
             fireEvent.dragLeave(dropZone);
         });
         expect(screen.queryByText('Drop to Install')).not.toBeInTheDocument();
-
         await waitFor(() => expect(mockElectronAPI.getInstalledMods).toHaveBeenCalled());
     });
-
     it('should trigger infinite scroll when intersection occurs', async () => {
-        // Setup initial load
         const page1 = Array.from({ length: 20 }, (_, i) => ({ id: `${i + 1}`, name: `Mod ${i + 1}` }));
         mockElectronAPI.searchBySection
-            .mockResolvedValueOnce(page1) // Page 1
-            .mockResolvedValueOnce([{ id: '21', name: 'Mod 21' }]); // Page 2
-
+            .mockResolvedValueOnce(page1)
+            .mockResolvedValueOnce([{ id: '21', name: 'Mod 21' }]);
         act(() => {
             renderWithProviders(<Mods />);
         });
-
-        // Switch to Browse tab
         fireEvent.click(screen.getByText('Browse Online'));
-
-        // Wait for first page load
         await waitFor(() => expect(screen.getAllByText('Mod 1').length).toBeGreaterThan(0));
-
-        // Trigger observer manually
         await act(async () => {
             if (observerCallback) {
                 observerCallback([{ isIntersecting: true }]);
             }
         });
-
-        // Expect second page fetch
         await waitFor(() => expect(screen.getByText('Mod 21')).toBeInTheDocument());
-
-        // Verify API called with page 2
         expect(mockElectronAPI.searchBySection).toHaveBeenCalledWith(expect.objectContaining({
             page: 2
         }));
-
-        // Ensure no pending updates are left
         await waitFor(() => expect(screen.queryByText('Browse Online')).toBeInTheDocument());
     });
-
     it('should handle partial success in update all', async () => {
-        // Setup mods needing update
         const installedMods = [
             { id: '1', name: 'Mod1', hasUpdate: true, fileSize: 100, author: 'A', version: '1.0' },
             { id: '2', name: 'Mod2', hasUpdate: true, fileSize: 100, author: 'B', version: '1.0' }
         ];
         mockElectronAPI.getInstalledMods.mockResolvedValue(installedMods);
-
-        // Setup updateAllMods response: 1 success, 1 failure
-        mockElectronAPI.updateAllMods.mockResolvedValue({
-            successCount: 1,
-            failCount: 1,
-            results: [
-                { id: '1', success: true },
-                { id: '2', success: false }
-            ]
-        });
-
+        mockElectronAPI.updateMod.mockImplementation(async (id: string) => id === '1');
         act(() => {
             renderWithProviders(<Mods />);
         });
-
-        // Wait for mods to load
         await waitFor(() => expect(screen.getByText('Mod1')).toBeInTheDocument());
-
-        // Click Update All
         const updateBtn = await screen.findByText('Update All');
         await act(async () => {
-             fireEvent.click(updateBtn);
+            fireEvent.click(updateBtn);
         });
-
-        // Wait for update request to finish to avoid state updates leaking out of the test
-        await waitFor(() => expect(mockElectronAPI.updateAllMods).toHaveBeenCalledWith(['1', '2']));
-
-        // Verify toast message for partial success
-        // We can't easily check toast text without mocking the toast provider or querying for toast container text
-        // But we can check if installedMods state updated correctly.
-        // Mod1 should have hasUpdate: false, Mod2 should still have hasUpdate: true (or kept as is)
-
-        // Actually, the component updates state based on result.
-        // Let's verify updateAllMods was called with correct IDs
-        expect(mockElectronAPI.updateAllMods).toHaveBeenCalledWith(['1', '2']);
+        fireEvent.click(await screen.findByRole('button', { name: /Atualizar selecionados/ }));
+        await screen.findByText('Resultado do lote');
+        await waitFor(() => expect(mockElectronAPI.updateMod).toHaveBeenLastCalledWith('2'));
+        expect(mockElectronAPI.updateMod).toHaveBeenLastCalledWith('2');
     });
 });

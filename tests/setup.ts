@@ -1,16 +1,15 @@
-import { vi, afterEach, expect } from 'vitest';
+import { vi, afterEach, expect, beforeEach } from 'vitest';
+import { completeFileSystemDouble } from './mock-fs-defaults';
 import '@testing-library/jest-dom'; // Side-effect import for auto-extend
-
+beforeEach(completeFileSystemDouble);
 // Conditional setup for DOM environment
 if (typeof window !== 'undefined') {
   // Use dynamic import for cleanup to avoid import errors in non-DOM envs if any
   const { cleanup } = await import('@testing-library/react');
-
   // Cleanup React components after each test
   afterEach(() => {
     cleanup();
   });
-
   // Mock Electron API Bridge
   Object.defineProperty(window, 'electronAPI', {
     value: {
@@ -43,7 +42,6 @@ if (typeof window !== 'undefined') {
       fetchNewMods: vi.fn(),
       getAllOnlineMods: vi.fn(),
       uninstallMod: vi.fn(),
-
       // Download Manager
       getDownloads: vi.fn(),
       startDownload: vi.fn(),
@@ -54,12 +52,10 @@ if (typeof window !== 'undefined') {
       openDownloadFolder: vi.fn(),
       onDownloadUpdate: vi.fn(),
       onDownloadScanFinished: vi.fn(),
-
       // Utils
       minimize: vi.fn(),
       maximize: vi.fn(),
       close: vi.fn(),
-
       on: vi.fn(),
       off: vi.fn(),
       createProfile: vi.fn(),

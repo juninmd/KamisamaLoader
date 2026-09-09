@@ -1,25 +1,26 @@
 import fs from 'node:fs/promises';
 import AdmZip from 'adm-zip';
-
+import { isTransactionArtifact } from './file-transaction.js';
 const MAX_ENTRIES = 50_000;
 const MAX_EXPANDED_BYTES = 4 * 1024 ** 3;
 const MAX_COMPRESSION_RATIO = 1_000;
 const RATIO_CHECK_MIN_BYTES = 1024 ** 2;
-
 export interface ArchiveEntryInfo {
   entryName: string;
   isDirectory: boolean;
   size: number;
   compressedSize: number;
 }
-
 export function validateArchiveEntries(entries: ArchiveEntryInfo[]) {
   if (entries.length > MAX_ENTRIES) throw new Error('Archive has too many entries.');
   let expandedBytes = 0;
-
+  const paths = new Set<string>();
   for (const entry of entries) {
     const name = entry.entryName;
     const parts = name.split(/[\\/]+/);
+    const canonical = parts.filter(Boolean).join('/').toLowerCase();
+    if (parts.some(isTransactionArtifact) || paths.has(canonical)) throw new Error(`Duplicate or reserved archive path: ${name}`);
+    paths.add(canonical);
     const absolute = /^[a-zA-Z]:/.test(name) || /^[\\/]/.test(name);
     if (!name || name.includes('\0') || name.includes(':') || absolute || parts.includes('..')) {
       throw new Error(`Unsafe archive path: ${name}`);
@@ -40,7 +41,6 @@ export function validateArchiveEntries(entries: ArchiveEntryInfo[]) {
     }
   }
 }
-
 export async function extractArchive(zipPath: string, destination: string) {
   const zip = new AdmZip(await fs.readFile(zipPath));
   validateArchiveEntries(zip.getEntries().map((entry) => ({

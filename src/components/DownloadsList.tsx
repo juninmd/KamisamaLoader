@@ -1,43 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { Pause, Play, X, Download as DownloadIcon, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
 import type { Download } from '../../shared/types';
-
 export const DownloadsList: React.FC = () => {
     const [downloads, setDownloads] = useState<Download[]>([]);
-
     useEffect(() => {
         // Initial fetch
         window.electronAPI.getDownloads().then(setDownloads);
-
         // Listen for updates - avoiding memory leak with cleanup
         const handleUpdate = (updatedDownloads: any[]) => {
             setDownloads(updatedDownloads);
         };
-
         // This relies on the preload exposing the listener specifically
         // In the d.ts we added onDownloadUpdate
         const unsubscribe = window.electronAPI.onDownloadUpdate(handleUpdate);
-
         const interval = setInterval(() => {
             window.electronAPI.getDownloads().then(setDownloads);
         }, 1000); // Polling as backup and for speed updates if event is throttled
-
         return () => {
             clearInterval(interval);
             unsubscribe?.();
         };
     }, []);
-
     const formatSpeed = (bytesPerSec: number) => {
         if (bytesPerSec === 0) return '';
         const mb = bytesPerSec / 1024 / 1024;
         return `${mb.toFixed(2)} MB/s`;
     };
-
     const handlePause = (id: string) => window.electronAPI.pauseDownload(id);
     const handleResume = (id: string) => window.electronAPI.resumeDownload(id);
     const handleCancel = (id: string) => window.electronAPI.cancelDownload(id);
-
     if (downloads.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-64 text-white/40 space-y-4">
@@ -46,7 +37,6 @@ export const DownloadsList: React.FC = () => {
             </div>
         );
     }
-
     return (
         <div className="space-y-4 p-4">
             {/* Header Actions */}
@@ -63,7 +53,6 @@ export const DownloadsList: React.FC = () => {
                             <span>Open Folder</span>
                         </div>
                     </button>
-
                     <button
                         onClick={() => window.electronAPI.clearCompletedDownloads()}
                         className="text-xs flex items-center gap-1 text-gray-500 hover:text-white transition-colors"
@@ -74,7 +63,6 @@ export const DownloadsList: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {downloads.map((dl) => (
                 <div key={dl.id} className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
                     {/* Icon based on state */}
@@ -83,15 +71,13 @@ export const DownloadsList: React.FC = () => {
                             dl.state === 'failed' ? <AlertCircle className="w-6 h-6 text-red-400" /> :
                                 <DownloadIcon className="w-6 h-6 text-blue-400" />}
                     </div>
-
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                             <h4 className="font-medium text-white truncate" title={dl.filename}>
                                 {dl.context?.type === 'update' ? `Updating: ${dl.filename}` : dl.filename}
                             </h4>
-                            <span className="text-xs text-white/50">{dl.state.toUpperCase()}</span>
+                            <span className="text-xs text-white/50">{dl.state === 'installing' ? 'APLICANDO ARQUIVOS' : dl.state.toUpperCase()}</span>
                         </div>
-
                         {/* Progress Bar */}
                         <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-1">
                             <div
@@ -103,14 +89,12 @@ export const DownloadsList: React.FC = () => {
                                 style={{ width: `${dl.progress}%` }}
                             />
                         </div>
-
                         <div className="flex justify-between text-xs text-white/40">
                             <span>{dl.progress.toFixed(1)}%</span>
                             <span>{formatSpeed(dl.speed)}</span>
                         </div>
                         {dl.error && <p className="text-xs text-red-400 mt-1">{dl.error}</p>}
                     </div>
-
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                         {dl.state === 'progressing' && (
@@ -118,14 +102,14 @@ export const DownloadsList: React.FC = () => {
                                 <Pause className="w-4 h-4 text-white" />
                             </button>
                         )}
-                        {(dl.state === 'paused' || dl.state === 'failed') && (
+                        {dl.state === 'paused' && (
                             <button onClick={() => handleResume(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Resume/Retry">
                                 <Play className="w-4 h-4 text-white" />
                             </button>
                         )}
-                        <button onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
+                        {['queued', 'progressing', 'paused'].includes(dl.state) && <button onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
                             <X className="w-4 h-4 text-white/50 group-hover:text-red-400" />
-                        </button>
+                        </button>}
                         <button
                             onClick={() => window.electronAPI.openDownloadFolder(dl.id)}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
