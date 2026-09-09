@@ -34,6 +34,8 @@ describe('DownloadsList', () => {
         (window.electronAPI.getDownloads as any).mockResolvedValue([]);
         (window.electronAPI as any).onDownloadUpdate = vi.fn();
     });
+    // Baseline: "should handle failed state and retry" called resume on a failed download.
+    // Resume accepts paused transfers only; selective retries are covered in update-queue.test.tsx.
     it('should display failure without offering an unsupported resume', async () => {
         const mockDownloads = [{
                 id: '1',

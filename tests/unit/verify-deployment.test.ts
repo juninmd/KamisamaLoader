@@ -115,6 +115,8 @@ describe('ModManager.verifyDeployment', () => {
         expect(fs.unlink).toHaveBeenCalledWith(DEPLOYED_PAK);
         expect(result.repaired).toEqual([]);
     });
+    // Baseline: "deletes orphan paks left in ~mods but keeps hand-placed files".
+    // A numeric prefix does not establish ownership; only catalog-owned files may be removed.
     it('preserves all files without catalog ownership, including numbered manual paks', async () => {
         mockFiles([enabledMod]);
         (fs.access as any).mockResolvedValue(undefined);
