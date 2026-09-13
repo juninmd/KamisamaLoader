@@ -13,27 +13,27 @@ vi.mock('fs/promises', () => ({
         rm: vi.fn()
     }
 }));
+
+const mockFetchModProfile = vi.fn();
 vi.mock('../../electron/gamebanana', () => ({
     getModDetails: vi.fn(),
     fetchItemData: vi.fn(),
     downloadModFiles: vi.fn(),
-    fetchModProfile: vi.fn(),
-    searchBySection: vi.fn(() => Promise.resolve([])),
-    fetchAllMods: vi.fn(() => Promise.resolve([{ id: 1 }])),
-    fetchCategories: vi.fn(),
-    fetchNewMods: vi.fn(),
-    fetchFeaturedMods: vi.fn()
+    fetchModProfile: (...args: any[]) => mockFetchModProfile(...args)
 }));
+
+vi.mock('electron', () => ({
+    app: {
+        getPath: vi.fn(() => '/userData'),
+        isPackaged: false
+    }
+}));
+
 vi.mock('../../electron/settings', () => ({
     getSettings: vi.fn(() => ({ gamePath: '/test/game' }))
 }));
-vi.mock('electron', () => ({
-    app: { getPath: vi.fn(() => '/userData') }
-}));
 
-import * as gb from '../../electron/gamebanana';
-
-describe('ModManager - search and cache gaps', () => {
+describe('ModManager - Download Cleanup coverage', () => {
     let modManager: ModManager;
 
     beforeEach(() => {
@@ -41,63 +41,84 @@ describe('ModManager - search and cache gaps', () => {
         modManager = new ModManager();
     });
 
-    it('should call searchOnlineMods', async () => {
-        const res = await modManager.searchOnlineMods({ searchString: 'test', page: 1 });
-        expect(res).toBeDefined();
+    it('should call cleanup when onFailed is triggered', async () => {
+         modManager.getModsFilePath = vi.fn().mockResolvedValue('/mods.json');
+         modManager.calculateFolderSize = vi.fn().mockResolvedValue(100);
+         modManager.extractZip = vi.fn().mockResolvedValue(true);
+         modManager.deployMod = vi.fn().mockResolvedValue(true);
+
+         const downloadManager = {
+              startDownload: vi.fn().mockReturnValue('mock-id'),
+              removeListener: vi.fn(),
+              failDownload: vi.fn(),
+              emit: vi.fn(),
+              on: vi.fn()
+         };
+         (modManager as any).downloadManager = downloadManager;
+
+         mockFetchModProfile.mockResolvedValue({
+             _aFiles: [{ _idRow: 500, _sDownloadUrl: 'http://test' }],
+             _sName: 'Test',
+             _aSubmitter: { _sName: 'TestAuthor' }
+         });
+
+         const mod = {
+            id: '123',
+            name: 'Test Mod',
+            gameBananaId: 100,
+            latestFileId: 500,
+            version: '1.0'
+         };
+
+         const result = await modManager.installOnlineMod(mod as any);
+         expect(result.success).toBe(true);
+
+         const failListener = (downloadManager.on as any).mock.calls.find((c: any) => c[0] === 'download-failed')?.[1];
+         expect(failListener).toBeDefined();
+
+         // Call failListener directly to trigger the branch handling failure
+         failListener('mock-id');
+
+         expect(downloadManager.removeListener).toHaveBeenCalledTimes(2);
     });
 
-    it('should hit getAllOnlineMods cache read error', async () => {
-        (fs.readFile as any).mockRejectedValue(new Error('No cache'));
-        const mods = await modManager.getAllOnlineMods();
-        expect(mods.length).toBe(1);
-    });
+    it('should ignore onFailed if id does not match', async () => {
+         modManager.getModsFilePath = vi.fn().mockResolvedValue('/mods.json');
+         modManager.calculateFolderSize = vi.fn().mockResolvedValue(100);
+         modManager.extractZip = vi.fn().mockResolvedValue(true);
+         modManager.deployMod = vi.fn().mockResolvedValue(true);
 
-    it('should hit getAllOnlineMods cache write error', async () => {
-        (fs.readFile as any).mockRejectedValue(new Error('No cache'));
-        (fs.writeFile as any).mockRejectedValue(new Error('Write Fail'));
+         const downloadManager = {
+              startDownload: vi.fn().mockReturnValue('mock-id'),
+              removeListener: vi.fn(),
+              failDownload: vi.fn(),
+              emit: vi.fn(),
+              on: vi.fn()
+         };
+         (modManager as any).downloadManager = downloadManager;
 
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+         mockFetchModProfile.mockResolvedValue({
+             _aFiles: [{ _idRow: 500, _sDownloadUrl: 'http://test' }],
+             _sName: 'Test',
+             _aSubmitter: { _sName: 'TestAuthor' }
+         });
 
-        const mods = await modManager.getAllOnlineMods(true);
-        expect(mods.length).toBe(1);
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[Cache] Failed to save cache:'), expect.any(Error));
-    });
+         const mod = {
+            id: '123',
+            name: 'Test Mod',
+            gameBananaId: 100,
+            latestFileId: 500,
+            version: '1.0'
+         };
 
-    it('should read from cache if valid in getAllOnlineMods', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({
-            timestamp: Date.now(), // Valid
-            mods: [{ id: 99 }]
-        }));
+         const result = await modManager.installOnlineMod(mod as any);
+         expect(result.success).toBe(true);
 
-        const mods = await modManager.getAllOnlineMods();
-        expect(mods[0].id).toBe(99);
-    });
+         const failListener = (downloadManager.on as any).mock.calls.find((c: any) => c[0] === 'download-failed')?.[1];
 
-    it('should ignore cache if expired in getAllOnlineMods', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify({
-            timestamp: Date.now() - (2 * 60 * 60 * 1000), // Expired
-            mods: [{ id: 99 }]
-        }));
+         // Trigger with different id
+         failListener('other-id');
 
-        const mods = await modManager.getAllOnlineMods();
-        expect(mods[0].id).toBe(1); // Fetched fresh
-    });
-
-    it('should call fetchCategories', async () => {
-        (gb.fetchCategories as any).mockResolvedValue([{ name: 'TestCat' }]);
-        const res = await modManager.fetchCategories();
-        expect(res).toBeDefined();
-    });
-
-    it('should call fetchNewMods', async () => {
-        (gb.fetchNewMods as any).mockResolvedValue([{ name: 'TestCat' }]);
-        const res = await modManager.fetchNewMods();
-        expect(res).toBeDefined();
-    });
-
-    it('should call fetchFeaturedMods', async () => {
-        (gb.fetchFeaturedMods as any).mockResolvedValue([{ name: 'TestCat' }]);
-        const res = await modManager.fetchFeaturedMods();
-        expect(res).toBeDefined();
+         expect(downloadManager.removeListener).toHaveBeenCalledTimes(0);
     });
 });

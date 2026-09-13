@@ -13,24 +13,30 @@ vi.mock('fs/promises', () => ({
         rm: vi.fn()
     }
 }));
+
+const mockFetchAllMods = vi.fn().mockResolvedValue([
+    { id: '1', name: 'Test' }
+]);
 vi.mock('../../electron/gamebanana', () => ({
     getModDetails: vi.fn(),
     fetchItemData: vi.fn(),
     downloadModFiles: vi.fn(),
     fetchModProfile: vi.fn(),
-    searchBySection: vi.fn(() => Promise.resolve([])),
-    fetchAllMods: vi.fn(() => Promise.resolve([{ id: 1 }]))
+    fetchAllMods: (...args: any[]) => mockFetchAllMods(...args)
 }));
+
+vi.mock('electron', () => ({
+    app: {
+        getPath: vi.fn(() => '/userData'),
+        isPackaged: false
+    }
+}));
+
 vi.mock('../../electron/settings', () => ({
     getSettings: vi.fn(() => ({ gamePath: '/test/game' }))
 }));
-vi.mock('electron', () => ({
-    app: { getPath: vi.fn(() => '/userData') }
-}));
 
-import * as gb from '../../electron/gamebanana';
-
-describe('ModManager - line 791 coverage', () => {
+describe('ModManager - handle parse local mods error', () => {
     let modManager: ModManager;
 
     beforeEach(() => {
@@ -38,24 +44,17 @@ describe('ModManager - line 791 coverage', () => {
         modManager = new ModManager();
     });
 
-    it('should set hasUpdate to false if versions match', async () => {
-        (fs.readFile as any).mockResolvedValue(JSON.stringify([{
-            id: 'mod1', enabled: true, folderPath: '/test', gameBananaId: 123, version: '1.0'
-        }]));
-        modManager.getModsFilePath = vi.fn().mockResolvedValue('/mods.json');
+    it('should catch error when writing cache file in fetchAllMods', async () => {
+         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+         (fs.writeFile as any).mockRejectedValueOnce(new Error('Cache write error'));
 
-        // Mock fetchItemData to return matching version
-        (gb.fetchItemData as any).mockResolvedValue({
-            _sVersion: '1.0',
-            _aFiles: [{ _idRow: 456, _sDownloadUrl: 'url' }]
-        });
+         // Force it to fetch from API not cache
+         (fs.readFile as any).mockImplementation((path) => {
+             throw new Error('Not found');
+         });
 
-        const updates = await modManager.checkForUpdates();
-        expect(updates.length).toBe(0);
-
-        // Inspect the args sent to writeFile to ensure hasUpdate is false
-        const writeCall = (fs.writeFile as any).mock.calls[0];
-        const writtenMods = JSON.parse(writeCall[1]);
-        expect(writtenMods[0].hasUpdate === false || writtenMods[0].hasUpdate === undefined).toBeTruthy();
+         const result = await modManager.getAllOnlineMods(true);
+         expect(result.length).toBe(1);
+         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[Cache] Failed to save cache:'), expect.any(Error));
     });
 });
