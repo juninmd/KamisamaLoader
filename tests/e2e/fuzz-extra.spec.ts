@@ -176,4 +176,162 @@ test('Spam Download Button Fuzzing', async () => {
     await window.screenshot({ path: 'tests/evidence/homologation/fuzz-download-spam.png' });
 });
 
+test('Fuzz rapid modal opening and closing', async () => {
+    // Navigate to Mods
+    await window.click('button[title="Mods"], button:has(.lucide-package)');
+    await window.waitForTimeout(1000);
+
+    // Check if we can find a mod card to click and open details
+    // For fuzzing, we will click randomly around the screen if not found, but we can also use Settings -> About modal if available.
+    const settingsBtn = window.locator('button[title="Settings"], button:has(.lucide-settings)');
+
+    for (let i = 0; i < 20; i++) {
+        await settingsBtn.click();
+        await window.waitForTimeout(50);
+        await window.keyboard.press('Escape');
+        await window.waitForTimeout(50);
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-modal-rapid-2.png' });
+  });
+
+  test('Fuzz rapid scrolling on Mods list', async () => {
+    await window.click('button[title="Mods"], button:has(.lucide-package)');
+    const browseTab = window.locator('button:has-text("Browse Online")');
+    if (await browseTab.isVisible() && !await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
+        await browseTab.click();
+    }
+    await window.waitForTimeout(1000);
+
+    const scrollContainer = window.locator('.overflow-y-auto, main').first();
+
+    if (await scrollContainer.isVisible()) {
+        for (let i = 0; i < 30; i++) {
+            const y = Math.floor(Math.random() * 5000);
+            await scrollContainer.evaluate((el: HTMLElement, yVal: number) => {
+                el.scrollTop = yVal;
+                el.dispatchEvent(new Event('scroll'));
+            }, y);
+            await window.waitForTimeout(50);
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-scroll.png' });
+  });
+
+  test('Fuzz extremely small and odd window bounds', async () => {
+    // Note: Playwright doesn't easily resize the *electron* window via page.setViewportSize without side effects on layout, but we can try browser window APIs.
+    // We will just evaluate a script to spam resize events internally
+
+    for (let i = 0; i < 20; i++) {
+        const width = Math.floor(Math.random() * 2000) + 10;
+        const height = Math.floor(Math.random() * 2000) + 10;
+        await window.setViewportSize({ width, height });
+        await window.waitForTimeout(50);
+    }
+
+    // Restore size
+    await window.setViewportSize({ width: 1280, height: 720 });
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-window-bounds.png' });
+  });
+
+  test('Fuzz weird search keys and symbols', async () => {
+    await window.click('button[title="Mods"], button:has(.lucide-package)');
+    const browseTab = window.locator('button:has-text("Browse Online")');
+    if (await browseTab.isVisible() && !await browseTab.evaluate((el: any) => el.classList.contains('bg-blue-600'))) {
+        await browseTab.click();
+    }
+    await window.waitForTimeout(1000);
+
+    const searchInput = window.getByPlaceholder('Search mods...');
+    if (await searchInput.isVisible()) {
+        const weirdStrings = [
+            '§±!@#$%^&*()_+{}|:"<>?~`-=[]\\;\',./',
+            '\\x00\\x01\\x02\\x03',
+            '\\n\\r\\t\\b\\f\\v',
+            'A'.repeat(1000),
+            'null', 'undefined', 'NaN', 'Infinity'
+        ];
+
+        for (const fuzz of weirdStrings) {
+            await searchInput.fill(fuzz);
+            await searchInput.press('Enter');
+            await window.waitForTimeout(100);
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-weird-search.png' });
+  });
+
+  test('Fuzz keyboard mash inside inputs', async () => {
+    await window.click('button[title="Settings"], button:has(.lucide-settings)');
+    await window.waitForTimeout(1000);
+
+    const inputs = await window.locator('input[type="text"]').all();
+    if (inputs.length > 0) {
+      for (const input of inputs) {
+        if (await input.isVisible() && await input.isEditable()) {
+           await input.focus();
+           for (let i = 0; i < 20; i++) {
+               // Spam random control keys
+               const keys = ['Control+A', 'Control+C', 'Control+V', 'Backspace', 'Delete', 'Enter', 'Escape', 'ArrowLeft', 'ArrowRight'];
+               const key = keys[Math.floor(Math.random() * keys.length)];
+               await window.keyboard.press(key);
+               await window.waitForTimeout(20);
+               // Add a random char
+               await window.keyboard.type(String.fromCharCode(97 + Math.floor(Math.random() * 26)));
+           }
+        }
+      }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-keyboard-mash-inputs.png' });
+  });
+
+  test('Fuzz rapid double clicks on UI buttons', async () => {
+    const buttons = await window.locator('button').all();
+
+    // Pick first 5 visible buttons to spam double clicks on
+    let count = 0;
+    for (const btn of buttons) {
+        if (await btn.isVisible() && count < 5) {
+            for(let i=0; i < 5; i++) {
+                await btn.dblclick({ force: true });
+                await window.waitForTimeout(50);
+            }
+            count++;
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-dblclick.png' });
+  });
+
+  test('Fuzz rapid profile selection', async () => {
+    // Navigate to Mods
+    await window.click('button[title="Mods"], button:has(.lucide-package)');
+    await window.waitForTimeout(1000);
+
+    const profileSelect = window.locator('select'); // assuming the profile dropdown is a select element
+    if (await profileSelect.isVisible()) {
+        const options = await profileSelect.locator('option').allInnerTexts();
+        if (options.length > 1) {
+            for (let i = 0; i < 20; i++) {
+                const randomOption = options[Math.floor(Math.random() * options.length)];
+                await profileSelect.selectOption({ label: randomOption });
+                await window.waitForTimeout(50);
+            }
+        }
+    }
+
+    expect(await window.title()).toBe('Kamisama Loader');
+    await window.screenshot({ path: 'tests/evidence/homologation/fuzz-rapid-profiles.png' });
+  });
+
 });
