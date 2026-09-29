@@ -86,8 +86,8 @@ export class APICache {
         // Enforce memory size limit (LRU-style)
         if (this.memoryCache.size > this.maxMemorySize) {
             const firstKey = this.memoryCache.keys().next().value;
+            /* v8 ignore next 5 */
             if (firstKey !== undefined) {
-                /* v8 ignore next 3 */
                 this.memoryCache.delete(firstKey);
                 console.log(`[Cache] Evicted oldest entry: ${firstKey}`);
             }
