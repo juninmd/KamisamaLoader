@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModManager } from '../../electron/mod-manager';
+import fs from 'fs/promises';
+
 
 vi.mock('electron', () => ({
     app: {
@@ -16,6 +18,7 @@ describe('ModManager Core Gaps 5', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.spyOn(fs, "mkdir").mockResolvedValue(undefined as never);
         modManager = new ModManager();
     });
 
