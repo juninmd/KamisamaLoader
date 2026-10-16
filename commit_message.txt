@@ -1,6 +1,6 @@
-test: comprehensive test coverage and fuzzing
+test: achieve comprehensive E2E and unit test coverage
 
-- Add automated E2E fuzz testing (`fuzz.spec.ts`) for search input and rapid UI navigation edge cases.
-- Increase backend Vitest coverage to >95% statements and branches by creating extensive gap tests.
-- Fix broken E2E paths ensuring `full_system.spec.ts` passes consistently.
-- Implement exhaustive unit tests across `gamebanana`, `mod-manager`, `download-manager`, and API cache systems.
+- Added and completed extensive Playwright UI fuzz testing, generating screenshots inside `tests/evidence/homologation/`. Tests include input smashing, spamming modals, rapid window resizing, and simulated network states.
+- Reached >96% line, >96% function, >95% statement, and >88% branch unit test coverage.
+- Placed targeted unit tests inside `tests/unit/coverage-frontend-gaps` and `tests/unit/coverage-backend-final` suites.
+- Caught hidden UI propagation and mock error handling gaps in `Mods.tsx`, `ModCard.tsx`, `Dashboard.tsx`, and `mod-manager.ts`.
