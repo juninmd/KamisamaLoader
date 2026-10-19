@@ -16,10 +16,6 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
     const [loadingProfileId, setLoadingProfileId] = useState<string | null>(null);
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadProfiles();
-    }, []);
-
     const loadProfiles = async () => {
         try {
             const [profilesData, settingsData] = await Promise.all([
@@ -35,6 +31,10 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
         }
     };
 
+    useEffect(() => {
+        loadProfiles();
+    }, []);
+
     const handleCreate = async () => {
         if (!newProfileName.trim()) return;
         try {
@@ -47,7 +47,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
             } else {
                 showToast(result.message || 'Failed to save profile', 'error');
             }
-        } catch (_e) {
+        } catch {
             showToast('Failed to save profile', 'error');
         }
     };
@@ -69,7 +69,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
                 } else {
                     showToast(result.message || 'Failed to load profile', 'error');
                 }
-            } catch (_e) {
+            } catch {
                 showToast('Failed to load profile', 'error');
             } finally {
                 setLoadingProfileId(null);
@@ -89,7 +89,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
             } else {
                 showToast('Failed to delete profile', 'error');
             }
-        } catch (_e) {
+        } catch {
             showToast('Failed to delete profile', 'error');
         }
     };

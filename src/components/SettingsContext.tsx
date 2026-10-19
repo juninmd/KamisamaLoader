@@ -16,10 +16,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [settings, setSettings] = useState<Settings>({ gamePath: '' });
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadSettings();
-    }, []);
-
     const loadSettings = async () => {
         try {
             const data = await window.electronAPI.getSettings();
@@ -30,6 +26,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
 
     const updateSettings = async (newSettings: Partial<Settings>) => {
         try {

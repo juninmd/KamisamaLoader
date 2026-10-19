@@ -13,10 +13,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     const [featuredMods, setFeaturedMods] = useState<any[]>([]);
     const [loadingFeatured, setLoadingFeatured] = useState(true);
 
-    useEffect(() => {
-        loadDashboardData();
-    }, []);
-
     const loadDashboardData = async () => {
         try {
             // Load Stats
@@ -40,6 +36,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             setLoadingFeatured(false);
         }
     };
+
+    useEffect(() => {
+        loadDashboardData();
+    }, []);
 
     const handleLaunch = async () => {
         setLaunching(true);

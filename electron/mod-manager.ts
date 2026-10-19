@@ -5,7 +5,7 @@ import { execFile } from 'child_process';
 import { app, net, shell } from 'electron';
 import AdmZip from 'adm-zip';
 import pLimit from 'p-limit';
-import { fetchModProfile, searchOnlineMods, getModChangelog, fetchModDetails } from './gamebanana.js';
+import { fetchModProfile, fetchModDetails } from './gamebanana.js';
 import { fetchLatestRelease } from './github.js';
 import { LocalMod, Profile, Settings, OnlineMod } from '../shared/types.js';
 
@@ -190,7 +190,7 @@ export class ModManager {
                 this.settingsFile = path.join(this.modsDir, 'settings.json');
             }
             return settings;
-        } catch (error) {
+        } catch {
             return { gamePath: '' };
         }
     }
@@ -199,7 +199,6 @@ export class ModManager {
         try {
             if (settings.modDownloadPath && settings.modDownloadPath !== this.modsDir) {
                 // Changing mod directory
-                const oldDir = this.modsDir;
                 const newDir = settings.modDownloadPath;
                 await fs.mkdir(newDir, { recursive: true });
 
@@ -271,7 +270,7 @@ export class ModManager {
 
             // Sort by priority Descending (Highest Priority First)
             return mods.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        } catch (error) {
+        } catch {
             return [];
         }
     }
@@ -289,7 +288,7 @@ export class ModManager {
                     size += stats.size;
                 }
             }
-        } catch (e) {
+        } catch {
             // console.error('Error calculating size', e); 
         }
         return size;
@@ -965,7 +964,7 @@ export class ModManager {
                     console.log('[Cache] Returning cached online mods');
                     return cache.mods;
                 }
-            } catch (e) {
+            } catch {
                 // Cache miss or invalid, ignore
             }
         }
