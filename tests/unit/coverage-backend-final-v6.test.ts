@@ -101,11 +101,11 @@ describe('ModManager Backup/Migrate Gaps', () => {
         mockGetEntries.mockReturnValue([
             { name: 'profiles.json' }
         ]);
-        mockReadAsText.mockReturnValue('{"profiles":[]}');
+        mockReadAsText.mockReturnValue('[]');
 
         await modManager.importCloudSync('/path/to/sync.zip');
 
-        expect(fs.writeFile).toHaveBeenCalledWith('/profiles.json', '{"profiles":[]}', 'utf-8');
+        expect(fs.writeFile).toHaveBeenCalledWith('/profiles.json', '[]', 'utf-8');
     });
 
     it('should cover importCloudSync reading settings.json', async () => {

@@ -1323,10 +1323,13 @@ export class ModManager {
 
                     let targetPath = '';
                     if (entry.name === 'mods.json') {
+                        parseLocalMods(content);
                         targetPath = await this.getModsFilePath();
                     } else if (entry.name === 'profiles.json') {
+                        parseProfiles(content);
                         targetPath = await this.getProfilesFilePath();
                     } else if (entry.name === 'settings.json') {
+                        parseSettings(content);
                         targetPath = this.settingsFile;
                     }
 
