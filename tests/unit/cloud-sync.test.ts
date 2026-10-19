@@ -13,7 +13,7 @@ vi.mock('adm-zip', () => {
                 { name: 'settings.json', isDirectory: false },
                 { name: 'random.txt', isDirectory: false }
             ]),
-            readAsText: vi.fn((entry) => `{"mock": "${entry.name}"}`)
+            readAsText: vi.fn((entry) => entry.name === 'settings.json' ? '{"gamePath":""}' : '[]')
         };
     });
     return { default: MockAdmZip };
@@ -70,12 +70,25 @@ describe('Cloud Sync (Export / Import)', () => {
       expect(result.message).toContain('Imported successfully');
 
       // Ensure only allowed files were written (mods.json and settings.json were in the mock entries)
-      expect(fs.writeFile).toHaveBeenCalledWith('/mock/mods/mods.json', '{"mock": "mods.json"}', 'utf-8');
+      expect(fs.writeFile).toHaveBeenCalledWith('/mock/mods/mods.json', '[]', 'utf-8');
 
       // random.txt should NOT have been written
       const writes = vi.mocked(fs.writeFile).mock.calls;
       const wroteRandom = writes.some(call => typeof call[0] === 'string' && call[0].includes('random.txt'));
       expect(wroteRandom).toBe(false);
+  });
+
+  it('should reject invalid JSON content without writing', async () => {
+      vi.mocked(AdmZip).mockImplementationOnce(function() {
+          return {
+              getEntries: () => [{ name: 'settings.json', isDirectory: false }],
+              readAsText: () => '{"gamePath": 42}'
+          };
+      } as any);
+      vi.mocked(fs.writeFile).mockClear();
+      const result = await modManager.importCloudSync('/test/import.zip');
+      expect(result.success).toBe(false);
+      expect(fs.writeFile).not.toHaveBeenCalled();
   });
 
   it('should handle import extraction failure', async () => {

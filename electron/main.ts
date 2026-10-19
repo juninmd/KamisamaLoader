@@ -19,7 +19,7 @@ process.on('uncaughtException', (error) => {
   console.error('CRITICAL: Uncaught Exception:', error);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error('CRITICAL: Unhandled Rejection:', reason);
 });
 
@@ -293,7 +293,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', (_event, commandLine) => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();

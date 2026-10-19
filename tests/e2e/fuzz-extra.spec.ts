@@ -765,7 +765,7 @@ test('Fuzz rapid modal opening and closing', async () => {
 
         await modContainer.evaluate((el: any) => {
             const dropEvent = new Event('drop', { bubbles: true });
-            // @ts-ignore: Mocking data transfer for React synthetic events
+            // @ts-expect-error: Mocking data transfer for React synthetic events
             dropEvent.dataTransfer = { files: [] };
             el.dispatchEvent(dropEvent);
         });

@@ -15,7 +15,7 @@ const Settings: React.FC = () => {
             } else {
                 showToast(result.message, 'error');
             }
-        } catch (_e) {
+        } catch {
             showToast('Failed to install UE4SS', 'error');
         }
     };

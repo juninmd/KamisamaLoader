@@ -129,7 +129,7 @@ export class APICache {
         try {
             await fs.unlink(this.persistentCachePath);
             console.log('[Cache] Cleared all cache');
-        } catch (err) {
+        } catch {
             // File might not exist, which is fine
         }
     }
@@ -167,7 +167,7 @@ export class APICache {
 
             this.persistentCacheLoaded = true;
             console.log(`[Cache] Loaded ${this.memoryCache.size} entries from disk`);
-        } catch (err) {
+        } catch {
             // File doesn't exist or is corrupted - start fresh
             console.log('[Cache] No persistent cache found, starting fresh');
         }
@@ -182,7 +182,7 @@ export class APICache {
             if (entry && Date.now() - entry.timestamp <= entry.ttl) {
                 return entry;
             }
-        } catch (err) {
+        } catch {
             // Ignore errors
         }
         return null;
@@ -232,7 +232,7 @@ export class APICache {
             }
 
             await fs.writeFile(this.persistentCachePath, JSON.stringify(cache, null, 2));
-        } catch (err) {
+        } catch {
             // Ignore errors
         }
     }

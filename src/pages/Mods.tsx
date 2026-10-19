@@ -64,23 +64,6 @@ const Mods: React.FC = () => {
     // Track latest request to avoid race conditions
     const lastRequestId = useRef(0);
 
-    // Refresh after downloads or browsing may have changed the local catalog.
-    useEffect(() => {
-        if (activeTab === 'installed') loadInstalledMods();
-    }, [activeTab]);
-
-    // Listen for deep link events or external changes
-    useEffect(() => {
-        const removeListener = window.electronAPI.onDownloadScanFinished(() => {
-            loadInstalledMods();
-            setActiveTab('downloads');
-            showToast('Download started via external link', 'info');
-        });
-        return () => {
-             if (removeListener) removeListener();
-        };
-    }, []);
-
     // Load Categories
     const loadCategories = async () => {
         try {
@@ -109,6 +92,23 @@ const Mods: React.FC = () => {
             setInstalledLoading(false);
         }
     };
+
+    // Listen for deep link events or external changes
+    useEffect(() => {
+        const removeListener = window.electronAPI.onDownloadScanFinished(() => {
+            loadInstalledMods();
+            setActiveTab('downloads');
+            showToast('Download started via external link', 'info');
+        });
+        return () => {
+             if (removeListener) removeListener();
+        };
+    }, []);
+
+    // Refresh after downloads or browsing may have changed the local catalog.
+    useEffect(() => {
+        if (activeTab === 'installed') loadInstalledMods();
+    }, [activeTab]);
 
     // Server-Side Fetch
     const loadBrowseMods = async (page: number, reset: boolean = false) => {
@@ -398,7 +398,7 @@ const Mods: React.FC = () => {
             } else {
                 showToast(result.message || 'Installation failed', 'error');
             }
-        } catch (_e) {
+        } catch {
             showToast('Installation request failed', 'error');
         }
     };
