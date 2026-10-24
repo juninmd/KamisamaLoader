@@ -1,5 +1,4 @@
-import { _electron as electron } from '@playwright/test';
-import { test, expect } from '@playwright/test';
+import { test, expect, _electron as electron } from '@playwright/test';
 
 test.describe('Extreme Fuzz Testing 15', () => {
   let app: any;
