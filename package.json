@@ -88,5 +88,10 @@
     "vitest": "^4.1.12",
     "wait-on": "^9.5.1"
   },
-  "packageManager": "pnpm@8.14.3+sha1.872b21adeaae4e71acd5c551ba848d927d6aa446"
+  "packageManager": "pnpm@8.14.3+sha1.872b21adeaae4e71acd5c551ba848d927d6aa446",
+  "pnpm": {
+    "overrides": {
+      "adm-zip": ">=0.6.1 <1.0.0"
+    }
+  }
 }
