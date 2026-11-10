@@ -399,3 +399,6 @@ temp-test-data/
 test-data/
 coverage/
 coverage_report*.txt
+
+# Artefatos locais e segredos: nunca versionar (smoke test de seguranca)
+playwright-report/
