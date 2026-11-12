@@ -38,7 +38,7 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-white;
+    @apply bg-[hsl(var(--background))] text-foreground antialiased selection:bg-primary/30 selection:text-white;
     /* Optional: Subtle background gradient/noise if desired, sticking to colors for now */
     background-image:
       radial-gradient(circle at 15% 50%, rgba(120, 50, 255, 0.08), transparent 25%),
