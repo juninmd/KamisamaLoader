@@ -76,7 +76,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
-    "happy-dom": "^20.14.6",
+    "happy-dom": "^21.0.4",
     "playwright": "^1.64.1",
     "postcss": "^8.5.31",
     "rimraf": "^6.1.3",
