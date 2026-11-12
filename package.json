@@ -81,6 +81,7 @@
     "postcss": "^8.5.31",
     "rimraf": "^6.1.3",
     "shx": "^0.4.0",
+    "@tailwindcss/postcss": "^4.3.5",
     "tailwindcss": "^4.3.5",
     "typescript": "~7.0.2",
     "typescript-eslint": "^8.71.2",
