@@ -263,4 +263,22 @@ describe('ModDetailsModal', () => {
         const buttons = screen.getAllByRole('button');
         buttons.forEach(b => fireEvent.click(b));
     });
+
+    it('is a labelled modal dialog whose icon-only buttons have names', async () => {
+        await act(async () => {
+            renderWithProviders(
+                <ModDetailsModal mod={mockMod} isOpen={true} onClose={mockClose} onInstall={mockInstall} />
+            );
+        });
+        const dialog = screen.getByRole('dialog', { name: 'Goku Mod details' });
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }));
+        expect(mockClose).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument();
+        });
+        expect(screen.getByRole('button', { name: 'Previous image' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Show image 1' })).toHaveAttribute('aria-current', 'true');
+        expect(screen.getByRole('button', { name: 'Show image 2' })).toHaveAttribute('aria-current', 'false');
+    });
 });
