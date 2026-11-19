@@ -98,6 +98,9 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
 
     return ReactDOM.createPortal(
         <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${mod.name} details`}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
@@ -106,6 +109,7 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                 {/* Close Button */}
                 <button
                     onClick={onClose}
+                    aria-label="Close dialog"
                     className="absolute top-4 right-4 z-20 p-2 bg-black/50 hover:bg-red-500/80 rounded-full text-white transition-colors backdrop-blur-md"
                 >
                     <X size={20} />
@@ -127,12 +131,14 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                             <>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                    aria-label="Previous image"
                                     className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all z-10"
                                 >
                                     <ChevronLeft size={24} />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                    aria-label="Next image"
                                     className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all z-10"
                                 >
                                     <ChevronRight size={24} />
@@ -144,6 +150,8 @@ const ModDetailsModal: React.FC<ModDetailsModalProps> = ({ mod, isOpen, onClose,
                                         <button
                                             key={idx}
                                             onClick={() => setCurrentImageIndex(idx)}
+                                            aria-label={`Show image ${idx + 1}`}
+                                            aria-current={idx === currentImageIndex}
                                             className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'}`}
                                         />
                                     ))}

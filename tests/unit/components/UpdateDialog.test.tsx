@@ -77,3 +77,27 @@ describe('UpdateDialog', () => {
         expect(screen.getByText('Updating...').closest('button')).toBeDisabled();
     });
 });
+
+describe('UpdateDialog accessibility', () => {
+    const mod = { id: '1', name: 'Test Mod', latestVersion: '2.0' };
+
+    it('is exposed as a labelled modal dialog with a named close button', () => {
+        const onClose = vi.fn();
+        renderWithProviders(
+            <UpdateDialog mod={mod} changelog={null} isUpdating={false} onUpdate={vi.fn()} onClose={onClose} />
+        );
+        const dialog = screen.getByRole('dialog', { name: 'Update Available' });
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes on Escape', () => {
+        const onClose = vi.fn();
+        renderWithProviders(
+            <UpdateDialog mod={mod} changelog={null} isUpdating={false} onUpdate={vi.fn()} onClose={onClose} />
+        );
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+});
