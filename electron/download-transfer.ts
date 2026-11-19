@@ -10,8 +10,21 @@ interface TransferCallbacks {
   onFailure: (message: string) => void;
 }
 
+const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
+const MAX_REDIRECTS = 10;
+const redirectCounts = new WeakMap<Download, number>();
+
+function resolveRedirect(location: string, base: string | undefined) {
+  if (/^https?:\/\//i.test(location)) return location;
+  try {
+    return new URL(location, base).toString();
+  } catch {
+    return location;
+  }
+}
+
 export function startDownloadTransfer(item: Download, callbacks: TransferCallbacks) {
-  const resuming = item.receivedBytes > 0;
+  let resuming = item.receivedBytes > 0;
   const options: Electron.ClientRequestConstructorOptions = {
     url: item.url,
     method: 'GET',
@@ -21,19 +34,33 @@ export function startDownloadTransfer(item: Download, callbacks: TransferCallbac
   callbacks.onRequest(request);
 
   request.on('response', (response) => {
-    if (response.statusCode === 301 || response.statusCode === 302) {
+    if (REDIRECT_STATUS.has(response.statusCode)) {
       const location = response.headers.location;
       const redirect = Array.isArray(location) ? location[0] : location;
       if (redirect) {
-        item.url = redirect;
+        const count = (redirectCounts.get(item) ?? 0) + 1;
+        if (count > MAX_REDIRECTS) {
+          redirectCounts.delete(item);
+          callbacks.onFailure('Too many redirects');
+          return;
+        }
+        redirectCounts.set(item, count);
+        item.url = resolveRedirect(redirect, item.url);
         callbacks.onRedirect();
         return;
       }
     }
+    redirectCounts.delete(item);
 
     if (response.statusCode !== 200 && response.statusCode !== 206) {
       callbacks.onFailure(`HTTP Error: ${response.statusCode}`);
       return;
+    }
+
+    // A 200 to a Range request means the server ignored it: restart instead of appending the full body to the partial file.
+    if (resuming && response.statusCode === 200) {
+      resuming = false;
+      item.receivedBytes = 0;
     }
 
     if (!resuming) {
