@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Check, ArrowRight, RefreshCw } from 'lucide-react';
 import { Artwork } from './Artwork';
@@ -26,16 +26,24 @@ interface UpdateDialogProps {
 }
 
 const UpdateDialog: React.FC<UpdateDialogProps> = ({ mod, changelog, isUpdating, onUpdate, onClose }) => {
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEsc);
+        return () => document.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
+
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div role="dialog" aria-modal="true" aria-labelledby="update-dialog-title" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-gray-900 border border-white/10 rounded-xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[85vh]">
 
                 {/* Header */}
                 <div className="p-4 bg-purple-900/30 border-b border-purple-500/20 rounded-t-xl flex justify-between items-center">
-                    <h3 className="font-bold text-white text-lg">
+                    <h3 id="update-dialog-title" className="font-bold text-white text-lg">
                         Update Available
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+                    <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-white transition-colors">
                         <X size={20} />
                     </button>
                 </div>
