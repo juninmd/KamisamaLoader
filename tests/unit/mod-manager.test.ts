@@ -887,6 +887,19 @@ describe('ModManager', () => {
             expect(result.success).toBe(true);
         });
 
+        it('extracts archives whose extension is upper case (MOD.ZIP)', async () => {
+            const modManager = new ModManager(mockDownloadManager as any);
+            const extract = vi.spyOn(modManager as any, 'extractZip').mockResolvedValue(undefined);
+            (fs.readFile as any).mockResolvedValue('[]');
+            (fs.copyFile as any).mockClear();
+
+            const result = await modManager.installMod('/dl/MOD.ZIP');
+            expect(result.success).toBe(true);
+            expect(extract).toHaveBeenCalledWith('/dl/MOD.ZIP', expect.stringContaining('MOD'));
+            // Copying the raw archive into Mods/ would leave the game with an unusable .ZIP
+            expect(fs.copyFile).not.toHaveBeenCalled();
+        });
+
         it('should install non-zip', async () => {
             const pakPath = '/dl/mod.pak';
             (fs.readFile as any).mockResolvedValue('[]');

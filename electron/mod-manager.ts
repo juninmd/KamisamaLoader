@@ -616,7 +616,7 @@ export class ModManager {
             const modDestDir = path.join(this.modsDir, modName);
 
             // Check if zip
-            if (filePath.endsWith('.zip')) {
+            if (filePath.toLowerCase().endsWith('.zip')) {
                 await this.extractZip(filePath, modDestDir);
             } else {
                 // Copy file directly (e.g. .pak)
