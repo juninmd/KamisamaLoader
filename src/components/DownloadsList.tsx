@@ -93,7 +93,14 @@ export const DownloadsList: React.FC = () => {
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-1">
+                        <div
+                            className="h-2 bg-white/10 rounded-full overflow-hidden mb-1"
+                            role="progressbar"
+                            aria-label={`Download progress: ${dl.filename}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={Math.round(dl.progress)}
+                        >
                             <div
                                 className={`h-full transition-all duration-300 ${dl.state === 'failed' ? 'bg-red-500' :
                                     dl.state === 'completed' ? 'bg-green-500' :
@@ -114,22 +121,24 @@ export const DownloadsList: React.FC = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                         {dl.state === 'progressing' && (
-                            <button onClick={() => handlePause(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Pause">
+                            <button type="button" onClick={() => handlePause(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Pause" aria-label={`Pause ${dl.filename}`}>
                                 <Pause className="w-4 h-4 text-white" />
                             </button>
                         )}
                         {(dl.state === 'paused' || dl.state === 'failed') && (
-                            <button onClick={() => handleResume(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Resume/Retry">
+                            <button type="button" onClick={() => handleResume(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Resume/Retry" aria-label={`${dl.state === 'failed' ? 'Retry' : 'Resume'} ${dl.filename}`}>
                                 <Play className="w-4 h-4 text-white" />
                             </button>
                         )}
-                        <button onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel">
+                        <button type="button" onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel" aria-label={`Cancel ${dl.filename}`}>
                             <X className="w-4 h-4 text-white/50 group-hover:text-red-400" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => window.electronAPI.openDownloadFolder(dl.id)}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             title="Show in Folder"
+                            aria-label={`Show ${dl.filename} in folder`}
                         >
                             <Folder size={16} className="text-white/50 hover:text-white" />
                         </button>
