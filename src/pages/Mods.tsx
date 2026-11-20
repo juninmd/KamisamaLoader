@@ -112,10 +112,10 @@ const Mods: React.FC = () => {
 
     // Server-Side Fetch
     const loadBrowseMods = async (page: number, reset: boolean = false) => {
-        // Increment request ID
-        const requestId = ++lastRequestId.current;
-
         if (loadingBrowse && !reset) return;
+
+        // Only after the guard: a skipped call must not turn the load in flight into a "stale" one.
+        const requestId = ++lastRequestId.current;
 
         setLoadingBrowse(true);
         try {
@@ -183,10 +183,12 @@ const Mods: React.FC = () => {
             }
 
         } catch (error) {
+            if (requestId !== lastRequestId.current) return;
             console.error('Failed to load online mods:', error);
             showToast('Failed to load online mods', 'error');
         } finally {
-            setLoadingBrowse(false);
+            // A superseded request must not switch the spinner off while the newer one is still loading.
+            if (requestId === lastRequestId.current) setLoadingBrowse(false);
         }
     };
 
