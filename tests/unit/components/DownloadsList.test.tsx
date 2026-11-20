@@ -41,6 +41,20 @@ describe('DownloadsList', () => {
         });
     });
 
+    it('exposes progress and per-download actions to assistive tech', async () => {
+        (window.electronAPI.getDownloads as any).mockResolvedValue([
+            { id: '1', filename: 'a.zip', state: 'progressing', progress: 42.4, speed: 0 },
+            { id: '2', filename: 'b.zip', state: 'failed', progress: 10, speed: 0 },
+        ]);
+        renderWithProviders(<DownloadsList />);
+        const bar = await screen.findByRole('progressbar', { name: 'Download progress: a.zip' });
+        expect(bar).toHaveAttribute('aria-valuenow', '42');
+        // Two rows, two "Cancel" icons: the name must say which download each one acts on.
+        expect(screen.getByRole('button', { name: 'Cancel a.zip' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Pause a.zip' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Retry b.zip' })).toBeInTheDocument();
+    });
+
     it('should render update context correctly', async () => {
         const mockDownloads = [{
             id: 'u1',
