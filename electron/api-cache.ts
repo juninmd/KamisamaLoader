@@ -24,6 +24,8 @@ export class APICache {
     private maxMemorySize: number;
     private defaultTTL: number;
     private persistentCacheLoaded: boolean = false;
+    // Serializes read-modify-write cycles on the cache file; parallel ones overwrote each other.
+    private writeChain: Promise<void> = Promise.resolve();
 
     constructor(config: CacheConfig = {}) {
         this.memoryCache = new Map();
@@ -188,7 +190,17 @@ export class APICache {
         return null;
     }
 
-    private async setPersistent(key: string, entry: CacheEntry): Promise<void> {
+    private enqueueWrite(task: () => Promise<void>): Promise<void> {
+        const run = this.writeChain.then(task);
+        this.writeChain = run.catch(() => undefined);
+        return run;
+    }
+
+    private setPersistent(key: string, entry: CacheEntry): Promise<void> {
+        return this.enqueueWrite(() => this.writePersistent(key, entry));
+    }
+
+    private async writePersistent(key: string, entry: CacheEntry): Promise<void> {
         try {
             let cache: Record<string, CacheEntry> = {};
 
@@ -219,7 +231,11 @@ export class APICache {
         }
     }
 
-    private async invalidatePersistent(regex: RegExp): Promise<void> {
+    private invalidatePersistent(regex: RegExp): Promise<void> {
+        return this.enqueueWrite(() => this.removePersistent(regex));
+    }
+
+    private async removePersistent(regex: RegExp): Promise<void> {
         try {
             const data = await fs.readFile(this.persistentCachePath, 'utf-8');
             const cache = parsePersistentCache(data);
