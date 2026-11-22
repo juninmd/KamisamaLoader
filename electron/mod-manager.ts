@@ -807,15 +807,22 @@ export class ModManager {
                 }
 
                 const fileStream = createWriteStream(destPath);
-                response.on('data', (chunk) => fileStream.write(chunk));
-                response.on('end', () => {
-                    fileStream.end(resolve);
-                });
-                response.on('error', (err: any) => {
+                let failed = false;
+                const fail = (err: Error) => {
+                    if (failed) return;
+                    failed = true;
                     fileStream.close();
                     fs.unlink(destPath).catch(() => { });
                     reject(err);
+                };
+                // Without this listener a write error (EACCES, ENOSPC) is thrown in the main process.
+                fileStream.on('error', fail);
+                response.on('data', (chunk) => { if (!failed) fileStream.write(chunk); });
+                response.on('end', () => {
+                    // end's callback also runs when the stream failed (e.g. open error after the last chunk)
+                    if (!failed) fileStream.end(() => (fileStream.errored ? fail(fileStream.errored) : resolve()));
                 });
+                response.on('error', fail);
             });
             request.on('error', reject);
             request.end();
