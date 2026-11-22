@@ -135,7 +135,8 @@ describe('Backend Coverage Fill', () => {
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
                 end: vi.fn((callback?: () => void) => callback?.()),
-                close: vi.fn()
+                close: vi.fn(),
+                on: vi.fn()
             });
 
             await (modManager as any).downloadFile('http://orig', '/tmp/f');
@@ -165,7 +166,8 @@ describe('Backend Coverage Fill', () => {
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
                 end: vi.fn((callback?: () => void) => callback?.()),
-                close: vi.fn()
+                close: vi.fn(),
+                on: vi.fn()
             });
 
             await expect((modManager as any).downloadFile('http://fail', '/tmp/f')).rejects.toThrow('Resp Error');
@@ -194,7 +196,8 @@ describe('Backend Coverage Fill', () => {
             (fsMock.createWriteStream as any).mockReturnValue({
                 write: vi.fn(),
                 end: vi.fn((callback?: () => void) => callback?.()),
-                close: vi.fn()
+                close: vi.fn(),
+                on: vi.fn()
             });
 
             await expect((modManager as any).downloadFile('http://fail', '/tmp/f')).rejects.toThrow('Resp Error');
