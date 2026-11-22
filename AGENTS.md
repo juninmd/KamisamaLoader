@@ -1,32 +1,40 @@
-# 🧠 AGENTS.md - Kamisama Intelligence System
+# AGENTS.md
 
-## 👤 AI Personas
+KamisamaLoader is an Electron mod manager for Dragon Ball: Sparking! ZERO (GameBanana catalog, downloads, mod deploy, profiles).
 
-### 1. Jules-Architect (System Design)
-- **Role**: Overseeing Electron architecture and secure I/O.
-- **Focus**: Process separation, IPC security, and filesystem integrity.
-- **Vibe**: Strategic and focused on stability.
+## Stack
+- Electron 45 main process (`electron/`), preload via contextBridge, React 19 + Vite 7 + Tailwind 3 renderer (`src/`), TypeScript 5.9
+- Unit tests: Vitest (happy-dom); E2E: Playwright
+- Package manager: pnpm (`packageManager` pins pnpm@8.14.3); lockfile is `pnpm-lock.yaml`
 
-### 2. Spark-Frontend (Visual Designer)
-- **Role**: Crafting the "Wow" factor of the Mod Loader UI.
-- **Focus**: Glassmorphism, React 19 patterns, and fluid animations.
-- **Vibe**: Creative and detail-oriented.
+## Commands
+- Setup: `pnpm install`
+- Dev (Vite + Electron): `pnpm run dev`
+- Build: `pnpm run build` (type-check, Vite build, Electron compile)
+- Package: `pnpm run dist` (electron-builder; Linux AppImage, Windows NSIS)
+- Lint: `pnpm run lint`
+- Typecheck: `pnpm run type-check`
+- Unit tests: `pnpm run test:unit`; coverage: `pnpm run test:coverage`
+- E2E: `pnpm run test:e2e` (builds first, then Playwright; writes `tests/evidence/homologation`)
 
-### 3. Gohan (Mod Expert)
-- **Role**: Logic for mod parsing, extraction, and conflict resolution.
-- **Focus**: `adm-zip` optimization, protocol handling, and mod validation.
-- **Vibe**: Precise and protective of the user's game files.
+## Structure
+- `electron/`: main process, IPC handlers, mod manager, downloads, GameBanana/GitHub clients, archive and validation
+- `electron/preload.ts`: the only bridge between renderer and main
+- `src/`: React renderer (pages, components, context)
+- `shared/types.ts`: types shared by main and renderer
+- `tests/unit/`, `tests/e2e/`, `tests/*.spec.ts`: Vitest and Playwright suites
+- `evidence/`: README screenshots
+- `.agents/`: notes for AI agents (electron-dev, modding-core, react-frontend)
+- `.github/workflows/`: validate (delegates to `juninmd/base-actions` reusable workflow), SAST, security, auto-tag, release-drafter
 
-## 📜 Development Rules (Antigravity)
-
-1. **Size Limit**: **Max 150 lines per file**. Refactor immediately if exceeded.
-2. **Typed IPC**: Never use `ipcRenderer.send` without a matching typed handler in Main.
-3. **Pure UI**: The Renderer must never have direct `fs` access.
-4. **Validation**: All JSON operations must be validated against a schema.
-
-## 🤝 Interaction Protocol
-- Research existing mod structures before implementing new parsers.
-- Use **Plan -> Act -> Validate** for every feature change.
+## Conventions
+- Branch default: `master`.
+- Keep files at or under 150 lines and split by responsibility when exceeded. Current violations: `electron/mod-manager.ts` (1412), `src/pages/Mods.tsx` (697), `electron/gamebanana.ts` (511).
+- IPC is typed: never call `ipcRenderer.send` without a matching handler in main.
+- Renderer (`src/`) has no direct `fs` access; file work goes through main.
+- Validate every JSON read/write against a schema (`electron/data-validation.ts`, `electron/ipc-validation.ts`).
+- Before adding a mod parser, read the existing mod structure notes in `.agents/modding-core`.
+- Work as Plan -> Act -> Validate for each feature change.
 
 <!-- base-actions-main-policy -->
 ## GitHub Actions — padrão obrigatório (@main)

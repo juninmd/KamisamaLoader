@@ -1,1 +1,0 @@
-grep -r "File" coverage/
