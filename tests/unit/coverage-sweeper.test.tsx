@@ -105,14 +105,9 @@ describe('Mods Page Full Sweeper Coverage', () => {
              expect(elements.length).toBeGreaterThan(1);
          });
 
-         const closeBtns = screen.queryAllByRole('button');
+         const closeBtn = screen.getByRole('button', { name: 'Close' });
          await act(async () => {
-             for (const btn of closeBtns) {
-                  if (btn.innerHTML.includes('lucide-x')) {
-                      fireEvent.click(btn);
-                      break;
-                  }
-             }
+             fireEvent.click(closeBtn);
          });
 
          await waitFor(() => {
@@ -145,12 +140,10 @@ describe('Mods Page Full Sweeper Coverage', () => {
                  expect(screen.getByText(/Yes, Update/i)).toBeInTheDocument();
              }, { timeout: 3000 });
 
-             const closeBtn = screen.getAllByRole('button').find(b => b.innerHTML.includes('lucide-x'));
-             if (closeBtn) {
-                 await act(async () => {
-                     fireEvent.click(closeBtn);
-                 });
-             }
+             const closeBtn = screen.getByRole('button', { name: 'Skip Update' });
+             await act(async () => {
+                 fireEvent.click(closeBtn);
+             });
 
              await waitFor(() => {
                  expect(screen.queryByText(/Yes, Update/i)).toBeNull();

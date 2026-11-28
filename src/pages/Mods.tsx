@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, RefreshCw, UploadCloud, ChevronDown } from 'lucide-react';
+import { Download, RefreshCw, UploadCloud } from 'lucide-react';
+import { Button, SearchField, Select, Spinner, Tabs } from '@juninmd/sonido';
 import { useToast } from '../components/ToastContext';
 import ModDetailsModal from '../components/ModDetailsModal';
 import UpdateDialog from '../components/UpdateDialog';
@@ -496,88 +497,76 @@ const Mods: React.FC = () => {
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 space-y-4 xl:space-y-0 flex-shrink-0 relative z-40">
 
                 <div className="flex bg-black/40 p-1 rounded-xl backdrop-blur-sm border border-white/10">
-                    <button
-                        onClick={() => setActiveTab('installed')}
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'installed'
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        Installed
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('browse')}
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'browse'
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        Browse Online
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('downloads')}
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'downloads'
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        Downloads
-                    </button>
+                    <Tabs
+                        items={[
+                            { key: 'installed', label: 'Installed' },
+                            { key: 'browse', label: 'Browse Online' },
+                            { key: 'downloads', label: 'Downloads' },
+                        ]}
+                        value={activeTab}
+                        onChange={setActiveTab}
+                        label="Mod views"
+                        variant="pill"
+                    />
                 </div>
 
-                <div className="flex items-center space-x-3 w-full xl:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
                     {activeTab === 'installed' && (
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 shrink-0">
                             <ProfileManager onProfileLoaded={() => loadInstalledMods()} />
                         </div>
                     )}
 
-                    <div className="relative group flex-1 xl:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors" size={18} />
-                        <input
-                            type="text"
+                    <div className="flex-1 min-w-[200px] xl:w-64">
+                        <SearchField
+                            label="Search mods"
                             placeholder={activeTab === 'browse' ? "Search online mods..." : "Search installed mods..."}
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-black/30 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                            onChange={setSearchQuery}
                         />
                     </div>
 
                     {activeTab === 'installed' && (
                         <>
-                            <div className="relative">
-                                <select
-                                    value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value as any)}
-                                    className="appearance-none bg-black/30 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer hover:bg-white/5 transition-colors"
-                                >
-                                    <option value="all" className="bg-[#1a1b26] text-white">All Mods</option>
-                                    <option value="enabled" className="bg-[#1a1b26] text-white">Enabled Only</option>
-                                    <option value="disabled" className="bg-[#1a1b26] text-white">Disabled Only</option>
-                                    <option value="updates" className="bg-[#1a1b26] text-white">Updates Available</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                            </div>
+                            <Select
+                                label="Filter installed mods"
+                                hideLabel
+                                compact
+                                value={filterStatus}
+                                onChange={(value) => setFilterStatus(value as typeof filterStatus)}
+                                options={[
+                                    { value: 'all', label: 'All Mods' },
+                                    { value: 'enabled', label: 'Enabled Only' },
+                                    { value: 'disabled', label: 'Disabled Only' },
+                                    { value: 'updates', label: 'Updates Available' },
+                                ]}
+                                className="w-36 shrink-0"
+                            />
 
-                            <button
+                            <Button
+                                variant="secondary"
+                                appearance="outline"
+                                size="sm"
+                                className="whitespace-nowrap shrink-0"
                                 onClick={handleCheckUpdates}
-                                disabled={checkingUpdates}
-                                className={`flex items-center space-x-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/40 px-4 py-2 rounded-xl text-sm font-bold transition-all ${checkingUpdates ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                loading={checkingUpdates}
+                                iconStart={checkingUpdates ? undefined : <RefreshCw size={16} />}
                             >
-                                <RefreshCw size={16} className={checkingUpdates ? "animate-spin" : ""} />
-                                <span>{checkingUpdates ? 'Checking...' : 'Check Updates'}</span>
-                            </button>
+                                {checkingUpdates ? 'Checking...' : 'Check Updates'}
+                            </Button>
 
                             {hasUpdates && (
-                                <button
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    className="whitespace-nowrap shrink-0"
                                     onClick={handleUpdateAll}
-                                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-600/20 transition-all animate-pulse hover:animate-none"
+                                    iconStart={<Download size={16} />}
                                 >
-                                    <Download size={16} />
-                                    <span>Update All</span>
-                                </button>
+                                    Update All
+                                </Button>
                             )}
-                            <div className="flex items-center space-x-3 text-xs text-gray-400 border-l border-white/10 pl-3 ml-2">
+                            <div className="flex items-center gap-3 text-xs text-gray-400 border-l border-white/10 pl-3 ml-1 shrink-0">
                                 <div className="flex flex-col">
                                     <span className="font-bold text-white">{filteredInstalledMods.length}</span>
                                     <span>Mods</span>
@@ -591,14 +580,16 @@ const Mods: React.FC = () => {
                     )}
                     {activeTab === 'browse' && (
                         <div className="flex items-center space-x-3">
-                            <button
+                            <Button
+                                variant="secondary"
+                                size="icon"
                                 onClick={() => loadBrowseMods(1, true)}
                                 disabled={loadingBrowse}
-                                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors text-white"
                                 title="Refresh Online Mods"
+                                aria-label="Refresh Online Mods"
                             >
                                 <RefreshCw size={18} className={loadingBrowse ? "animate-spin" : ""} />
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -658,15 +649,9 @@ const Mods: React.FC = () => {
 
                             {(loadingBrowse && browsePage > 1) || (browseMods.length > 0 && hasMore) ? (
                                 <div ref={observerTarget} className="flex justify-center items-center py-8 shrink-0 w-full">
-                                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <Spinner size={24} label="Loading more mods" />
                                 </div>
                             ) : null}
-
-                            {!loadingBrowse && browseMods.length === 0 && (
-                                <div className="flex justify-center items-center h-64 text-gray-400">
-                                    No mods found.
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}

@@ -1,31 +1,30 @@
-import * as React from "react"
-import { cn } from "../../lib/utils"
+import {
+    Badge as SonidoBadge,
+    type BadgeProps as SonidoBadgeProps,
+} from "@juninmd/sonido"
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: "default" | "secondary" | "destructive" | "outline" | "glass"
+/**
+ * Compatibility layer for the Badge API the app already uses.
+ * Tones and shapes are Sonido's; only the legacy `variant` names are mapped.
+ */
+export type BadgeVariant = "default" | "secondary" | "destructive" | "outline" | "glass"
+
+export interface BadgeProps extends SonidoBadgeProps {
+    variant?: BadgeVariant
+}
+
+const VARIANTS: Record<BadgeVariant, Pick<SonidoBadgeProps, "tone" | "appearance" | "className">> = {
+    default: { tone: "accent", appearance: "solid" },
+    secondary: { tone: "neutral", appearance: "soft" },
+    destructive: { tone: "danger", appearance: "solid" },
+    outline: { tone: "neutral", appearance: "soft", className: "bg-transparent border-white/20" },
+    glass: { tone: "neutral", appearance: "soft", className: "backdrop-blur-md bg-black/40" },
 }
 
 function Badge({ className, variant = "default", ...props }: BadgeProps) {
-    return (
-        <div
-            className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                {
-                    "border-transparent bg-primary text-primary-foreground hover:bg-primary/80":
-                        variant === "default",
-                    "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80":
-                        variant === "secondary",
-                    "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80":
-                        variant === "destructive",
-                    "text-foreground": variant === "outline",
-                    "border-white/10 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10":
-                        variant === "glass",
-                },
-                className
-            )}
-            {...props}
-        />
-    )
+    const mapped = VARIANTS[variant]
+    const merged = [mapped.className, className].filter(Boolean).join(" ")
+    return <SonidoBadge tone={mapped.tone} appearance={mapped.appearance} className={merged} {...props} />
 }
 
 export { Badge }

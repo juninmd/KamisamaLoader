@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Trash2, ChevronDown, Folder, Plus } from 'lucide-react';
+import { Button, TextField } from '@juninmd/sonido';
 import { useToast } from './ToastContext';
 import type { Profile } from '../../shared/types';
 
@@ -96,15 +97,16 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
 
     return (
         <div className="relative z-50">
-            <button
+            <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 px-3 py-2 rounded-xl text-sm font-medium border border-white/10 transition-colors"
                 title="Manage Mod Profiles"
+                iconStart={<Folder size={16} className="text-primary" />}
+                iconEnd={<ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
             >
-                <Folder size={16} className="text-blue-400" />
-                <span>Profiles</span>
-                <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
+                Profiles
+            </Button>
 
             {isOpen && (
                 <>
@@ -169,30 +171,33 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ onProfileLoaded }) => {
                         {/* Create Input */}
                         {isCreating && (
                             <div className="p-2 bg-black/20 rounded-lg border border-white/5 animate-in slide-in-from-top-2">
-                                <input
-                                    type="text"
+                                <TextField
+                                    label="Profile name"
+                                    hideLabel
                                     placeholder="Profile Name..."
                                     value={newProfileName}
                                     onChange={(e) => setNewProfileName(e.target.value)}
-                                    className="w-full bg-black/30 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 mb-2"
+                                    className="mb-2"
                                     autoFocus
                                     onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                                 />
-                                <div className="flex items-center justify-end space-x-2">
-                                    <button
+                                <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="xs"
                                         onClick={() => setIsCreating(false)}
-                                        className="text-xs text-gray-400 hover:text-white px-2 py-1"
                                     >
                                         Cancel
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        size="xs"
+                                        iconStart={<Save size={12} />}
                                         onClick={handleCreate}
                                         disabled={!newProfileName.trim()}
-                                        className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold disabled:opacity-50"
                                     >
-                                        <Save size={12} />
-                                        <span>Save</span>
-                                    </button>
+                                        Save
+                                    </Button>
                                 </div>
                             </div>
                         )}

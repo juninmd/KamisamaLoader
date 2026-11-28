@@ -2,10 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Download, RefreshCw, Trash2, Heart, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Card, CardContent, CardFooter } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Switch } from '../ui/Switch';
+import { Badge, Button, Card, CardBody, CardFooter, Switch } from '@juninmd/sonido';
 import { cn } from '../../lib/utils';
 import type { Mod, LocalMod } from '../../../shared/types';
 import { Artwork } from '../Artwork';
@@ -48,6 +45,7 @@ export const ModCard: React.FC<ModCardProps> = ({
             className="group h-full"
         >
             <Card
+                padding="none"
                 className={cn(
                     "h-full flex flex-col overflow-hidden border-0 bg-black/40 shadow-xl ring-1 ring-white/10 transition-colors",
                     isEnabled && "ring-primary/50 bg-primary/5",
@@ -70,17 +68,17 @@ export const ModCard: React.FC<ModCardProps> = ({
                     {/* Badges */}
                     <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                         {isInstalled && (
-                            <Badge variant={isEnabled ? "default" : "secondary"} className="shadow-lg backdrop-blur-md">
+                            <Badge tone={isEnabled ? "success" : "neutral"} appearance={isEnabled ? "solid" : "soft"} className="shadow-lg backdrop-blur-md">
                                 {isEnabled ? "Active" : "Installed"}
                             </Badge>
                         )}
                         {hasUpdate && (
-                            <Badge variant="glass" className="bg-green-500/80 text-white animate-pulse">
+                            <Badge tone="success" appearance="solid" dot live className="bg-green-500/80">
                                 Update
                             </Badge>
                         )}
                         {mod.isNsfw && (
-                            <Badge variant="destructive" className="bg-red-500/80 text-white">
+                            <Badge tone="danger" appearance="solid" className="bg-red-500/80">
                                 NSFW
                             </Badge>
                         )}
@@ -88,11 +86,11 @@ export const ModCard: React.FC<ModCardProps> = ({
 
                     {/* Quick Category Tag */}
                     <div className="absolute bottom-2 left-2 flex gap-2">
-                        <Badge variant="glass" className="text-[10px] uppercase tracking-wider bg-black/60">
+                        <Badge tone="neutral" appearance="soft" className="text-[10px] uppercase tracking-wider bg-black/60">
                             {mod.category || 'Mod'}
                         </Badge>
                         {isInstalled && localMod?.priority !== undefined && (
-                            <Badge variant="glass" className="text-[10px] bg-blue-600/60 backdrop-blur-md">
+                            <Badge tone="violet" appearance="soft" className="text-[10px] bg-blue-600/60 backdrop-blur-md">
                                 Prio: {localMod.priority}
                             </Badge>
                         )}
@@ -100,7 +98,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                 </div>
 
                 {/* Content */}
-                <CardContent className="flex-1 p-4 pb-2 space-y-2">
+                <CardBody className="flex-1 p-4 pb-2 space-y-2">
                     <div className="flex justify-between items-start gap-2">
                         <h3 className="font-bold text-sm text-foreground line-clamp-2 leading-tight group-hover:text-primary transition-colors" title={mod.name}>
                             {mod.name}
@@ -109,7 +107,7 @@ export const ModCard: React.FC<ModCardProps> = ({
 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="truncate max-w-[120px]">by <span className="text-foreground/80">{mod.author}</span></span>
-                        <span>•</span>
+                        <span>·</span>
                         <span>{effectiveMod.version || 'v1.0'}</span>
                     </div>
 
@@ -135,7 +133,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                             )}
                         </div>
                     )}
-                </CardContent>
+                </CardBody>
 
                 {/* Footer Actions */}
                 <CardFooter className="p-3 pt-0 gap-2">
@@ -151,7 +149,7 @@ export const ModCard: React.FC<ModCardProps> = ({
 
                             {hasUpdate && onUpdate && (
                                 <Button
-                                    variant="glass"
+                                    variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 text-green-400 hover:bg-green-500/20 hover:text-green-300 border-green-500/30"
                                     onClick={(e) => { e.stopPropagation(); onUpdate(localMod); }}
@@ -194,12 +192,12 @@ export const ModCard: React.FC<ModCardProps> = ({
                         </>
                     ) : (
                         <Button
-                            variant="default"
+                            variant="primary"
                             size="sm"
-                            className="flex-1 h-8 text-xs font-bold bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+                            className="flex-1 h-8 text-xs font-bold"
+                            iconStart={<Download size={14} />}
                             onClick={(e) => { e.stopPropagation(); onInstall?.(mod); }}
                         >
-                            <Download size={14} className="mr-1.5" />
                             Download
                         </Button>
                     )}

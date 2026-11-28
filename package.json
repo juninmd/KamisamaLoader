@@ -46,6 +46,7 @@
     }
   },
   "dependencies": {
+    "@juninmd/sonido": "^2.5.0",
     "adm-zip": "^0.6.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

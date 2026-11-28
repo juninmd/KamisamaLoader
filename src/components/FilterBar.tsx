@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ChevronDown, Calendar, TrendingUp, Eye, Heart, Download } from 'lucide-react';
+import { Badge, Button } from '@juninmd/sonido';
 
 export interface FilterState {
     categories: string[];
@@ -86,13 +87,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <div className="flex flex-wrap items-center gap-3">
                 {/* Category Filter */}
                 <div className="relative">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                        className="flex items-center space-x-2 bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                        iconEnd={<ChevronDown size={16} className={`transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />}
                     >
-                        <span>Category</span>
-                        <ChevronDown size={16} className={`transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-                    </button>
+                        Category
+                    </Button>
 
                     {showCategoryDropdown && (
                         <div className="absolute top-full mt-2 left-0 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
@@ -100,7 +102,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <button
                                     key={cat.id}
                                     onClick={() => toggleCategory(cat.name)}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${activeFilters.categories.includes(cat.name) ? 'text-blue-400 bg-blue-600/20' : 'text-gray-300'
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${activeFilters.categories.includes(cat.name) ? 'text-primary bg-primary/20' : 'text-gray-300'
                                         }`}
                                 >
                                     {cat.name}
@@ -112,14 +114,15 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
                 {/* Sort By */}
                 <div className="relative">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setShowSortDropdown(!showSortDropdown)}
-                        className="flex items-center space-x-2 bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                        iconStart={currentSort ? <currentSort.icon size={16} /> : undefined}
+                        iconEnd={<ChevronDown size={16} className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />}
                     >
-                        {currentSort && <currentSort.icon size={16} />}
-                        <span>{currentSort?.label}</span>
-                        <ChevronDown size={16} className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
-                    </button>
+                        {currentSort?.label}
+                    </Button>
 
                     {showSortDropdown && (
                         <div className="absolute top-full mt-2 left-0 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 min-w-[180px]">
@@ -127,7 +130,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <button
                                     key={option.value}
                                     onClick={() => setSortBy(option.value)}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors flex items-center space-x-2 ${activeFilters.sortBy === option.value ? 'text-blue-400 bg-blue-600/20' : 'text-gray-300'
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors flex items-center space-x-2 ${activeFilters.sortBy === option.value ? 'text-primary bg-primary/20' : 'text-gray-300'
                                         }`}
                                 >
                                     <option.icon size={16} />
@@ -140,14 +143,15 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
                 {/* Date Range */}
                 <div className="relative">
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setShowDateDropdown(!showDateDropdown)}
-                        className="flex items-center space-x-2 bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+                        iconStart={<Calendar size={16} />}
+                        iconEnd={<ChevronDown size={16} className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''}`} />}
                     >
-                        <Calendar size={16} />
-                        <span>{currentDate?.label}</span>
-                        <ChevronDown size={16} className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''}`} />
-                    </button>
+                        {currentDate?.label}
+                    </Button>
 
                     {showDateDropdown && (
                         <div className="absolute top-full mt-2 left-0 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 min-w-[150px]">
@@ -155,7 +159,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <button
                                     key={option.value}
                                     onClick={() => setDateRange(option.value)}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${activeFilters.dateRange === option.value ? 'text-blue-400 bg-blue-600/20' : 'text-gray-300'
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${activeFilters.dateRange === option.value ? 'text-primary bg-primary/20' : 'text-gray-300'
                                         }`}
                                 >
                                     {option.label}
@@ -166,36 +170,46 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 </div>
 
                 {/* Content Filters */}
-                <div className="flex items-center space-x-2 border-l border-white/10 pl-3 ml-1">
-                    <button
+                <div className="flex items-center gap-2 border-l border-white/10 pl-3 ml-1">
+                    <Button
+                        size="xs"
+                        variant={activeFilters.nsfw ? 'danger' : 'secondary'}
+                        appearance={activeFilters.nsfw ? 'solid' : 'outline'}
                         onClick={() => onFilterChange({ ...activeFilters, nsfw: !activeFilters.nsfw })}
-                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.nsfw ? 'bg-red-600/20 border-red-500/50 text-red-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
                     >
                         NSFW
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        size="xs"
+                        variant={activeFilters.zeroSpark ? 'secondary' : 'ghost'}
+                        appearance="outline"
                         onClick={() => onFilterChange({ ...activeFilters, zeroSpark: !activeFilters.zeroSpark })}
-                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.zeroSpark ? 'bg-yellow-600/20 border-yellow-500/50 text-yellow-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                        className={activeFilters.zeroSpark ? 'text-yellow-300 border-yellow-500/50 bg-yellow-600/20' : ''}
                     >
                         ZeroSpark
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        size="xs"
+                        variant={activeFilters.colorZ ? 'secondary' : 'ghost'}
+                        appearance="outline"
                         onClick={() => onFilterChange({ ...activeFilters, colorZ: !activeFilters.colorZ })}
-                        className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${activeFilters.colorZ ? 'bg-purple-600/20 border-purple-500/50 text-purple-300' : 'bg-black/30 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                        className={activeFilters.colorZ ? 'text-purple-300 border-purple-500/50 bg-purple-600/20' : ''}
                     >
                         ColorZ
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Clear All */}
                 {hasActiveFilters && (
-                    <button
+                    <Button
+                        variant="danger"
+                        appearance="outline"
+                        size="sm"
+                        iconStart={<X size={16} />}
                         onClick={clearAll}
-                        className="flex items-center space-x-2 bg-red-600/20 border border-red-500/30 rounded-xl px-4 py-2 text-sm text-red-300 hover:bg-red-600/40 transition-colors"
                     >
-                        <X size={16} />
-                        <span>Clear All</span>
-                    </button>
+                        Clear All
+                    </Button>
                 )}
             </div>
 
@@ -203,18 +217,22 @@ const FilterBar: React.FC<FilterBarProps> = ({
             {activeFilters.categories.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {activeFilters.categories.map(category => (
-                        <div
+                        <Badge
                             key={category}
-                            className="flex items-center space-x-2 bg-blue-600/20 border border-blue-500/30 rounded-full px-3 py-1 text-sm text-blue-300 animate-in fade-in duration-200"
+                            tone="violet"
+                            appearance="soft"
+                            className="gap-2 animate-in fade-in duration-200"
                         >
                             <span>{category}</span>
                             <button
+                                type="button"
+                                aria-label={`Remove ${category}`}
                                 onClick={() => removeCategory(category)}
                                 className="hover:text-white transition-colors"
                             >
                                 <X size={14} />
                             </button>
-                        </div>
+                        </Badge>
                     ))}
                 </div>
             )}

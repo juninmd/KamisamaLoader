@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, Package, Settings as SettingsIcon } from 'lucide-react';
+import { Badge, Button } from '@juninmd/sonido';
 import { cn } from '../lib/utils';
-import { Button } from '../components/ui/Button';
 import { useSettings } from '../components/SettingsContext';
 
 interface MainLayoutProps {
@@ -22,11 +22,12 @@ const SidebarItem = ({
     onClick: () => void
 }) => (
     <Button
-        variant={isActive ? "glass" : "ghost"}
+        variant={isActive ? "secondary" : "ghost"}
         className={cn(
             "w-full justify-start gap-3 transition-all duration-300",
             isActive ? "bg-primary/20 hover:bg-primary/30 text-white border-primary/20 shadow-[0_0_20px_rgba(124,58,237,0.2)]" : "text-gray-400 hover:text-white"
         )}
+        style={isActive ? { background: 'hsl(var(--primary) / 0.2)' } : undefined}
         onClick={onClick}
     >
         <Icon size={20} />
@@ -84,8 +85,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activePage, onNavigat
                         isActive={activePage === 'mods'}
                         onClick={() => onNavigate('mods')}
                     />
-                    {/* Note: 'browse' is currently a tab in Mods, but we can potentially link it conceptually. 
-               For now we keep the main high level navs. */}
                     <SidebarItem
                         icon={SettingsIcon}
                         label="Settings"
@@ -96,16 +95,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activePage, onNavigat
 
                 {/* Footer / Status */}
                 <div className="mt-auto p-4 rounded-xl bg-white/5 border border-white/5 backdrop-blur-md">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" />
-                        <span className="text-xs font-medium text-gray-300">System Online</span>
-                    </div>
+                    <Badge tone="success" appearance="soft" dot live>
+                        System Online
+                    </Badge>
                 </div>
             </aside>
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-                {/* Top Header effects could go here */}
                 <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
 
                 <div className="flex-1 overflow-auto relative z-10 p-6">

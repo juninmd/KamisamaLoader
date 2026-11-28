@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pause, Play, X, Download as DownloadIcon, FileDown, AlertCircle, CheckCircle, Trash2, Folder } from 'lucide-react';
+import { Button, EmptyState, ProgressBar } from '@juninmd/sonido';
 import type { Download } from '../../shared/types';
 
 export const DownloadsList: React.FC = () => {
@@ -40,10 +41,12 @@ export const DownloadsList: React.FC = () => {
 
     if (downloads.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-white/40 space-y-4">
-                <FileDown className="w-16 h-16 opacity-20" />
-                <p>No active downloads</p>
-            </div>
+            <EmptyState
+                icon={<FileDown size={40} />}
+                title="No active downloads"
+                description="Downloads you start will show their progress here."
+                className="h-64"
+            />
         );
     }
 
@@ -51,27 +54,28 @@ export const DownloadsList: React.FC = () => {
         <div className="space-y-4 p-4">
             {/* Header Actions */}
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Active & Recent</h3>
-                <div className="flex space-x-2">
-                    <button
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Active &amp; Recent</h3>
+                <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        size="xs"
+                        iconStart={<Folder size={12} />}
                         onClick={async () => {
                             await window.electronAPI.openModsDirectory();
                         }}
                     >
-                        <div className="flex items-center gap-1 cursor-pointer">
-                            <Folder size={12} />
-                            <span>Open Folder</span>
-                        </div>
-                    </button>
+                        Open Folder
+                    </Button>
 
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="xs"
+                        iconStart={<Trash2 size={12} />}
                         onClick={() => window.electronAPI.clearCompletedDownloads()}
-                        className="text-xs flex items-center gap-1 text-gray-500 hover:text-white transition-colors"
                         title="Clear Finished"
                     >
-                        <Trash2 size={12} />
-                        <span>Clear History</span>
-                    </button>
+                        Clear History
+                    </Button>
                 </div>
             </div>
 
@@ -93,25 +97,14 @@ export const DownloadsList: React.FC = () => {
                         </div>
 
                         {/* Progress Bar */}
-                        <div
-                            className="h-2 bg-white/10 rounded-full overflow-hidden mb-1"
-                            role="progressbar"
-                            aria-label={`Download progress: ${dl.filename}`}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-valuenow={Math.round(dl.progress)}
-                        >
-                            <div
-                                className={`h-full transition-all duration-300 ${dl.state === 'failed' ? 'bg-red-500' :
-                                    dl.state === 'completed' ? 'bg-green-500' :
-                                        dl.state === 'paused' ? 'bg-yellow-500' :
-                                            'bg-blue-500'
-                                    }`}
-                                style={{ width: `${dl.progress}%` }}
-                            />
-                        </div>
+                        <ProgressBar
+                            value={dl.progress / 100}
+                            label={`Download progress: ${dl.filename}`}
+                            size="sm"
+                            tone={dl.state === 'completed' ? 'aqua' : 'accent'}
+                        />
 
-                        <div className="flex justify-between text-xs text-white/40">
+                        <div className="flex justify-between text-xs text-white/40 mt-1">
                             <span>{dl.progress.toFixed(1)}%</span>
                             <span>{formatSpeed(dl.speed)}</span>
                         </div>
@@ -121,27 +114,45 @@ export const DownloadsList: React.FC = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                         {dl.state === 'progressing' && (
-                            <button type="button" onClick={() => handlePause(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Pause" aria-label={`Pause ${dl.filename}`}>
-                                <Pause className="w-4 h-4 text-white" />
-                            </button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handlePause(dl.id)}
+                                title="Pause"
+                                aria-label={`Pause ${dl.filename}`}
+                            >
+                                <Pause className="w-4 h-4" />
+                            </Button>
                         )}
                         {(dl.state === 'paused' || dl.state === 'failed') && (
-                            <button type="button" onClick={() => handleResume(dl.id)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Resume/Retry" aria-label={`${dl.state === 'failed' ? 'Retry' : 'Resume'} ${dl.filename}`}>
-                                <Play className="w-4 h-4 text-white" />
-                            </button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleResume(dl.id)}
+                                title="Resume/Retry"
+                                aria-label={`${dl.state === 'failed' ? 'Retry' : 'Resume'} ${dl.filename}`}
+                            >
+                                <Play className="w-4 h-4" />
+                            </Button>
                         )}
-                        <button type="button" onClick={() => handleCancel(dl.id)} className="p-2 hover:bg-red-500/20 rounded-full transition-colors group" title="Cancel" aria-label={`Cancel ${dl.filename}`}>
-                            <X className="w-4 h-4 text-white/50 group-hover:text-red-400" />
-                        </button>
-                        <button
-                            type="button"
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCancel(dl.id)}
+                            title="Cancel"
+                            aria-label={`Cancel ${dl.filename}`}
+                        >
+                            <X className="w-4 h-4 text-white/50 hover:text-red-400" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => window.electronAPI.openDownloadFolder(dl.id)}
-                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             title="Show in Folder"
                             aria-label={`Show ${dl.filename} in folder`}
                         >
                             <Folder size={16} className="text-white/50 hover:text-white" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             ))}

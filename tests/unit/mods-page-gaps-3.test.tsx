@@ -40,7 +40,7 @@ describe('Mods Component - FilterBar coverage', () => {
     it('should trigger onFilterChange in FilterBar', async () => {
         renderWithProviders(<Mods />);
 
-        const browseBtn = await screen.findByRole('button', { name: /Browse Online/i });
+        const browseBtn = await screen.findByRole('tab', { name: /Browse Online/i });
         fireEvent.click(browseBtn);
 
         await waitFor(() => {

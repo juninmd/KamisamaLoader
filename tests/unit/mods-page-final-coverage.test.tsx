@@ -218,14 +218,14 @@ describe('Mods Page Final Coverage', () => {
         renderMods();
         await waitFor(() => screen.getByText('Mod1'));
 
-        const switchEl = screen.getByRole('checkbox') || screen.getAllByRole('switch')[0];
+        const switchEl = screen.getByRole('switch');
         // Or find by ID
         // ModGrid renders ModCard which has Switch.
         // Let's rely on text or role.
 
         // Actually, Switch component usually has role 'switch'.
         // We might need to target specific one.
-        const toggle = screen.getAllByRole('checkbox')[0];
+        const toggle = screen.getByRole('switch');
         fireEvent.click(toggle);
 
         await waitFor(() => {
@@ -242,7 +242,7 @@ describe('Mods Page Final Coverage', () => {
         renderMods();
         await waitFor(() => screen.getByText('Mod1'));
 
-        const toggle = screen.getAllByRole('checkbox')[0];
+        const toggle = screen.getByRole('switch');
         fireEvent.click(toggle);
 
         await waitFor(() => {

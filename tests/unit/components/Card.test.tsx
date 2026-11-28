@@ -18,7 +18,9 @@ describe('Card Components', () => {
 
         const card = screen.getByTestId('card');
         expect(card).toBeInTheDocument();
-        expect(card).toHaveClass('glass-card');
+        // Sonido's surface classes replaced the old local `glass-card` recipe.
+        expect(card).toHaveClass('sn-card');
+        expect(card).toHaveClass('sn-card--glass');
         expect(card).toHaveClass('test-class');
         expect(ref.current).toBe(card);
     });

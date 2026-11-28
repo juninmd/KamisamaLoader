@@ -34,7 +34,7 @@ describe('ToastContext', () => {
         expect(screen.getByText('Test Message')).toBeInTheDocument();
     });
 
-    it('auto dismisses toast after 5 seconds', () => {
+    it('auto dismisses when the Sonido drain animation ends', () => {
         render(
             <ToastProvider>
                 <TestComponent />
@@ -44,9 +44,11 @@ describe('ToastContext', () => {
         fireEvent.click(screen.getByText('Show Toast'));
         expect(screen.getByText('Test Message')).toBeInTheDocument();
 
-        // Fast forward
+        // Sonido toasts dismiss on the CSS drain animation, not on a timer.
+        const drain = document.querySelector('.sn-toast__drain') as HTMLElement;
+        expect(drain).toBeTruthy();
         act(() => {
-            vi.advanceTimersByTime(5000);
+            fireEvent.animationEnd(drain);
         });
 
         expect(screen.queryByText('Test Message')).not.toBeInTheDocument();

@@ -51,7 +51,7 @@ describe('Mods Page Extended Coverage', () => {
 
       await waitFor(() => expect(screen.getByText('Mod 1')).toBeInTheDocument());
 
-      const switchEl = screen.getByRole('checkbox');
+      const switchEl = screen.getByRole('switch');
 
       await act(async () => {
         fireEvent.click(switchEl);
@@ -72,7 +72,7 @@ describe('Mods Page Extended Coverage', () => {
       });
       await waitFor(() => expect(screen.getByText('Mod 1')).toBeInTheDocument());
 
-      const switchEl = screen.getByRole('checkbox');
+      const switchEl = screen.getByRole('switch');
 
       await act(async () => {
         fireEvent.click(switchEl);

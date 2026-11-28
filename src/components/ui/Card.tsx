@@ -1,78 +1,41 @@
 import * as React from "react"
-import { cn } from "../../lib/utils"
+import {
+    Card as SonidoCard,
+    CardHeader as SonidoCardHeader,
+    CardTitle as SonidoCardTitle,
+    CardBody,
+    CardFooter as SonidoCardFooter,
+} from "@juninmd/sonido"
 
-const Card = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-    <div
+/**
+ * Sonido surfaces with the padding that the app already applies through its
+ * own utility classes (`p-4`, `p-6`). `CardContent` maps to Sonido `CardBody`.
+ */
+export type CardProps = React.ComponentPropsWithoutRef<typeof SonidoCard>
+
+type CardWithRef = React.ForwardRefExoticComponent<
+    CardProps & React.RefAttributes<HTMLDivElement>
+>
+
+const SonidoCardWithRef = SonidoCard as unknown as CardWithRef
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, ...props }, ref) => (
+    <SonidoCardWithRef
         ref={ref}
-        className={cn(
-            "glass-card rounded-xl text-card-foreground",
-            className
-        )}
+        surface="glass"
+        padding="none"
+        className={className}
         {...props}
     />
 ))
 Card.displayName = "Card"
 
-const CardHeader = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn("flex flex-col space-y-1.5 p-6", className)}
-        {...props}
-    />
-))
-CardHeader.displayName = "CardHeader"
-
-const CardTitle = React.forwardRef<
-    HTMLParagraphElement,
-    React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-    <h3
-        ref={ref}
-        className={cn(
-            "text-2xl font-semibold leading-none tracking-tight",
-            className
-        )}
-        {...props}
-    />
-))
-CardTitle.displayName = "CardTitle"
-
-const CardDescription = React.forwardRef<
-    HTMLParagraphElement,
-    React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-    <p
-        ref={ref}
-        className={cn("text-sm text-muted-foreground", className)}
-        {...props}
-    />
-))
-CardDescription.displayName = "CardDescription"
-
-const CardContent = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-))
-CardContent.displayName = "CardContent"
-
-const CardFooter = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn("flex items-center p-6 pt-0", className)}
-        {...props}
-    />
-))
-CardFooter.displayName = "CardFooter"
+const CardHeader = SonidoCardHeader
+const CardTitle = SonidoCardTitle
+const CardDescription = (props: React.HTMLAttributes<HTMLParagraphElement>) => (
+    <p className="text-sm text-muted-foreground" {...props} />
+)
+const CardContent = CardBody
+const CardFooter = SonidoCardFooter
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
