@@ -1,56 +1,44 @@
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import Toast from './Toast';
+import React, { createContext, useCallback, useContext, type ReactNode } from 'react';
+import { ToastProvider as SonidoToastProvider, useToast as useSonidoToast } from '@juninmd/sonido';
 
-interface ToastMessage {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
+type ToastKind = 'success' | 'error' | 'info';
 
 interface ToastContextType {
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+    showToast: (message: string, type: ToastKind) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
-    const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
-
-    // Auto remove
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000); // 5 seconds
-  }, []);
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  return (
-    <ToastContext.Provider value={{ showToast }}>
-      {children}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col space-y-2">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
+const TONES: Record<ToastKind, 'success' | 'danger' | 'neutral'> = {
+    success: 'success',
+    error: 'danger',
+    info: 'neutral',
 };
 
+/** Bridges the app's `showToast(message, type)` API onto Sonido toasts. */
+const ToastBridge: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const toast = useSonidoToast();
+
+    const showToast = useCallback(
+        (message: string, type: ToastKind) => {
+            toast({ title: message, tone: TONES[type], duration: 5000 });
+        },
+        [toast]
+    );
+
+    return <ToastContext.Provider value={{ showToast }}>{children}</ToastContext.Provider>;
+};
+
+export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => (
+    <SonidoToastProvider>
+        <ToastBridge>{children}</ToastBridge>
+    </SonidoToastProvider>
+);
+
 export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
+    const context = useContext(ToastContext);
+    if (context === undefined) {
+        throw new Error('useToast must be used within a ToastProvider');
+    }
+    return context;
 };

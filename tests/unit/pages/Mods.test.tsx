@@ -108,12 +108,12 @@ describe('Mods Page', () => {
     it('should refresh installed mods when returning from downloads', async () => {
         renderWithProviders(<Mods />);
         await waitFor(() => screen.getByText('Local Mod'));
-        fireEvent.click(screen.getByRole('button', { name: 'Downloads' }));
+        fireEvent.click(screen.getByRole('tab', { name: 'Downloads' }));
         (window.electronAPI.getInstalledMods as any).mockResolvedValue([
             { id: '3', name: 'Newly Installed', isEnabled: true, priority: 1, author: 'QA', fileSize: 1 }
         ]);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Installed' }));
+        fireEvent.click(screen.getByRole('tab', { name: 'Installed' }));
 
         await waitFor(() => expect(screen.getByText('Newly Installed')).toBeInTheDocument());
     });

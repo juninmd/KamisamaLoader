@@ -1,16 +1,17 @@
 import React from 'react';
+import { Skeleton as SonidoSkeleton } from '@juninmd/sonido';
+import { cn } from '../lib/utils';
 
-const Skeleton: React.FC = () => {
-    return (
-        <div className="glass-panel overflow-hidden border border-white/5 h-[320px] animate-pulse">
-            <div className="h-40 bg-gray-700/50"></div>
-            <div className="p-4 space-y-4">
-                <div className="h-4 bg-gray-700/50 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-700/50 rounded w-1/2"></div>
-                <div className="h-10 bg-gray-700/50 rounded mt-4"></div>
-            </div>
-        </div>
-    );
-};
+interface SkeletonProps {
+    className?: string;
+    label?: string;
+}
+
+/** Mod-card placeholder: Sonido's shimmering skeleton inside the app surface. */
+const Skeleton: React.FC<SkeletonProps> = ({ className, label = 'Loading mods' }) => (
+    <div className={cn('glass-panel overflow-hidden border border-white/5 h-[320px] p-4', className)}>
+        <SonidoSkeleton media rows={3} label={label} />
+    </div>
+);
 
 export default Skeleton;

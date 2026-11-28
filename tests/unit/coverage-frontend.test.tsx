@@ -93,7 +93,7 @@ describe('Frontend Coverage Fill', () => {
             await waitFor(() => expect(screen.getByText('M')).toBeInTheDocument());
 
             // Use switch (role checkbox) instead of text "Enable"
-            const switchEl = screen.getByRole('checkbox');
+            const switchEl = screen.getByRole('switch');
             fireEvent.click(switchEl);
 
             await waitFor(() => {

@@ -85,7 +85,8 @@ describe('ModDetailsModal', () => {
             );
         });
 
-        fireEvent.keyDown(document, { key: 'Escape' });
+        const dialog = screen.getByRole('dialog', { name: 'Goku Mod details' });
+        fireEvent(dialog, new Event('cancel'));
         expect(mockClose).toHaveBeenCalled();
     });
 
@@ -101,11 +102,9 @@ describe('ModDetailsModal', () => {
             );
         });
 
-        const backdrop = document.body.querySelector('.fixed.inset-0.bg-black\\/80');
-        if (backdrop) {
-            fireEvent.click(backdrop);
-            expect(mockClose).toHaveBeenCalled();
-        }
+        const dialog = screen.getByRole('dialog', { name: 'Goku Mod details' });
+        fireEvent.click(dialog);
+        expect(mockClose).toHaveBeenCalled();
     });
 
     it('should trigger install', async () => {
@@ -271,8 +270,8 @@ describe('ModDetailsModal', () => {
             );
         });
         const dialog = screen.getByRole('dialog', { name: 'Goku Mod details' });
-        expect(dialog).toHaveAttribute('aria-modal', 'true');
-        fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }));
+        expect(dialog).toHaveAttribute('open');
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
         expect(mockClose).toHaveBeenCalled();
         await waitFor(() => {
             expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument();

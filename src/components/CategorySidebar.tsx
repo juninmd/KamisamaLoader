@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, ChevronRight, Star, Users, Palette, Map, Gamepad2, Music, Wrench, Sparkles, Package } from 'lucide-react';
+import { ChevronDown, ChevronRight, Star, Users, Palette, Map, Gamepad2, Music, Wrench, Sparkles, Package } from 'lucide-react';
+import { Badge, SearchField } from '@juninmd/sonido';
 
 export interface Category {
     id: number;
@@ -102,14 +103,12 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
             </div>
 
             {/* Search */}
-            <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                <input
-                    type="text"
+            <div className="mb-4">
+                <SearchField
+                    label="Search categories"
                     placeholder="Search categories..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-black/30 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    onChange={setSearchTerm}
                 />
             </div>
 
@@ -199,9 +198,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
                 <Icon size={16} className={isSelected ? '' : 'text-gray-500'} />
                 <span className="text-sm font-medium truncate">{category.name}</span>
                 {category.count !== undefined && (
-                    <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full text-gray-400">
-                        {category.count}
-                    </span>
+                    <Badge appearance="count">{category.count}</Badge>
                 )}
             </div>
 

@@ -35,7 +35,9 @@ describe('ModManager.downloadFile write errors', () => {
         process.on('uncaughtException', uncaught);
         try {
             const result = (new ModManager() as any).downloadFile('http://mod', path.join(parentIsFile, 'mod.zip'));
-            await expect(result).rejects.toThrow(/ENOTDIR/);
+            // Windows reports ENOENT for a file used as a directory; POSIX reports
+            // ENOTDIR. Both prove the write failed and was surfaced as a rejection.
+            await expect(result).rejects.toThrow(/ENOENT|ENOTDIR/);
             await new Promise(r => setTimeout(r, 20));
             expect(uncaught).not.toHaveBeenCalled();
         } finally {

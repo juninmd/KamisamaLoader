@@ -59,8 +59,8 @@ describe('ModCard', () => {
         const localMod = { ...mockMod, isEnabled: false };
         render(<ModCard mod={mockMod} isInstalled={true} localMod={localMod} onToggle={onToggle} />);
 
-        // Use Switch component interaction (checkbox)
-        const switchEl = screen.getByRole('checkbox');
+        // Use Switch component interaction (role="switch" from Sonido)
+        const switchEl = screen.getByRole('switch');
         fireEvent.click(switchEl);
         expect(onToggle).toHaveBeenCalledWith(mockMod.id);
     });

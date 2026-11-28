@@ -4,9 +4,11 @@ import { renderWithProviders } from '../test-utils';
 import Skeleton from '../../../src/components/Skeleton';
 
 describe('Skeleton', () => {
-    it('should render', () => {
+    it('renders the Sonido shimmer inside the app surface', () => {
         const { container } = renderWithProviders(<Skeleton />);
-        expect(container.firstChild).toHaveClass('animate-pulse');
         expect(container.firstChild).toHaveClass('glass-panel');
+        const shimmer = container.querySelector('.sn-skeleton');
+        expect(shimmer).toBeInTheDocument();
+        expect(shimmer).toHaveAttribute('aria-busy', 'true');
     });
 });
